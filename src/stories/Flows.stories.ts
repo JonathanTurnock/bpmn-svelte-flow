@@ -9,23 +9,6 @@ export default {
   }
 };
 
-/**
- * Like `edge()` from the shared helpers, but also emits a `<bpmndi:BPMNLabel>`
- * so the edge label is positioned from the diagram interchange instead of the
- * polyline midpoint.
- */
-function labelledEdge(
-  element: string,
-  waypoints: Array<[number, number]>,
-  label: [number, number, number, number]
-): string {
-  const points = waypoints.map(([x, y]) => `        <di:waypoint x="${x}" y="${y}"/>`).join('\n');
-  return `      <bpmndi:BPMNEdge id="${element}_di" bpmnElement="${element}">
-${points}
-        <bpmndi:BPMNLabel><dc:Bounds x="${label[0]}" y="${label[1]}" width="${label[2]}" height="${label[3]}"/></bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>`;
-}
-
 /* -------------------------------------------------------------------------
  * Sequence flows: plain, conditional (diamond at source), default (slash).
  * ---------------------------------------------------------------------- */
@@ -83,7 +66,7 @@ const sequenceFlows = bpmnDefinitions(
       [186, 276],
       [240, 276]
     ]),
-    labelledEdge(
+    edge(
       'Flow_cond',
       [
         [340, 256],
@@ -91,9 +74,9 @@ const sequenceFlows = bpmnDefinitions(
         [390, 180],
         [440, 180]
       ],
-      [350, 228, 62, 14]
+      { label: [350, 228, 62, 14] }
     ),
-    labelledEdge(
+    edge(
       'Flow_def',
       [
         [340, 296],
@@ -101,7 +84,7 @@ const sequenceFlows = bpmnDefinitions(
         [390, 380],
         [440, 380]
       ],
-      [350, 302, 62, 14]
+      { label: [350, 302, 62, 14] }
     ),
     edge('Flow_b', [
       [540, 180],
@@ -115,23 +98,23 @@ const sequenceFlows = bpmnDefinitions(
       [580, 276],
       [620, 276]
     ]),
-    labelledEdge(
+    edge(
       'Flow_ok',
       [
         [645, 251],
         [645, 188],
         [760, 188]
       ],
-      [668, 164, 40, 14]
+      { label: [668, 164, 40, 14] }
     ),
-    labelledEdge(
+    edge(
       'Flow_gdef',
       [
         [645, 301],
         [645, 368],
         [760, 368]
       ],
-      [668, 344, 40, 14]
+      { label: [668, 344, 40, 14] }
     )
   ].join('\n')
 );
@@ -218,21 +201,21 @@ const messageFlows = bpmnDefinitions(
       [570, 380],
       [680, 380]
     ]),
-    labelledEdge(
+    edge(
       'MF_1',
       [
         [320, 200],
         [320, 340]
       ],
-      [326, 256, 40, 14]
+      { label: [326, 256, 40, 14] }
     ),
-    labelledEdge(
+    edge(
       'MF_2',
       [
         [520, 340],
         [520, 200]
       ],
-      [428, 256, 88, 14]
+      { label: [428, 256, 88, 14] }
     )
   ].join('\n')
 );
@@ -347,7 +330,7 @@ const bentFlows = bpmnDefinitions(
       [136, 318],
       [200, 318]
     ]),
-    labelledEdge(
+    edge(
       'F2',
       [
         [300, 298],
@@ -355,9 +338,9 @@ const bentFlows = bpmnDefinitions(
         [400, 158],
         [300, 158]
       ],
-      [320, 214, 64, 14]
+      { label: [320, 214, 64, 14] }
     ),
-    labelledEdge(
+    edge(
       'F3',
       [
         [300, 138],
@@ -365,7 +348,7 @@ const bentFlows = bpmnDefinitions(
         [450, 298],
         [500, 298]
       ],
-      [458, 196, 76, 14]
+      { label: [458, 196, 76, 14] }
     ),
     edge('F4', [
       [600, 318],

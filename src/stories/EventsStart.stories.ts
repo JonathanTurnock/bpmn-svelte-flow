@@ -1,5 +1,5 @@
 import BpmnDiagram from '../lib/components/BpmnDiagram.svelte';
-import { bpmnDefinitions, shape } from './helpers/bpmn-xml.js';
+import { bpmnDefinitions, eventShape } from './helpers/bpmn-xml.js';
 
 export default {
   title: 'Events/Start Events',
@@ -9,14 +9,6 @@ export default {
   }
 };
 
-const EV = 36;
-const SPACING = 100;
-
-/** DI shape for a 36x36 event in column `i`, with a centred label below it. */
-function evShape(id: string, i: number, x0 = 60, y = 90): string {
-  const x = x0 + i * SPACING;
-  return shape(id, x, y, EV, EV, { label: [x + EV / 2 - 48, y + EV + 8, 96, 26] });
-}
 
 const startEvents = bpmnDefinitions(
   `  <bpmn:process id="Process_StartEvents" isExecutable="false">
@@ -51,7 +43,7 @@ const startEvents = bpmnDefinitions(
     'S_Multiple',
     'S_ParallelMultiple'
   ]
-    .map((id, i) => evShape(id, i))
+    .map((id, i) => eventShape(id, i))
     .join('\n')
 );
 

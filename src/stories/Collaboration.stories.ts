@@ -9,19 +9,6 @@ export default {
   }
 };
 
-/** `edge()` plus a `<bpmndi:BPMNLabel>` so message-flow labels sit where the DI says. */
-function labelledEdge(
-  element: string,
-  waypoints: Array<[number, number]>,
-  label: [number, number, number, number]
-): string {
-  const points = waypoints.map(([x, y]) => `        <di:waypoint x="${x}" y="${y}"/>`).join('\n');
-  return `      <bpmndi:BPMNEdge id="${element}_di" bpmnElement="${element}">
-${points}
-        <bpmndi:BPMNLabel><dc:Bounds x="${label[0]}" y="${label[1]}" width="${label[2]}" height="${label[3]}"/></bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>`;
-}
-
 /* -------------------------------------------------------------------------
  * 1. Two expanded pools, lanes in the first, message flows across.
  * ---------------------------------------------------------------------- */
@@ -108,21 +95,21 @@ const twoPools = bpmnDefinitions(
       [570, 470],
       [650, 470]
     ]),
-    labelledEdge(
+    edge(
       'MF_1',
       [
         [350, 180],
         [350, 430]
       ],
-      [356, 336, 40, 14]
+      { label: [356, 336, 40, 14] }
     ),
-    labelledEdge(
+    edge(
       'MF_2',
       [
         [520, 430],
         [520, 300]
       ],
-      [452, 336, 52, 14]
+      { label: [452, 336, 52, 14] }
     )
   ].join('\n')
 );
@@ -179,15 +166,15 @@ const blackBox = bpmnDefinitions(
       [570, 180],
       [650, 180]
     ]),
-    labelledEdge(
+    edge(
       'MF_1',
       [
         [340, 220],
         [340, 400]
       ],
-      [200, 296, 128, 14]
+      { label: [200, 296, 128, 14] }
     ),
-    labelledEdge(
+    edge(
       'MF_2',
       [
         [520, 400],
@@ -195,7 +182,7 @@ const blackBox = bpmnDefinitions(
         [640, 330],
         [640, 220]
       ],
-      [560, 306, 120, 14]
+      { label: [560, 306, 120, 14] }
     )
   ].join('\n')
 );
@@ -266,13 +253,13 @@ const verticalPools = bpmnDefinitions(
       [365, 465],
       [365, 500]
     ]),
-    labelledEdge(
+    edge(
       'MF_1',
       [
         [415, 425],
         [500, 425]
       ],
-      [420, 400, 80, 14]
+      { label: [420, 400, 80, 14] }
     )
   ].join('\n')
 );
@@ -331,21 +318,21 @@ const multiInstance = bpmnDefinitions(
       [570, 180],
       [650, 180]
     ]),
-    labelledEdge(
+    edge(
       'MF_1',
       [
         [340, 220],
         [340, 400]
       ],
-      [212, 296, 116, 14]
+      { label: [212, 296, 116, 14] }
     ),
-    labelledEdge(
+    edge(
       'MF_2',
       [
         [520, 400],
         [520, 220]
       ],
-      [528, 296, 44, 14]
+      { label: [528, 296, 44, 14] }
     )
   ].join('\n')
 );

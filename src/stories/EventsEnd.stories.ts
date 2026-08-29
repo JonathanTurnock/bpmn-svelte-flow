@@ -1,5 +1,5 @@
 import BpmnDiagram from '../lib/components/BpmnDiagram.svelte';
-import { bpmnDefinitions, shape } from './helpers/bpmn-xml.js';
+import { bpmnDefinitions, eventShape } from './helpers/bpmn-xml.js';
 
 export default {
   title: 'Events/End Events',
@@ -9,13 +9,6 @@ export default {
   }
 };
 
-const EV = 36;
-const SPACING = 100;
-
-function evShape(id: string, i: number, x0 = 60, y = 90): string {
-  const x = x0 + i * SPACING;
-  return shape(id, x, y, EV, EV, { label: [x + EV / 2 - 48, y + EV + 8, 96, 26] });
-}
 
 const ids = [
   'E_None',
@@ -58,7 +51,7 @@ const endEvents = bpmnDefinitions(
       <bpmn:signalEventDefinition id="E_Multiple_def2"/>
     </bpmn:endEvent>
   </bpmn:process>`,
-  ids.map((id, i) => evShape(id, i)).join('\n')
+  ids.map((id, i) => eventShape(id, i)).join('\n')
 );
 
 /**

@@ -70,3 +70,12 @@ export function edge(
 ${points}${label}
       </bpmndi:BPMNEdge>`;
 }
+
+/**
+ * DI shape for a 36x36 event laid out in column `column`, with a centred
+ * external label just below it — the layout every event-matrix story uses.
+ */
+export function eventShape(id: string, column: number, x0 = 60, y = 90, spacing = 100): string {
+  const x = x0 + column * spacing;
+  return shape(id, x, y, 36, 36, { label: [x - 30, y + 44, 96, 26] });
+}
