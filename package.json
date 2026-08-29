@@ -26,7 +26,8 @@
     "prepare": "npm run package",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "npm run package && node tests/engine.test.mjs"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

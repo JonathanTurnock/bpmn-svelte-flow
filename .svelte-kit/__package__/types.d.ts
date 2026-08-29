@@ -35,6 +35,8 @@ export interface BpmnNodeData extends Record<string, unknown> {
     /** false renders a dashed border (non-interrupting start / boundary event). */
     interrupting?: boolean;
     parallelMultiple?: boolean;
+    /** For boundary events: id of the activity the event is attached to. */
+    attachedTo?: string;
     /** e.g. 'bpmn:UserTask' → user glyph; also set for call activities. */
     taskType?: string;
     markers?: ActivityMarker[];

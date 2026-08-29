@@ -1,6 +1,8 @@
 // bpmn-svelte-flow — a Svelte Flow based BPMN 2.0 renderer.
 export { default as BpmnDiagram } from './components/BpmnDiagram.svelte';
+export { default as BpmnSimulator } from './components/BpmnSimulator.svelte';
 export { bpmnNodeTypes, bpmnEdgeTypes } from './components/registry.js';
+export { BpmnSimulation } from './simulation/engine.js';
 export { parseBpmn } from './parser/parse.js';
 export { bpmnToFlow } from './parser/transform.js';
 export { default as BpmnEdge } from './components/edges/BpmnEdge.svelte';

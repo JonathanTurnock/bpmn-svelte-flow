@@ -60,6 +60,44 @@ peer dependency; `@xyflow/svelte` and `bpmn-moddle` are pulled in automatically.
 | `onload`         | `({ nodes, edges, warnings }) => void`  | —        | Called after a document is parsed and rendered         |
 | `onerror`        | `(error: Error) => void`                | —        | Called when parsing fails                              |
 
+## Simulation
+
+`<BpmnSimulator>` adds token-flow simulation on top of the renderer. Instead of
+implementing an expression language, behaviour is attached to nodes as small
+**JavaScript attachment boxes**: click a node on the canvas and write plain JS
+against the payload.
+
+```svelte
+<script>
+  import { BpmnSimulator } from 'bpmn-svelte-flow';
+</script>
+
+<BpmnSimulator
+  {xml}
+  height="600px"
+  payload={{ amount: 5200 }}
+  scripts={{
+    Task_Score: 'payload.risk = payload.amount > 1000 ? "high" : "low";',
+    Gw_Amount: 'return payload.risk === "high" ? "Flow_manual" : "Flow_auto";'
+  }}
+/>
+```
+
+- **Activities / events**: the script reads and mutates `payload` (or returns a
+  replacement). `throw`ing inside an activity routes the token to an attached
+  error boundary event.
+- **Exclusive / event-based gateways**: return the id or label of the outgoing
+  flow to take; the default flow (then the first flow) is the fallback.
+- **Inclusive gateways**: return an array of flow ids; **parallel gateways**
+  fork every path and join when all incoming flows have delivered a token,
+  merging payloads.
+
+The component provides Step / Play / Reset controls, an initial-payload JSON
+editor, per-node script editors (ƒ badges mark scripted nodes), a payload log,
+live highlighting of the control flow, and token dots animated along the real
+edge waypoints. The engine is also exported headless as `BpmnSimulation` for
+driving your own UI, and `npm test` exercises it in Node.
+
 ### Lower-level API
 
 ```ts

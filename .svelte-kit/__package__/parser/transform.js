@@ -136,6 +136,7 @@ function shapeToNode(di, warnings) {
         }
         else if (type === 'bpmn:BoundaryEvent') {
             data.interrupting = element.cancelActivity !== false;
+            data.attachedTo = element.attachedToRef?.id;
             zIndex = 30;
         }
         else {
