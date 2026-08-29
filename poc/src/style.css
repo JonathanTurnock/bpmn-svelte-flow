@@ -1,0 +1,142 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  color: #22242a;
+  background: #fff;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+}
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #d8dbe1;
+  background: #fafbfc;
+  font-size: 13px;
+}
+#toolbar select,
+#toolbar button {
+  font-size: 13px;
+  padding: 5px 12px;
+  border: 1px solid #c6cad2;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+#toolbar button:hover:enabled {
+  background: #eef1f5;
+}
+#toolbar button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#progress {
+  margin-left: auto;
+  color: #5b616c;
+  font-size: 12px;
+}
+main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+#canvas {
+  flex: 1;
+  min-width: 0;
+}
+#panel {
+  width: 420px;
+  flex: 0 0 420px;
+  border-left: 1px solid #d8dbe1;
+  background: #fafbfc;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+#panel h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+#panel h3 {
+  margin: 18px 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #5b616c;
+}
+#step-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #3c414b;
+}
+#logic,
+#payload {
+  margin: 0;
+  padding: 10px;
+  background: #22242a;
+  color: #e6e8ee;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#changes {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+#changes li {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  padding: 2px 0;
+  color: #0f766e;
+}
+#changes li.removed {
+  color: #b3261e;
+}
+#changes-badge {
+  font-weight: 400;
+  color: #0f766e;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* --- diagram highlighting ------------------------------------------- */
+.djs-element.step-active .djs-visual > :first-child {
+  stroke: #10b981 !important;
+  stroke-width: 2.6px !important;
+  fill: #ecfdf5 !important;
+}
+.djs-element.step-visited .djs-visual > :first-child {
+  stroke: #10b981 !important;
+}
+.djs-connection.step-visited .djs-visual > path {
+  stroke: #10b981 !important;
+  marker-end: url(#sequenceflow-end-green);
+}
+.token-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 1px 4px rgba(0, 0, 0, 0.35);
+}

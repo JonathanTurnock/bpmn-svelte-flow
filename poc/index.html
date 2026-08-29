@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messaging Platform — Flow PoC</title>
+  </head>
+  <body>
+    <div id="app">
+      <header id="toolbar">
+        <strong>Messaging Platform · flow PoC</strong>
+        <select id="scenario"></select>
+        <button id="step">Step</button>
+        <button id="play">Play</button>
+        <button id="reset">Reset</button>
+        <span id="progress"></span>
+      </header>
+      <main>
+        <div id="canvas"></div>
+        <aside id="panel">
+          <section>
+            <h2 id="step-title">—</h2>
+            <p id="step-note"></p>
+          </section>
+          <section>
+            <h3 id="logic-label">Business logic</h3>
+            <pre id="logic"></pre>
+          </section>
+          <section>
+            <h3>Payload <span id="changes-badge"></span></h3>
+            <ul id="changes"></ul>
+            <pre id="payload"></pre>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

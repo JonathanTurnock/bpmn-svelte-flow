@@ -31,7 +31,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "npm run package && node tests/engine.test.mjs"
+    "test": "npm run package && node tests/engine.test.mjs",
+    "poc": "vite poc --open",
+    "build-poc": "vite build poc --base ./"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
@@ -58,6 +60,7 @@
     "@storybook/svelte-vite": "^10.5.10",
     "@sveltejs/package": "^2.5.8",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "bpmn-js": "^18.26.0",
     "storybook": "^10.5.10",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
