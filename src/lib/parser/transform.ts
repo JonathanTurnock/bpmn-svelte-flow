@@ -157,7 +157,12 @@ function gatewayKindOf(element: any): GatewayKind {
 function shapeToNode(di: any, warnings: string[]): BpmnFlowNode | undefined {
   const element = di.bpmnElement;
   if (!element) {
-    warnings.push('BPMNShape without resolvable bpmnElement was skipped');
+    // The reference failed to resolve, so read the raw attribute for the
+    // diagnostic (di.bpmnElement itself is undefined in this case).
+    const ref = di.$attrs?.bpmnElement;
+    warnings.push(
+      `BPMNShape${di.id ? ` <${di.id}>` : ''} references unresolvable element${ref ? ` "${ref}"` : ''} and was skipped`
+    );
     return undefined;
   }
   if (!di.bounds) {
@@ -332,7 +337,10 @@ function edgeEndpoints(element: any): { source?: string; target?: string } {
 function diEdgeToEdge(di: any, nodeIds: Set<string>, warnings: string[]): BpmnFlowEdge | undefined {
   const element = di.bpmnElement;
   if (!element) {
-    warnings.push('BPMNEdge without resolvable bpmnElement was skipped');
+    const ref = di.$attrs?.bpmnElement;
+    warnings.push(
+      `BPMNEdge${di.id ? ` <${di.id}>` : ''} references unresolvable element${ref ? ` "${ref}"` : ''} and was skipped`
+    );
     return undefined;
   }
   const { source, target } = edgeEndpoints(element);

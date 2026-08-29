@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NodeProps } from '@xyflow/svelte';
   import type { BpmnNodeData } from '../../types.js';
+  import ActivityMarkers from '../icons/ActivityMarkers.svelte';
   import ExternalLabel from './ExternalLabel.svelte';
   import NodeHandles from './NodeHandles.svelte';
 
@@ -41,23 +42,8 @@
       stroke-width={strokeWidth}
       stroke-linejoin="round"
     />
-    {#if isCollapsed}
-      <g transform={`translate(${d.width / 2 - 7}, ${d.height - 19})`}>
-        <rect
-          x="1"
-          y="1"
-          width="12"
-          height="12"
-          rx="1.5"
-          fill="none"
-          stroke="var(--bpmn-stroke, #22242a)"
-          stroke-width="1.4"
-        />
-        <line x1="7" y1="3.5" x2="7" y2="10.5" stroke="var(--bpmn-stroke, #22242a)" stroke-width="1.4" />
-        <line x1="3.5" y1="7" x2="10.5" y2="7" stroke="var(--bpmn-stroke, #22242a)" stroke-width="1.4" />
-      </g>
-    {/if}
   </svg>
+  <ActivityMarkers markers={d.markers} />
 
   {#if d.labelBounds}
     <ExternalLabel label={d.label} labelBounds={d.labelBounds} width={d.width} height={d.height} />

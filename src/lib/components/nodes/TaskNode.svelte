@@ -4,6 +4,7 @@
   import ActivityMarkers from '../icons/ActivityMarkers.svelte';
   import TaskTypeIcon from '../icons/TaskTypeIcon.svelte';
   import NodeHandles from './NodeHandles.svelte';
+  import TransactionInner from './TransactionInner.svelte';
 
   let { data, selected }: NodeProps = $props();
   const d = $derived(data as unknown as BpmnNodeData);
@@ -21,7 +22,7 @@
   style={`width: ${d.width}px; height: ${d.height}px;`}
 >
   {#if d.isTransaction}
-    <div class="bpmn-transaction-inner"></div>
+    <TransactionInner />
   {/if}
   <TaskTypeIcon taskType={d.taskType} />
   {#if d.label}
@@ -51,13 +52,6 @@
   }
   .bpmn-task.selected {
     border-color: var(--bpmn-selected, #1a70ef);
-  }
-  .bpmn-transaction-inner {
-    position: absolute;
-    inset: 2.5px;
-    border: 1.3px solid var(--bpmn-stroke, #22242a);
-    border-radius: 7px;
-    pointer-events: none;
   }
   .bpmn-task-label {
     font-family: var(--bpmn-font-family, Arial, sans-serif);

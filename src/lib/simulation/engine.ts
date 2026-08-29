@@ -194,8 +194,9 @@ export class BpmnSimulation {
     // Seed a token on every top-level start event (boundary events and event
     // sub-process starts never seed; sub-process internals are opaque in v1,
     // which we approximate by skipping start events that sit inside an
-    // expanded container's bounds).
-    const containers = this.graph.nodes.filter((n) => n.type === 'bpmn-subprocess');
+    // expanded container's bounds). Containers are identified by the
+    // data contract (isExpanded), not by the rendering registry's type key.
+    const containers = this.graph.nodes.filter((n) => n.data.isExpanded === true);
     const insideContainer = (n: BpmnFlowNode) =>
       containers.some(
         (c) =>
@@ -327,42 +328,57 @@ export class BpmnSimulation {
     if (!target) return;
     const type = target.data.element;
 
-    // Joining gateways: hold the token until every incoming flow has arrived.
+    // Joining gateways can park, merge, and consume tokens — see arriveAtJoin.
     if (type === 'bpmn:ParallelGateway' || type === 'bpmn:InclusiveGateway') {
-      const incoming = this.incoming.get(target.id) ?? [];
-      if (incoming.length > 1) {
-        const arrivals = this.joinArrivals.get(target.id) ?? new Map();
-        arrivals.set(edge.id, token);
-        this.joinArrivals.set(target.id, arrivals);
-        const required =
-          type === 'bpmn:ParallelGateway'
-            ? incoming.length
-            : Math.min(incoming.length, arrivals.size + this.pendingUpstream(target.id));
-        if (arrivals.size < required) {
-          this.log(
-            target,
-            `token #${token.id} waiting at join (${arrivals.size}/${incoming.length})`,
-            'info'
-          );
-          // token parks on the gateway; remove all but one arrival later
-          return;
-        }
-        // Join fires: merge payloads into the first arrival, drop the rest.
-        const arrived = [...arrivals.values()];
-        const survivor = arrived[0];
-        for (const other of arrived.slice(1)) {
-          Object.assign(survivor.payload, other.payload);
-          this.consume(other);
-        }
-        survivor.at = target.id;
-        this.joinArrivals.delete(target.id);
-        this.log(target, `join fired, tokens merged into #${survivor.id}`, 'info', survivor.payload);
-      }
+      this.arriveAtJoin(token, edge, target);
     }
   }
 
-  /** Count live tokens that could still reach the given join (rough heuristic). */
-  private pendingUpstream(gatewayId: string): number {
+  /**
+   * Handles a token arriving at a joining parallel/inclusive gateway: the
+   * token parks until the join can fire, at which point all parked tokens are
+   * merged into one (payloads combined in arrival order, the rest consumed).
+   */
+  private arriveAtJoin(token: SimulationToken, edge: BpmnFlowEdge, target: BpmnFlowNode): void {
+    const type = target.data.element;
+    const incoming = this.incoming.get(target.id) ?? [];
+    if (incoming.length <= 1) return;
+
+    const arrivals = this.joinArrivals.get(target.id) ?? new Map();
+    arrivals.set(edge.id, token);
+    this.joinArrivals.set(target.id, arrivals);
+    const required =
+      type === 'bpmn:ParallelGateway'
+        ? incoming.length
+        : Math.min(incoming.length, arrivals.size + this.otherLiveTokenCount(target.id));
+    if (arrivals.size < required) {
+      this.log(
+        target,
+        `token #${token.id} waiting at join (${arrivals.size}/${incoming.length})`,
+        'info'
+      );
+      // token parks on the gateway; merged or released on a later arrival
+      return;
+    }
+    // Join fires: merge payloads into the first arrival, drop the rest.
+    const arrived = [...arrivals.values()];
+    const survivor = arrived[0];
+    for (const other of arrived.slice(1)) {
+      Object.assign(survivor.payload, other.payload);
+      this.consume(other);
+    }
+    survivor.at = target.id;
+    this.joinArrivals.delete(target.id);
+    this.log(target, `join fired, tokens merged into #${survivor.id}`, 'info', survivor.payload);
+  }
+
+  /**
+   * Live tokens anywhere other than the given gateway. A coarse upper bound
+   * on how many more arrivals an inclusive join might still receive — NOT a
+   * reachability analysis: tokens on unrelated branches are counted too, so
+   * an inclusive join waits as long as anything else is still moving.
+   */
+  private otherLiveTokenCount(gatewayId: string): number {
     return this.state.tokens.filter((t) => t.at !== gatewayId).length;
   }
 

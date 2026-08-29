@@ -69,6 +69,31 @@ export function segmentAngle(from: Point, to: Point): number {
   return (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
 }
 
+/** Point at `fraction` (0–1) along a polyline, measured by cumulative length. */
+export function pointAlongPolyline(points: Point[], fraction: number): Point {
+  if (points.length === 0) return { x: 0, y: 0 };
+  if (points.length === 1 || fraction <= 0) return points[0];
+  const lengths: number[] = [];
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const l = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y);
+    lengths.push(l);
+    total += l;
+  }
+  let remaining = Math.min(fraction, 1) * total;
+  for (let i = 0; i < lengths.length; i++) {
+    if (remaining <= lengths[i] && lengths[i] > 0) {
+      const t = remaining / lengths[i];
+      return {
+        x: points[i].x + (points[i + 1].x - points[i].x) * t,
+        y: points[i].y + (points[i + 1].y - points[i].y) * t
+      };
+    }
+    remaining -= lengths[i];
+  }
+  return points[points.length - 1];
+}
+
 /** Midpoint of a polyline (by cumulative length). */
 export function polylineMidpoint(points: Point[]): Point {
   if (points.length === 0) return { x: 0, y: 0 };

@@ -1,5 +1,5 @@
 import type { BpmnFlowGraph, BpmnWorkflowTest } from '../types.js';
-import { BpmnSimulation, type SimulationState } from './engine.js';
+import { BpmnSimulation } from './engine.js';
 
 /**
  * Workflow tests are JavaScript blocks embedded in the BPMN file:
@@ -17,7 +17,7 @@ import { BpmnSimulation, type SimulationState } from './engine.js';
  *
  * Each test runs a fresh headless simulation to completion, then executes the
  * script body with:
- *  - `state`    — the final {@link SimulationState} (visited/traversedEdges are Sets)
+ *  - `state`    — the final SimulationState (visited/traversedEdges are Sets)
  *  - `payloads` — final payloads of every token consumed at an end event
  *  - `payload`  — shorthand for `payloads[0]`
  *  - `assert(cond, msg?)` / `assert.equal(actual, expected, msg?)`

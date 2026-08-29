@@ -12,6 +12,10 @@
       "svelte": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./headless": {
+      "types": "./dist/headless.d.ts",
+      "default": "./dist/headless.js"
+    },
     "./styles.css": "./dist/styles.css"
   },
   "files": [

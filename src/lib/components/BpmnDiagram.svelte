@@ -129,15 +129,6 @@
     position: relative;
     background: var(--bpmn-canvas-bg, #ffffff);
   }
-  .bpmn-diagram :global(.bpmn-hidden-handle) {
-    opacity: 0;
-    pointer-events: none;
-    width: 1px;
-    height: 1px;
-    min-width: 0;
-    min-height: 0;
-    border: none;
-  }
   .bpmn-diagram-error {
     padding: 16px;
     font-family: var(--bpmn-font-family, Arial, sans-serif);

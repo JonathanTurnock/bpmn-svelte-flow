@@ -3,6 +3,7 @@
   import type { BpmnNodeData } from '../../types.js';
   import ActivityMarkers from '../icons/ActivityMarkers.svelte';
   import NodeHandles from './NodeHandles.svelte';
+  import TransactionInner from './TransactionInner.svelte';
 
   // Expanded sub-process / transaction / ad-hoc / event sub-process container.
   let { data, selected }: NodeProps = $props();
@@ -18,7 +19,7 @@
   style={`width: ${d.width}px; height: ${d.height}px;`}
 >
   {#if d.isTransaction}
-    <div class="bpmn-transaction-inner"></div>
+    <TransactionInner />
   {/if}
   {#if d.label}
     <div class="bpmn-subprocess-label">{d.label}</div>
@@ -44,13 +45,6 @@
   }
   .bpmn-subprocess.selected {
     border-color: var(--bpmn-selected, #1a70ef);
-  }
-  .bpmn-transaction-inner {
-    position: absolute;
-    inset: 2.5px;
-    border: 1.3px solid var(--bpmn-stroke, #22242a);
-    border-radius: 7px;
-    pointer-events: none;
   }
   .bpmn-subprocess-label {
     position: absolute;

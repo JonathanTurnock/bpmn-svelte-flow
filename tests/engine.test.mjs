@@ -1,6 +1,6 @@
-import { parseBpmn } from '../dist/parser/parse.js';
-import { bpmnToFlow } from '../dist/parser/transform.js';
-import { BpmnSimulation } from '../dist/simulation/engine.js';
+// Import through the published svelte-free entry point so internal module
+// layout can change without touching this test.
+import { parseBpmn, bpmnToFlow, BpmnSimulation, runWorkflowTests } from '../dist/headless.js';
 
 const els = ['S', 'T1', 'G', 'TA', 'TB', 'PF', 'PX', 'PY', 'PJ', 'TE', 'BE', 'TR', 'E1', 'E2'];
 const flows = ['F1', 'F2', 'Fa', 'Fb', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'];
@@ -99,7 +99,6 @@ check('case3 scriptless run finishes via default flow', sim3.state.finished && s
 // ---------------------------------------------------------------------------
 // Embedded scripts + workflow tests (bsf:script / bsf:test extension elements)
 // ---------------------------------------------------------------------------
-const { runWorkflowTests } = await import('../dist/simulation/testing.js');
 
 const execXml = `<?xml version='1.0'?>
 <bpmn:definitions xmlns:bpmn='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:bpmndi='http://www.omg.org/spec/BPMN/20100524/DI' xmlns:dc='http://www.omg.org/spec/DD/20100524/DC' xmlns:di='http://www.omg.org/spec/DD/20100524/DI' xmlns:bsf='http://bpmn-svelte-flow/schema/1.0' targetNamespace='x'>
