@@ -5,7 +5,7 @@
   // (loop, multi-instance, compensation, ad-hoc, collapsed sub-process).
   let { markers = [] }: { markers?: ActivityMarker[] } = $props();
 
-  const stroke = 'var(--bpmn-stroke, #22242a)';
+  const stroke = 'var(--bpmn-stroke, #334155)';
 </script>
 
 {#if markers.length > 0}

@@ -34,7 +34,7 @@
   const isDotted = $derived(kind === 'association' || kind === 'data-association');
 
   const strokeDasharray = $derived(isMessage ? '9,5' : isDotted ? '0.5,5' : undefined);
-  const strokeWidth = $derived(isDotted ? 1.6 : isLink ? 5 : 2);
+  const strokeWidth = $derived(isDotted ? 1.6 : isLink ? 5 : 1.7);
 
   // filled arrowhead: sequence flows (incl. default/conditional variants)
   const filledArrow = $derived(
@@ -150,7 +150,7 @@
     <BaseEdge
       {id}
       path={trimmedPath}
-      style={`stroke: ${selected ? 'var(--bpmn-selected, #1a70ef)' : 'var(--bpmn-stroke, #22242a)'}; stroke-width: ${strokeWidth}px; fill: none; stroke-linecap: ${isDotted ? 'round' : 'butt'};${strokeDasharray ? ` stroke-dasharray: ${strokeDasharray};` : ''}`}
+      style={`stroke: ${selected ? 'var(--bpmn-selected, #2563eb)' : 'var(--bpmn-edge-stroke, #64748b)'}; stroke-width: ${strokeWidth}px; fill: none; stroke-linecap: ${isDotted ? 'round' : 'butt'};${strokeDasharray ? ` stroke-dasharray: ${strokeDasharray};` : ''}`}
       interactionWidth={16}
     />
 
@@ -167,21 +167,21 @@
     {#if filledArrow}
       <polygon
         points={arrowheadPoints(secondLast, last, ARROW_LEN, ARROW_WIDTH)}
-        style={`fill: ${selected ? 'var(--bpmn-selected, #1a70ef)' : 'var(--bpmn-stroke, #22242a)'}; stroke: none;`}
+        style={`fill: ${selected ? 'var(--bpmn-selected, #2563eb)' : 'var(--bpmn-edge-stroke, #64748b)'}; stroke: none;`}
       />
     {/if}
 
     {#if isMessage}
       <polygon
         points={arrowheadPoints(secondLast, last, MSG_ARROW_LEN, MSG_ARROW_WIDTH)}
-        style={`fill: var(--bpmn-fill, #ffffff); stroke: ${selected ? 'var(--bpmn-selected, #1a70ef)' : 'var(--bpmn-stroke, #22242a)'}; stroke-width: 1.6px; stroke-linejoin: round;`}
+        style={`fill: var(--bpmn-fill, #ffffff); stroke: ${selected ? 'var(--bpmn-selected, #2563eb)' : 'var(--bpmn-edge-stroke, #64748b)'}; stroke-width: 1.6px; stroke-linejoin: round;`}
       />
       {#if messageDot}
         <circle
           cx={messageDot.x}
           cy={messageDot.y}
           r={MSG_DOT_R}
-          style={`fill: var(--bpmn-fill, #ffffff); stroke: ${selected ? 'var(--bpmn-selected, #1a70ef)' : 'var(--bpmn-stroke, #22242a)'}; stroke-width: 1.6px;`}
+          style={`fill: var(--bpmn-fill, #ffffff); stroke: ${selected ? 'var(--bpmn-selected, #2563eb)' : 'var(--bpmn-edge-stroke, #64748b)'}; stroke-width: 1.6px;`}
         />
       {/if}
     {/if}
@@ -189,13 +189,13 @@
     {#if vArrowEnd}
       <polyline
         points={vArrowPoints(secondLast, last, 10, 11)}
-        style="fill: none; stroke: var(--bpmn-stroke, #22242a); stroke-width: 1.6px; stroke-linecap: round; stroke-linejoin: round;"
+        style="fill: none; stroke: var(--bpmn-edge-stroke, #64748b); stroke-width: 1.6px; stroke-linecap: round; stroke-linejoin: round;"
       />
     {/if}
     {#if vArrowStart}
       <polyline
         points={vArrowPoints(second, first, 10, 11)}
-        style="fill: none; stroke: var(--bpmn-stroke, #22242a); stroke-width: 1.6px; stroke-linecap: round; stroke-linejoin: round;"
+        style="fill: none; stroke: var(--bpmn-edge-stroke, #64748b); stroke-width: 1.6px; stroke-linecap: round; stroke-linejoin: round;"
       />
     {/if}
 
@@ -206,14 +206,14 @@
         x2="6"
         y2="-6"
         transform={`translate(${slash.at.x}, ${slash.at.y}) rotate(${slash.angle})`}
-        style="stroke: var(--bpmn-stroke, #22242a); stroke-width: 2px;"
+        style="stroke: var(--bpmn-edge-stroke, #64748b); stroke-width: 1.7px;"
       />
     {/if}
 
     {#if diamond}
       <polygon
         points={diamond}
-        style="fill: var(--bpmn-fill, #ffffff); stroke: var(--bpmn-stroke, #22242a); stroke-width: 1.6px; stroke-linejoin: round;"
+        style="fill: var(--bpmn-fill, #ffffff); stroke: var(--bpmn-edge-stroke, #64748b); stroke-width: 1.6px; stroke-linejoin: round;"
       />
     {/if}
 
@@ -238,9 +238,10 @@
     stroke-linejoin: round;
   }
   .bpmn-edge-label {
-    fill: var(--bpmn-label-color, #22242a);
-    font-size: 11px;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    fill: var(--bpmn-muted-color, #64748b);
+    font-size: 10.5px;
+    font-weight: 500;
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     paint-order: stroke;
     stroke: var(--bpmn-canvas-bg, #ffffff);
     stroke-width: 3.5px;
@@ -249,6 +250,6 @@
     user-select: none;
   }
   .bpmn-edge.selected .bpmn-edge-label {
-    fill: var(--bpmn-selected, #1a70ef);
+    fill: var(--bpmn-selected, #2563eb);
   }
 </style>

@@ -157,7 +157,7 @@
     flex: 0 0 300px;
     border-left: 1px solid #d8dbe1;
     background: #fafbfc;
-    color: #22242a;
+    color: #334155;
     overflow-y: auto;
     padding: 10px 12px;
     box-sizing: border-box;
@@ -173,7 +173,7 @@
   .sim-selected {
     text-transform: none;
     letter-spacing: 0;
-    color: #22242a;
+    color: #334155;
   }
   .sim-controls {
     display: flex;

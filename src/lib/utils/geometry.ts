@@ -5,7 +5,7 @@ import type { Point } from '../types.js';
  * BPMN DI waypoints are typically orthogonal polylines; the small corner
  * radius matches the bpmn.io rendering style.
  */
-export function waypointsToPath(points: Point[], cornerRadius = 5): string {
+export function waypointsToPath(points: Point[], cornerRadius = 8): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
 

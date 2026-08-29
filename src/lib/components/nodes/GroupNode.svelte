@@ -17,7 +17,7 @@
       height={d.height - 2}
       rx="10"
       fill="none"
-      stroke="var(--bpmn-stroke, #22242a)"
+      stroke="var(--bpmn-stroke, #334155)"
       stroke-width="1.4"
       stroke-dasharray="8,3,1,3"
     />
@@ -38,8 +38,8 @@
     top: 4px;
     left: 50%;
     transform: translateX(-50%);
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11px;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
   }
 </style>

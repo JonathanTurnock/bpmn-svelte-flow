@@ -31,7 +31,7 @@
       : `max-width: ${Math.max(width - 12, 20)}px;`
   );
   const borderColor = $derived(
-    selected ? 'var(--bpmn-selected, #1a70ef)' : 'var(--bpmn-stroke, #22242a)'
+    selected ? 'var(--bpmn-selected, #2563eb)' : 'var(--bpmn-lane-border, #cbd5e1)'
   );
 </script>
 
@@ -60,7 +60,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: var(--bpmn-pool-band-fill, transparent);
+    background: var(--bpmn-pool-band-fill, #f1f5f9);
   }
   .bpmn-title-band.left {
     top: 0;
@@ -77,10 +77,12 @@
        shrink it, or the text ellipses at the band width instead of the
        container's extent. */
     flex: 0 0 auto;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
-    font-size: 11.5px;
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     line-height: 1.2;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-muted-color, #64748b);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -90,6 +92,7 @@
   .bpmn-title.bold {
     font-size: 12px;
     font-weight: 600;
+    color: var(--bpmn-label-color, #334155);
   }
   .bpmn-title.rotated {
     transform: rotate(-90deg);

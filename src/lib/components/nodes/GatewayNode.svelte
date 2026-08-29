@@ -8,7 +8,7 @@
   const d = $derived(data as unknown as BpmnNodeData);
   const kind = $derived(d.gatewayKind ?? 'exclusive');
 
-  const stroke = 'var(--bpmn-stroke, #22242a)';
+  const stroke = 'var(--bpmn-stroke, #334155)';
 </script>
 
 <div class="bpmn-gateway" class:selected style={`width: ${d.width}px; height: ${d.height}px;`}>
@@ -82,6 +82,6 @@
     position: relative;
   }
   .bpmn-gateway.selected svg path:first-child {
-    stroke: var(--bpmn-selected, #1a70ef);
+    stroke: var(--bpmn-selected, #2563eb);
   }
 </style>

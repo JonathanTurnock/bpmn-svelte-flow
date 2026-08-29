@@ -31,10 +31,10 @@
 <style>
   .bpmn-external-label {
     position: absolute;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11px;
     line-height: 1.2;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
     pointer-events: none;
     white-space: pre-line;
     text-align: center;

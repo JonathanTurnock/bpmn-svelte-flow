@@ -263,7 +263,7 @@
     position: relative;
     display: flex;
     background: var(--bpmn-canvas-bg, #ffffff);
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
   }
   .bpmn-simulator :global(.svelte-flow) {
     flex: 1;

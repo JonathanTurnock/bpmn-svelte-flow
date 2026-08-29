@@ -54,7 +54,7 @@
       cy="18"
       r={outerRadius}
       fill="var(--bpmn-fill, #ffffff)"
-      stroke="var(--bpmn-stroke, #22242a)"
+      stroke="var(--bpmn-stroke, #334155)"
       stroke-width={outerWidth}
       stroke-dasharray={dash}
     />
@@ -65,7 +65,7 @@
         cy="18"
         r="14.25"
         fill="none"
-        stroke="var(--bpmn-stroke, #22242a)"
+        stroke="var(--bpmn-stroke, #334155)"
         stroke-width="1.5"
         stroke-dasharray={dash}
       />
@@ -81,6 +81,6 @@
     position: relative;
   }
   .bpmn-event.selected .bpmn-event-ring {
-    stroke: var(--bpmn-selected, #1a70ef);
+    stroke: var(--bpmn-selected, #2563eb);
   }
 </style>

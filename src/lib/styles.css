@@ -4,14 +4,19 @@
  * import this file to override the theme in one place.
  */
 :root {
-  --bpmn-stroke: #22242a;
+  --bpmn-stroke: #334155;
   --bpmn-fill: #ffffff;
-  --bpmn-label-color: #22242a;
+  --bpmn-label-color: #334155;
+  --bpmn-muted-color: #64748b;
   --bpmn-canvas-bg: #ffffff;
   --bpmn-container-fill: #ffffff;
+  --bpmn-node-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 2px 8px rgb(15 23 42 / 0.05);
+  --bpmn-edge-stroke: #64748b;
   --bpmn-pool-fill: #ffffff;
-  --bpmn-pool-band-fill: transparent;
-  --bpmn-choreo-band-fill: #d5d9e0;
-  --bpmn-selected: #1a70ef;
-  --bpmn-font-family: Arial, sans-serif;
+  --bpmn-pool-border: #94a3b8;
+  --bpmn-lane-border: #cbd5e1;
+  --bpmn-pool-band-fill: #f1f5f9;
+  --bpmn-choreo-band-fill: #e2e8f0;
+  --bpmn-selected: #2563eb;
+  --bpmn-font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }

@@ -33,8 +33,8 @@
     position: relative;
     box-sizing: border-box;
     background: var(--bpmn-container-fill, #ffffff);
-    border: 1.6px solid var(--bpmn-stroke, #22242a);
-    border-radius: 10px;
+    border: 1.4px solid var(--bpmn-stroke, #334155);
+    border-radius: 12px;
   }
   .bpmn-subprocess.call {
     border-width: 3.5px;
@@ -44,14 +44,14 @@
     border-style: dotted;
   }
   .bpmn-subprocess.selected {
-    border-color: var(--bpmn-selected, #1a70ef);
+    border-color: var(--bpmn-selected, #2563eb);
   }
   .bpmn-subprocess-label {
     position: absolute;
     top: 4px;
     left: 8px;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11.5px;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
   }
 </style>

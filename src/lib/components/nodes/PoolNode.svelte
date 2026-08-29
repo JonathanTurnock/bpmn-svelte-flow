@@ -38,7 +38,7 @@
           y1="1.5"
           x2={x}
           y2="14.5"
-          stroke="var(--bpmn-stroke, #22242a)"
+          stroke="var(--bpmn-stroke, #334155)"
           stroke-width="2"
         />
       {/each}
@@ -52,10 +52,13 @@
     position: relative;
     box-sizing: border-box;
     background: var(--bpmn-pool-fill, #ffffff);
-    border: 1.6px solid var(--bpmn-stroke, #22242a);
+    border: 1.4px solid var(--bpmn-pool-border, #94a3b8);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--bpmn-node-shadow, 0 1px 2px rgb(15 23 42 / 0.06), 0 2px 8px rgb(15 23 42 / 0.05));
   }
   .bpmn-pool.selected {
-    border-color: var(--bpmn-selected, #1a70ef);
+    border-color: var(--bpmn-selected, #2563eb);
   }
   .bpmn-pool-blackbox-label {
     position: absolute;
@@ -65,11 +68,11 @@
     justify-content: center;
     padding: 4px 10px;
     box-sizing: border-box;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 12px;
     font-weight: 600;
     text-align: center;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
     pointer-events: none;
   }
   .bpmn-pool-multiplicity {

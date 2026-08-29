@@ -50,8 +50,9 @@
     position: relative;
     box-sizing: border-box;
     background: var(--bpmn-fill, #ffffff);
-    border: 1.6px solid var(--bpmn-stroke, #22242a);
-    border-radius: 10px;
+    border: 1.4px solid var(--bpmn-stroke, #334155);
+    border-radius: 12px;
+    box-shadow: var(--bpmn-node-shadow, 0 1px 2px rgb(15 23 42 / 0.06), 0 2px 8px rgb(15 23 42 / 0.05));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -64,7 +65,7 @@
     border-style: dotted;
   }
   .bpmn-task.selected {
-    border-color: var(--bpmn-selected, #1a70ef);
+    border-color: var(--bpmn-selected, #2563eb);
   }
   /* The type icon (top-left) and the marker row (bottom-centre) sit
      absolutely; reserve their bands so the label never runs into either. */
@@ -82,10 +83,11 @@
     padding-bottom: 16px;
   }
   .bpmn-task-label {
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11.5px;
-    line-height: 1.25;
-    color: var(--bpmn-label-color, #22242a);
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--bpmn-label-color, #334155);
     text-align: center;
     padding: 4px 6px;
     overflow-wrap: break-word;

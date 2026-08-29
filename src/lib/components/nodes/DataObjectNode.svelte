@@ -7,7 +7,7 @@
   // Data object / data input / data output: page with a folded corner.
   let { data, selected }: NodeProps = $props();
   const d = $derived(data as unknown as BpmnNodeData);
-  const stroke = 'var(--bpmn-stroke, #22242a)';
+  const stroke = 'var(--bpmn-stroke, #334155)';
 </script>
 
 <div class="bpmn-data-object" class:selected style={`width: ${d.width}px; height: ${d.height}px;`}>
@@ -42,6 +42,6 @@
     position: relative;
   }
   .bpmn-data-object.selected svg path:first-child {
-    stroke: var(--bpmn-selected, #1a70ef);
+    stroke: var(--bpmn-selected, #2563eb);
   }
 </style>

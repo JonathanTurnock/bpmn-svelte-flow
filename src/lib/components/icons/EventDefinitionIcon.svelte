@@ -15,7 +15,7 @@
     parallelMultiple = false
   }: { definition?: string; filled?: boolean; parallelMultiple?: boolean } = $props();
 
-  const stroke = 'var(--bpmn-stroke, #22242a)';
+  const stroke = 'var(--bpmn-stroke, #334155)';
   /** Solid body colour for throw variants. */
   const body = $derived(filled ? stroke : 'none');
   /** Colour that has to stay readable on top of a filled body. */

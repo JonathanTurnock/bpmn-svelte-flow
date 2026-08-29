@@ -131,7 +131,7 @@
   }
   .bpmn-diagram-error {
     padding: 16px;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     color: #b3261e;
   }
   .bpmn-diagram-error pre {

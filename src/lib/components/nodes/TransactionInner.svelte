@@ -9,7 +9,7 @@
   .bpmn-transaction-inner {
     position: absolute;
     inset: 2.5px;
-    border: 1.3px solid var(--bpmn-stroke, #22242a);
+    border: 1.3px solid var(--bpmn-stroke, #334155);
     border-radius: 7px;
     pointer-events: none;
   }

@@ -2,7 +2,7 @@
   // Small glyph in the top-left corner of an activity marking its task type.
   let { taskType }: { taskType?: string } = $props();
 
-  const stroke = 'var(--bpmn-stroke, #22242a)';
+  const stroke = 'var(--bpmn-stroke, #334155)';
 
   const kind = $derived.by(() => {
     switch (taskType) {

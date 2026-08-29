@@ -38,7 +38,7 @@
     <polygon
       points={hexPoints}
       fill="var(--bpmn-fill, #ffffff)"
-      stroke={selected ? 'var(--bpmn-selected, #1a70ef)' : 'var(--bpmn-stroke, #22242a)'}
+      stroke={selected ? 'var(--bpmn-selected, #2563eb)' : 'var(--bpmn-stroke, #334155)'}
       stroke-width={strokeWidth}
       stroke-linejoin="round"
     />
@@ -71,11 +71,11 @@
     box-sizing: border-box;
     padding-left: 14%;
     padding-right: 14%;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11.5px;
     line-height: 1.2;
     text-align: center;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
     pointer-events: none;
   }
 </style>

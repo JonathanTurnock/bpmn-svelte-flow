@@ -302,7 +302,7 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="GW_Method_di" bpmnElement="GW_Method" isMarkerVisible="true">
         <dc:Bounds x="290" y="515" width="50" height="50"/>
-        <bpmndi:BPMNLabel><dc:Bounds x="267" y="461" width="96" height="24"/></bpmndi:BPMNLabel>
+        <bpmndi:BPMNLabel><dc:Bounds x="250" y="464" width="130" height="18"/></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_Kafka_di" bpmnElement="Task_Kafka">
         <dc:Bounds x="430" y="450" width="140" height="80"/>
@@ -329,7 +329,7 @@
       <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7"><di:waypoint x="1030" y="300"/><di:waypoint x="1090" y="300"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8"><di:waypoint x="1160" y="340"/><di:waypoint x="1160" y="412"/><di:waypoint x="505" y="412"/><di:waypoint x="505" y="430"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="FS1_di" bpmnElement="FS1"><di:waypoint x="236" y="540"/><di:waypoint x="290" y="540"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F_K_di" bpmnElement="F_K"><di:waypoint x="315" y="515"/><di:waypoint x="315" y="490"/><di:waypoint x="430" y="490"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_K_di" bpmnElement="F_K"><di:waypoint x="315" y="515"/><di:waypoint x="315" y="490"/><di:waypoint x="430" y="490"/><bpmndi:BPMNLabel><dc:Bounds x="390" y="468" width="44" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F_W_di" bpmnElement="F_W"><di:waypoint x="315" y="565"/><di:waypoint x="315" y="595"/><di:waypoint x="430" y="595"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F_K2_di" bpmnElement="F_K2"><di:waypoint x="570" y="490"/><di:waypoint x="630" y="490"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F_W2_di" bpmnElement="F_W2"><di:waypoint x="570" y="595"/><di:waypoint x="630" y="595"/></bpmndi:BPMNEdge>

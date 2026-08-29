@@ -38,7 +38,7 @@
       {#if top.multiplicity}
         <svg class="bpmn-choreo-multiplicity" viewBox="0 0 14 12" width="12" height="10" aria-hidden="true">
           {#each [2, 7, 12] as x}
-            <line x1={x} y1="0.8" x2={x} y2="11.2" stroke="var(--bpmn-stroke, #22242a)" stroke-width="1.8" />
+            <line x1={x} y1="0.8" x2={x} y2="11.2" stroke="var(--bpmn-stroke, #334155)" stroke-width="1.8" />
           {/each}
         </svg>
       {/if}
@@ -60,7 +60,7 @@
       {#if p.multiplicity}
         <svg class="bpmn-choreo-multiplicity" viewBox="0 0 14 12" width="12" height="10" aria-hidden="true">
           {#each [2, 7, 12] as x}
-            <line x1={x} y1="0.8" x2={x} y2="11.2" stroke="var(--bpmn-stroke, #22242a)" stroke-width="1.8" />
+            <line x1={x} y1="0.8" x2={x} y2="11.2" stroke="var(--bpmn-stroke, #334155)" stroke-width="1.8" />
           {/each}
         </svg>
       {/if}
@@ -77,7 +77,7 @@
     display: flex;
     flex-direction: column;
     background: var(--bpmn-fill, #ffffff);
-    border: 1.6px solid var(--bpmn-stroke, #22242a);
+    border: 1.6px solid var(--bpmn-stroke, #334155);
     border-radius: 10px;
     overflow: hidden;
   }
@@ -85,7 +85,7 @@
     border-width: 4px;
   }
   .bpmn-choreography.selected {
-    border-color: var(--bpmn-selected, #1a70ef);
+    border-color: var(--bpmn-selected, #2563eb);
   }
   .bpmn-choreo-band {
     position: relative;
@@ -101,16 +101,16 @@
     background: var(--bpmn-fill, #ffffff);
   }
   .bpmn-choreo-band.top {
-    border-bottom: 1.4px solid var(--bpmn-stroke, #22242a);
+    border-bottom: 1.4px solid var(--bpmn-stroke, #334155);
   }
   .bpmn-choreo-band.bottom {
-    border-top: 1.4px solid var(--bpmn-stroke, #22242a);
+    border-top: 1.4px solid var(--bpmn-stroke, #334155);
   }
   .bpmn-choreo-band-name {
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11px;
     line-height: 1.2;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -127,10 +127,10 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-family: var(--bpmn-font-family, Arial, sans-serif);
+    font-family: var(--bpmn-font-family, 'Inter', 'Segoe UI', system-ui, sans-serif);
     font-size: 11.5px;
     line-height: 1.25;
-    color: var(--bpmn-label-color, #22242a);
+    color: var(--bpmn-label-color, #334155);
     padding: 4px 8px 16px;
     box-sizing: border-box;
     overflow: hidden;

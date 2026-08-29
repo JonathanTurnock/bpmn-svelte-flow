@@ -27,10 +27,10 @@
   .bpmn-lane {
     position: relative;
     box-sizing: border-box;
-    border: 1.2px solid var(--bpmn-stroke, #22242a);
+    border: 1px solid var(--bpmn-lane-border, #cbd5e1);
     background: transparent;
   }
   .bpmn-lane.selected {
-    border-color: var(--bpmn-selected, #1a70ef);
+    border-color: var(--bpmn-selected, #2563eb);
   }
 </style>
