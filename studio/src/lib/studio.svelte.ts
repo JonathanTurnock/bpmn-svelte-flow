@@ -41,15 +41,15 @@ const EVENT_DEFINITIONS: Record<string, string> = {
   compensation: 'bpmn:CompensateEventDefinition'
 };
 
-/** Default DI sizes per element family. */
+/** Default DI sizes per element family — tasks run wide so titles breathe. */
 function sizeOf(type: string): { width: number; height: number } {
   if (/Event$/.test(type)) return { width: 36, height: 36 };
   if (/Gateway$/.test(type)) return { width: 50, height: 50 };
-  if (type === 'bpmn:SubProcess' || type === 'bpmn:Transaction') return { width: 350, height: 200 };
-  if (type === 'bpmn:TextAnnotation') return { width: 120, height: 40 };
+  if (type === 'bpmn:SubProcess' || type === 'bpmn:Transaction') return { width: 400, height: 220 };
+  if (type === 'bpmn:TextAnnotation') return { width: 140, height: 40 };
   if (type === 'bpmn:DataObjectReference') return { width: 36, height: 50 };
   if (type === 'bpmn:DataStoreReference') return { width: 50, height: 50 };
-  return { width: 100, height: 80 };
+  return { width: 140, height: 80 };
 }
 
 function localName(type: string): string {
@@ -811,7 +811,7 @@ class StudioStore {
       const d = depth.get(bo.id) ?? 0;
       const row = rows.get(d) ?? 0;
       rows.set(d, row + 1);
-      const targetX = baseX + d * 180;
+      const targetX = baseX + d * 220;
       const targetY = hasLanes ? shape.bounds.y : baseY + row * 140;
       if (shape.bounds.x !== targetX || shape.bounds.y !== targetY) {
         this.moveShape(bo.id, targetX, targetY);
