@@ -294,7 +294,7 @@
         <dc:Bounds x="1090" y="260" width="140" height="80"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Sub_Deliver_di" bpmnElement="Sub_Deliver" isExpanded="true">
-        <dc:Bounds x="160" y="430" width="690" height="220"/>
+        <dc:Bounds x="160" y="430" width="690" height="235"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Sub_Start_di" bpmnElement="Sub_Start">
         <dc:Bounds x="200" y="522" width="36" height="36"/>
