@@ -2,8 +2,9 @@
   import {
     Download,
     FilePlus,
-    FolderOpen,
-    Plus,
+    PanelBottom,
+    PanelLeft,
+    PanelRight,
     Redo2,
     Save,
     Undo2,
@@ -14,46 +15,15 @@
   import { download } from '../utils.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
-  import * as Select from '$lib/components/ui/select/index.js';
   import { Separator } from '$lib/components/ui/separator/index.js';
 
-  let addType = $state('task');
-  let openSelect = $state('');
+  let {
+    leftOpen = $bindable(true),
+    rightOpen = $bindable(true),
+    bottomOpen = $bindable(true)
+  }: { leftOpen?: boolean; rightOpen?: boolean; bottomOpen?: boolean } = $props();
+
   let fileInput: HTMLInputElement;
-
-  const documents = $derived.by(() => {
-    void studio.workspaceVersion;
-    return studio.listDocuments();
-  });
-
-  const ADD_TYPES = [
-    ['task', 'Task'],
-    ['userTask', 'User task'],
-    ['serviceTask', 'Service task'],
-    ['scriptTask', 'Script task'],
-    ['sendTask', 'Send task'],
-    ['receiveTask', 'Receive task'],
-    ['businessRuleTask', 'Business rule task'],
-    ['callActivity', 'Call activity'],
-    ['subProcess', 'Sub-process'],
-    ['exclusiveGateway', 'Exclusive gateway'],
-    ['parallelGateway', 'Parallel gateway'],
-    ['inclusiveGateway', 'Inclusive gateway'],
-    ['eventBasedGateway', 'Event gateway'],
-    ['startEvent', 'Start event'],
-    ['endEvent', 'End event'],
-    ['intermediateCatchEvent', 'Catch event'],
-    ['intermediateThrowEvent', 'Throw event'],
-    ['textAnnotation', 'Annotation']
-  ] as const;
-
-  async function addElement() {
-    const after = studio.selectedId ?? undefined;
-    const { id } = await studio.mutate(() =>
-      studio.addElement({ type: addType, afterElementId: after })
-    );
-    studio.selectedId = id;
-  }
 
   async function importFile(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
@@ -74,23 +44,6 @@
   <Button size="sm" variant="outline" onclick={() => studio.saveDocument()} title="Save to browser workspace">
     <Save /> Save
   </Button>
-  <Select.Root
-    type="single"
-    bind:value={openSelect}
-    onValueChange={async (name) => {
-      if (name) await studio.openDocument(name);
-      openSelect = '';
-    }}
-  >
-    <Select.Trigger size="sm" aria-label="open document">Open…</Select.Trigger>
-    <Select.Content>
-      {#each documents as d (d.name)}
-        <Select.Item value={d.name} label={d.name} />
-      {:else}
-        <Select.Item value="" label="no saved documents" disabled />
-      {/each}
-    </Select.Content>
-  </Select.Root>
   <Button size="sm" variant="ghost" onclick={() => studio.newDocument()} title="New document">
     <FilePlus /> New
   </Button>
@@ -106,38 +59,42 @@
   >
     <Download /> Export
   </Button>
-  <Button
-    size="sm"
-    variant="ghost"
-    onclick={async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}samples/messaging-flow.bpmn`);
-      await studio.importXml(await res.text(), 'messaging-flow');
-    }}
-    title="Load the messaging platform sample"
-  >
-    <FolderOpen /> Sample
-  </Button>
 
-  <div class="ml-auto flex items-center gap-2">
-    <Select.Root type="single" bind:value={addType}>
-      <Select.Trigger size="sm" class="w-44" aria-label="element type">
-        {ADD_TYPES.find(([value]) => value === addType)?.[1] ?? 'Element type'}
-      </Select.Trigger>
-      <Select.Content>
-        {#each ADD_TYPES as [value, label] (value)}
-          <Select.Item {value} {label} />
-        {/each}
-      </Select.Content>
-    </Select.Root>
-    <Button size="sm" variant="secondary" onclick={addElement} title="Add after the selected element" data-testid="add-element">
-      <Plus /> Add
-    </Button>
-    <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-4" />
+  <div class="ml-auto flex items-center gap-1">
     <Button size="icon-sm" variant="ghost" onclick={() => studio.undo()} disabled={!studio.canUndo} title="Undo">
       <Undo2 />
     </Button>
     <Button size="icon-sm" variant="ghost" onclick={() => studio.redo()} disabled={!studio.canRedo} title="Redo">
       <Redo2 />
+    </Button>
+    <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-4" />
+    <Button
+      size="icon-sm"
+      variant={leftOpen ? 'secondary' : 'ghost'}
+      onclick={() => (leftOpen = !leftOpen)}
+      title="Toggle workspace panel"
+      aria-label="Toggle workspace panel"
+    >
+      <PanelLeft />
+    </Button>
+    <Button
+      size="icon-sm"
+      variant={bottomOpen ? 'secondary' : 'ghost'}
+      onclick={() => (bottomOpen = !bottomOpen)}
+      title="Toggle run console"
+      aria-label="Toggle run console"
+      data-testid="toggle-bottom"
+    >
+      <PanelBottom />
+    </Button>
+    <Button
+      size="icon-sm"
+      variant={rightOpen ? 'secondary' : 'ghost'}
+      onclick={() => (rightOpen = !rightOpen)}
+      title="Toggle inspector panel"
+      aria-label="Toggle inspector panel"
+    >
+      <PanelRight />
     </Button>
   </div>
 </header>

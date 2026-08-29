@@ -2,6 +2,7 @@
   import { studio } from './lib/studio.svelte.js';
   import { registerWebMcp } from './lib/webmcp.js';
   import Toolbar from './lib/components/Toolbar.svelte';
+  import LeftPanel from './lib/components/LeftPanel.svelte';
   import Canvas from './lib/components/Canvas.svelte';
   import InspectorPanel from './lib/components/InspectorPanel.svelte';
   import RunPanel from './lib/components/RunPanel.svelte';
@@ -13,7 +14,10 @@
 
   let ready = $state(false);
   let mcp = $state<{ api: string; tools: number } | null>(null);
-  let tab = $state('inspector');
+  let tab = $state('run');
+  let leftOpen = $state(true);
+  let rightOpen = $state(true);
+  let bottomOpen = $state(true);
 
   $effect(() => {
     studio.boot().then(() => {
@@ -22,15 +26,8 @@
     });
   });
 
-  // A canvas click pulls the inspector forward; panel-driven selection
-  // (trace steps, issues) highlights on the canvas without switching tabs.
-  $effect(() => {
-    void studio.inspectRequest;
-    if (studio.inspectRequest && studio.selectedId) tab = 'inspector';
-  });
-
+  // The console tabs: execution and diagnostics, where width helps.
   const TABS = [
-    ['inspector', 'Inspector'],
     ['run', 'Run'],
     ['tests', 'Tests'],
     ['issues', 'Issues'],
@@ -41,9 +38,14 @@
 </script>
 
 <div class="flex h-full flex-col">
-  <Toolbar />
+  <Toolbar bind:leftOpen bind:rightOpen bind:bottomOpen />
   <div class="flex min-h-0 flex-1">
-    <main class="min-w-0 flex-1 border-r">
+    {#if leftOpen}
+      <aside class="w-60 shrink-0 border-r">
+        <LeftPanel />
+      </aside>
+    {/if}
+    <main class="min-w-0 flex-1">
       {#if ready}
         <Canvas />
       {:else}
@@ -52,31 +54,44 @@
         </div>
       {/if}
     </main>
-    <aside class="flex w-[400px] shrink-0 flex-col">
-      <Tabs.Root bind:value={tab} class="flex min-h-0 flex-1 flex-col gap-0">
-        <div class="border-b px-3 pt-2 pb-1.5">
-          <Tabs.List variant="line" class="w-full">
-            {#each TABS as [id, label] (id)}
-              <Tabs.Trigger value={id} data-testid={`tab-${id}`}>
-                {label}
-                {#if id === 'issues' && issueCount}
-                  <Badge variant="destructive">{issueCount}</Badge>
-                {/if}
-              </Tabs.Trigger>
-            {/each}
-          </Tabs.List>
-        </div>
-        <Tabs.Content value="inspector" class="min-h-0 flex-1"><InspectorPanel /></Tabs.Content>
-        <Tabs.Content value="run" class="min-h-0 flex-1"><RunPanel /></Tabs.Content>
-        <Tabs.Content value="tests" class="min-h-0 flex-1"><TestsPanel /></Tabs.Content>
-        <Tabs.Content value="issues" class="min-h-0 flex-1"><IssuesPanel /></Tabs.Content>
-        <Tabs.Content value="xml" class="min-h-0 flex-1"><XmlPanel /></Tabs.Content>
-      </Tabs.Root>
-      <footer class="border-t px-4 py-2 text-xs text-muted-foreground">
-        {#if mcp}
-          WebMCP · {mcp.tools} tools via <span class="font-mono">{mcp.api}</span>
-        {/if}
-      </footer>
-    </aside>
+    {#if rightOpen}
+      <aside class="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l">
+        <InspectorPanel />
+      </aside>
+    {/if}
   </div>
+
+  <section class="shrink-0 border-t">
+    <Tabs.Root bind:value={tab} class="gap-0">
+      <div class="flex items-center border-b px-3 pt-1.5 pb-1">
+        <Tabs.List variant="line">
+          {#each TABS as [id, label] (id)}
+            <Tabs.Trigger
+              value={id}
+              data-testid={`tab-${id}`}
+              onclick={() => (bottomOpen = true)}
+            >
+              {label}
+              {#if id === 'issues' && issueCount}
+                <Badge variant="destructive">{issueCount}</Badge>
+              {/if}
+            </Tabs.Trigger>
+          {/each}
+        </Tabs.List>
+        <span class="ml-auto text-xs text-muted-foreground">
+          {#if mcp}
+            WebMCP · {mcp.tools} tools via <span class="font-mono">{mcp.api}</span>
+          {/if}
+        </span>
+      </div>
+      {#if bottomOpen}
+        <div class="h-[320px]">
+          <Tabs.Content value="run" class="h-full"><RunPanel /></Tabs.Content>
+          <Tabs.Content value="tests" class="h-full overflow-y-auto"><TestsPanel /></Tabs.Content>
+          <Tabs.Content value="issues" class="h-full overflow-y-auto"><IssuesPanel /></Tabs.Content>
+          <Tabs.Content value="xml" class="h-full"><XmlPanel /></Tabs.Content>
+        </div>
+      {/if}
+    </Tabs.Root>
+  </section>
 </div>

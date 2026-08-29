@@ -72,8 +72,8 @@
     nodesConnectable={false}
     zoomOnDoubleClick={false}
     proOptions={{ hideAttribution: true }}
-    onnodeclick={({ node }) => ((studio.selectedId = node.id), (studio.inspectRequest += 1))}
-    onedgeclick={({ edge }) => ((studio.selectedId = edge.id), (studio.inspectRequest += 1))}
+    onnodeclick={({ node }) => (studio.selectedId = node.id)}
+    onedgeclick={({ edge }) => (studio.selectedId = edge.id)}
     onpaneclick={() => (studio.selectedId = null)}
     onnodedragstop={ondragstop}
   >
