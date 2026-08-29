@@ -10,7 +10,7 @@
 import { BpmnModdle } from 'bpmn-moddle';
 import { bpmnToFlow } from '$bsf/parser/transform.js';
 import type { BpmnFlowGraph } from '$bsf/types.js';
-import bsfSchema from './engine/bsf-moddle.js';
+import bsfSchema from '@bsf/engine/moddle';
 import {
   BsfEngine,
   collectScenarios,
@@ -24,7 +24,7 @@ import {
   type Issue,
   type Scenario,
   type TestResult
-} from './engine/engine.mjs';
+} from '@bsf/engine';
 import { makeId } from './utils.js';
 
 const WORKSPACE_KEY = 'bsf.workspace.v1';

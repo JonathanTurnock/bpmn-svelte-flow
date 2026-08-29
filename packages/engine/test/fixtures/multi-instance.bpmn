@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_Multi" targetNamespace="http://bpmn-svelte-flow/conformance"
+    expressionLanguage="text/javascript">
+  <bpmn:process id="P_Multi" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="broadcast" payload='{"items":[{"id":"a"},{"id":"b"},{"id":"c"}]}'/>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:scriptTask id="Task_Prepare" name="Stamp batch" scriptFormat="text/javascript">
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:script>payload.batch = 'batch_' + payload.items.length;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:subProcess id="Sub_Notify" name="Notify each item">
+      <bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics id="MI_Notify" isSequential="true">
+        <bpmn:extensionElements>
+          <bsf:collection expression="items" elementVariable="item"/>
+        </bpmn:extensionElements>
+        <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">payload.items.length</bpmn:loopCardinality>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Sub_Start"><bpmn:outgoing>fs1</bpmn:outgoing></bpmn:startEvent>
+      <bpmn:serviceTask id="Task_Notify" name="Notify item">
+        <bpmn:extensionElements>
+          <bsf:mock>void payload.item.id; /* delivery happens per item; per-instance writes stay in the iteration scope */</bsf:mock>
+        </bpmn:extensionElements>
+        <bpmn:incoming>fs1</bpmn:incoming><bpmn:outgoing>fs2</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="Sub_End"><bpmn:incoming>fs2</bpmn:incoming></bpmn:endEvent>
+      <bpmn:sequenceFlow id="fs1" sourceRef="Sub_Start" targetRef="Task_Notify"/>
+      <bpmn:sequenceFlow id="fs2" sourceRef="Task_Notify" targetRef="Sub_End"/>
+    </bpmn:subProcess>
+    <bpmn:endEvent id="End_Done"><bpmn:incoming>f3</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="Task_Prepare"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Prepare" targetRef="Sub_Notify"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="Sub_Notify" targetRef="End_Done"/>
+  </bpmn:process>
+</bpmn:definitions>

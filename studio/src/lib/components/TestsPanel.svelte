@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FlaskConical, Plus } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
-  import type { TestResult } from '../engine/engine.mjs';
+  import type { TestResult } from '@bsf/engine';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Input } from '$lib/components/ui/input/index.js';

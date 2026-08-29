@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_Message" targetNamespace="http://bpmn-svelte-flow/conformance"
+    expressionLanguage="text/javascript">
+  <bpmn:message id="Msg_Confirm" name="payment-confirmation">
+    <bpmn:extensionElements>
+      <bsf:sample correlationKey="orderId">{"confirmation":{"status":"accepted","reference":"pay_9f2"}}</bsf:sample>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:process id="P_Message" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="order" payload='{"sku":"SKU-7"}'/>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="Task_Place" name="Place order">
+      <bpmn:extensionElements>
+        <bsf:mock>payload.orderId = 'ord_' + payload.sku.toLowerCase();</bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Catch_Confirm" name="Payment confirmed">
+      <bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MsgDef_Confirm" messageRef="Msg_Confirm"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:scriptTask id="Task_Apply" name="Apply confirmation" scriptFormat="text/javascript">
+      <bpmn:incoming>f3</bpmn:incoming><bpmn:outgoing>f4</bpmn:outgoing>
+      <bpmn:script>payload.state = payload.confirmation.status + ':' + payload.orderId;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="End_Done"><bpmn:incoming>f4</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="Task_Place"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Place" targetRef="Catch_Confirm"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="Catch_Confirm" targetRef="Task_Apply"/>
+    <bpmn:sequenceFlow id="f4" sourceRef="Task_Apply" targetRef="End_Done"/>
+  </bpmn:process>
+</bpmn:definitions>

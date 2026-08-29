@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_ErrBoundary" targetNamespace="http://bpmn-svelte-flow/conformance"
+    expressionLanguage="text/javascript">
+  <bpmn:process id="P_ErrBoundary" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="ok" payload='{"card":"4111","declined":false}'/>
+      <bsf:scenario name="declined" payload='{"card":"4111","declined":true}'/>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="Task_Charge" name="Charge card">
+      <bpmn:extensionElements>
+        <bsf:mock>
+          if (payload.declined) { throw new Error('CARD_DECLINED'); }
+          payload.charge = { status: 'captured', last4: payload.card.slice(-4) };
+        </bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Bnd_Declined" attachedToRef="Task_Charge">
+      <bpmn:outgoing>fe</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrDef_Declined"/>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="End_Charged"><bpmn:incoming>f2</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="End_Failed"><bpmn:incoming>fe</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="Task_Charge"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Charge" targetRef="End_Charged"/>
+    <bpmn:sequenceFlow id="fe" sourceRef="Bnd_Declined" targetRef="End_Failed"/>
+  </bpmn:process>
+</bpmn:definitions>

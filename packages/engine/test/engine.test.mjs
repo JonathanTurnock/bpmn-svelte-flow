@@ -1,9 +1,8 @@
-// Tests for the studio's browser BPMN engine (studio/engine.mjs), run in
-// node over a bpmn-moddle parse — the same moddle object shapes bpmn-js
-// hands the engine in the browser.
+// Tests for the BSF BPMN engine, run over a bpmn-moddle parse — the same
+// moddle object shapes the studio hands the engine in the browser.
 import { readFileSync } from 'node:fs';
 import { BpmnModdle } from 'bpmn-moddle';
-import bsfSchema from '../studio/src/lib/engine/bsf-moddle.js';
+import bsfSchema from '../src/bsf-moddle.js';
 import {
   BsfEngine,
   collectScenarios,
@@ -11,7 +10,7 @@ import {
   runTests,
   validate,
   processesOf
-} from '../studio/src/lib/engine/engine.mjs';
+} from '../src/engine.mjs';
 
 let pass = 0;
 let fail = 0;
@@ -35,7 +34,7 @@ assert.equal = (a, e, msg) => {
 
 const moddle = new BpmnModdle({ bsf: bsfSchema });
 const xml = readFileSync(
-  new URL('../studio/public/samples/messaging-flow.bpmn', import.meta.url),
+  new URL('./fixtures/messaging-flow.bpmn', import.meta.url),
   'utf8'
 );
 const { rootElement: definitions, warnings } = await moddle.fromXML(xml);

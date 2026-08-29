@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_Parallel" targetNamespace="http://bpmn-svelte-flow/conformance"
+    expressionLanguage="text/javascript">
+  <bpmn:process id="P_Parallel" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="quote" payload='{"base":100}'/>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:parallelGateway id="Fork">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>fa</bpmn:outgoing><bpmn:outgoing>fb</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:scriptTask id="Task_Tax" name="Compute tax" scriptFormat="text/javascript">
+      <bpmn:incoming>fa</bpmn:incoming><bpmn:outgoing>fa2</bpmn:outgoing>
+      <bpmn:script>payload.tax = payload.base * 0.2;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="Task_Shipping" name="Compute shipping" scriptFormat="text/javascript">
+      <bpmn:incoming>fb</bpmn:incoming><bpmn:outgoing>fb2</bpmn:outgoing>
+      <bpmn:script>payload.shipping = payload.base > 50 ? 0 : 7.5;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:parallelGateway id="Join">
+      <bpmn:incoming>fa2</bpmn:incoming><bpmn:incoming>fb2</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="Task_Total" name="Total the quote">
+      <bpmn:extensionElements>
+        <bsf:mock>payload.total = payload.base + payload.tax + payload.shipping;</bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Done"><bpmn:incoming>f3</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="Fork"/>
+    <bpmn:sequenceFlow id="fa" sourceRef="Fork" targetRef="Task_Tax"/>
+    <bpmn:sequenceFlow id="fb" sourceRef="Fork" targetRef="Task_Shipping"/>
+    <bpmn:sequenceFlow id="fa2" sourceRef="Task_Tax" targetRef="Join"/>
+    <bpmn:sequenceFlow id="fb2" sourceRef="Task_Shipping" targetRef="Join"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Join" targetRef="Task_Total"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="Task_Total" targetRef="End_Done"/>
+  </bpmn:process>
+</bpmn:definitions>

@@ -1,7 +1,9 @@
 # Spike: the BSF artifact in a third-party engine
 
-`messaging-flow.bpmn` is the studio's sample artifact, byte-for-byte
-(`studio/public/samples/messaging-flow.bpmn`): the messaging-platform flow in
+The messaging-flow artifact (canonical copy
+`packages/engine/test/fixtures/messaging-flow.bpmn`, served byte-for-byte as
+the studio sample `studio/public/samples/messaging-flow.bpmn` — the test
+suite guards the two against drift) is the messaging-platform flow in
 strict BPMN 2.0 — message start → regex sanitisation script task → policy
 business-rule task → allow/deny gateway with condition + default flow → save
 service task → Kinesis message catch → join script task → participants
@@ -40,10 +42,10 @@ hand-off story working against real software:
 ## Run it
 
 ```sh
-npm i
-node spike/run-engine-adapted.mjs spike/messaging-flow.bpmn happy    # adapter executes bsf:mock
-node spike/run-engine-adapted.mjs spike/messaging-flow.bpmn denied   # policy-deny path
-node spike/run-engine.mjs spike/messaging-flow.bpmn happy            # raw engine: shows the dialect gap
-npx bpmnlint --config spike/.bpmnlintrc spike/messaging-flow.bpmn    # portability lint
-npx bpmnlint --config spike/.bpmnlintrc-c8 spike/messaging-flow.bpmn # Camunda 8 binding inventory
+bun install
+bun spike/run-engine-adapted.mjs packages/engine/test/fixtures/messaging-flow.bpmn happy    # adapter executes bsf:mock
+bun spike/run-engine-adapted.mjs packages/engine/test/fixtures/messaging-flow.bpmn denied   # policy-deny path
+bun spike/run-engine.mjs packages/engine/test/fixtures/messaging-flow.bpmn happy            # raw engine: shows the dialect gap
+bunx bpmnlint --config spike/.bpmnlintrc packages/engine/test/fixtures/messaging-flow.bpmn    # portability lint
+bunx bpmnlint --config spike/.bpmnlintrc-c8 packages/engine/test/fixtures/messaging-flow.bpmn # Camunda 8 binding inventory
 ```

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_Pipeline" targetNamespace="http://bpmn-svelte-flow/conformance"
+    expressionLanguage="text/javascript">
+  <bpmn:process id="P_Pipeline" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="signup" payload='{"email":"Ada.Lovelace@Example.COM"}'/>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:scriptTask id="Task_Normalise" name="Normalise email" scriptFormat="text/javascript">
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:script>payload.email = payload.email.trim().toLowerCase();</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:serviceTask id="Task_Enrich" name="Look up account">
+      <bpmn:extensionElements>
+        <bsf:mock>payload.account = { id: 'acc_' + payload.email.split('@')[0], plan: 'pro' };</bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:scriptTask id="Task_Sign" name="Sign welcome token" scriptFormat="text/javascript">
+      <bpmn:incoming>f3</bpmn:incoming><bpmn:outgoing>f4</bpmn:outgoing>
+      <bpmn:script>payload.token = payload.account.id + ':' + payload.email.length;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="End_Done"><bpmn:incoming>f4</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="Task_Normalise"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Normalise" targetRef="Task_Enrich"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="Task_Enrich" targetRef="Task_Sign"/>
+    <bpmn:sequenceFlow id="f4" sourceRef="Task_Sign" targetRef="End_Done"/>
+  </bpmn:process>
+</bpmn:definitions>

@@ -18,7 +18,7 @@ shapes at their modeled positions, edges following their modeled waypoints.
   you get panning, zooming, fit-view, selection, minimap and background out of
   the box, and you can compose the exported node/edge components into your own
   `<SvelteFlow>` for custom behavior.
-- **Storybook for every notation element** — run `npm run storybook` to browse
+- **Storybook for every notation element** — run `bun run storybook` to browse
   the whole catalog.
 
 The repo also ships **BSF Studio** (`studio/`) — an in-browser BPMN
@@ -99,7 +99,7 @@ The component provides Step / Play / Reset controls, an initial-payload JSON
 editor, per-node script editors (click any node), a payload log, live
 highlighting of the control flow, and token dots animated along the real edge
 waypoints. The engine is also exported headless as `BpmnSimulation` for
-driving your own UI, and `npm test` exercises it in Node.
+driving your own UI, and `bun run test` exercises it headless.
 
 ### Executable workflow files
 
@@ -179,15 +179,19 @@ turns the renderer into a full **local, in-browser BPMN workbench**:
 - **The canvas is this library**: the studio renders and edits diagrams with
   the repo's own Svelte Flow nodes and edges (drag shapes, click to inspect;
   DI is maintained on every mutation).
-- **An in-browser BPMN engine, JavaScript execution** (`studio/src/lib/engine/`):
-  runs the file's standard semantics — `conditionExpression` + default flows,
+- **An in-browser BPMN engine, JavaScript execution**
+  ([`@bsf/engine`](./packages/engine), its own workspace package): runs the
+  file's standard semantics — `conditionExpression` + default flows,
   `bpmn:scriptTask` bodies, multi-instance loops, error boundaries, message
   events — with `bsf:mock` blocks standing in for service/user tasks and
   `bsf:test` blocks asserting on the outcome. All scripts, mocks and
   conditions are JavaScript (`text/javascript`) over a mutable `payload`.
-- **Everything else is standards-compliant BPMN 2.0**: the artifact imports
-  into other engines — `spike/` proves it end-to-end in bpmn-engine, with a
-  generic adapter mapping the declared JavaScript onto the engine.
+- **Everything else is standards-compliant BPMN 2.0**, and portability is
+  tested, not asserted: the engine package's **conformance suite** runs
+  every fixture workflow in both `@bsf/engine` and bpmn-engine (through the
+  package's generic binding-pass adapter, `@bsf/engine/adapter`) from the
+  same file and payloads, and requires identical end events, executed tasks,
+  multi-instance iteration counts, and payload values.
 - **WebMCP tools for the whole workspace**: 31 tools registered on
   `navigator.modelContext` (and always on `window.bsf` for the console) —
   read (`get_model`, `get_element`, `get_issues`), build (`add_element`,
@@ -205,19 +209,24 @@ turns the renderer into a full **local, in-browser BPMN workbench**:
   localStorage-backed document workspace with autosave.
 
 ```sh
-npm run studio        # dev server (opens the studio)
-npm run build-studio  # static build into studio/dist/
+bun run studio        # dev server (opens the studio)
+bun run build-studio  # static build into studio/dist/
 ```
 
 ## Development
 
+The repo is a **bun workspace** (`bun` is the package manager and runner):
+the library at the root, the engine in `packages/engine` (`@bsf/engine`),
+and the studio in `studio/`. Consumers installing from GitHub can keep using
+any package manager — the `prepare` build is package-manager-agnostic.
+
 ```sh
-npm install
-npm run storybook        # browse the notation catalog at :6006
-npm run check            # svelte-check
-npm run package          # build the library into dist/
-npm run build-storybook  # static storybook
-npm test                 # library engine tests + studio engine tests
+bun install
+bun run storybook        # browse the notation catalog at :6006
+bun run check            # svelte-check
+bun run package          # build the library into dist/
+bun run build-storybook  # static storybook
+bun run test             # library tests + engine tests + conformance suite
 ```
 
 ## License

@@ -6,7 +6,7 @@
 import { Engine } from 'bpmn-engine';
 import { readFileSync } from 'node:fs';
 
-const file = process.argv[2] ?? 'spike/messaging-flow.bpmn';
+const file = process.argv[2] ?? 'packages/engine/test/fixtures/messaging-flow.bpmn';
 const scenario = process.argv[3] ?? 'happy';
 
 const payloads = {

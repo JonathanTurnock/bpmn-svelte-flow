@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_Routing" targetNamespace="http://bpmn-svelte-flow/conformance"
+    expressionLanguage="text/javascript">
+  <bpmn:process id="P_Routing" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="big" payload='{"amount":1500}'/>
+      <bsf:scenario name="medium" payload='{"amount":500}'/>
+      <bsf:scenario name="small" payload='{"amount":50}'/>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:scriptTask id="Task_Classify" name="Classify order" scriptFormat="text/javascript">
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:script>payload.tier = payload.amount > 1000 ? 'big' : payload.amount > 100 ? 'medium' : 'small';</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:exclusiveGateway id="GW_Tier" name="Tier?" default="f_small">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f_big</bpmn:outgoing>
+      <bpmn:outgoing>f_medium</bpmn:outgoing>
+      <bpmn:outgoing>f_small</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Big"><bpmn:incoming>f_big</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="End_Medium"><bpmn:incoming>f_medium</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="End_Small"><bpmn:incoming>f_small</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="Task_Classify"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Classify" targetRef="GW_Tier"/>
+    <bpmn:sequenceFlow id="f_big" sourceRef="GW_Tier" targetRef="End_Big">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/javascript">payload.tier === 'big'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f_medium" sourceRef="GW_Tier" targetRef="End_Medium">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/javascript">payload.tier === 'medium'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f_small" sourceRef="GW_Tier" targetRef="End_Small"/>
+  </bpmn:process>
+</bpmn:definitions>

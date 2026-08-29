@@ -1,7 +1,7 @@
 # Product Brief — BSF Studio
 
 
-*Status: shipped — the studio lives in `studio/` (`npm run studio`).*
+*Status: shipped — the studio lives in `studio/` (`bun run studio`).*
 *Builds on: this repo's own Svelte Flow BPMN renderer, bpmn-moddle, the
 execution semantics and test-runner contract proven here, and a
 WebMCP-compliant chat client in Chrome (already built, external to this
@@ -238,7 +238,7 @@ are undoable; results are compact JSON.
 │      │            DI maintained together on every edit               │
 │      ├── Canvas: this repo's own Svelte Flow BPMN renderer (drag,    │
 │      │     select, run highlighting — the same nodes Storybook shows)│
-│      ├── Execution engine (studio/src/lib/engine — standard          │
+│      ├── Execution engine (@bsf/engine, packages/engine — standard  │
 │      │     semantics: conditions, default flows, script tasks, MI,   │
 │      │     error boundaries, message samples; bsf:mock for the   │
 │      │     rest; step-bounded; JavaScript everywhere)                │
@@ -252,15 +252,18 @@ are undoable; results are compact JSON.
 
 ## Status
 
-Shipped, verified end-to-end in this repo (`npm test`, plus a headless
+Shipped, verified end-to-end in this repo (`bun run test`, plus a headless
 browser suite driving the built studio through its WebMCP tools):
 
-- **Document core + engine** — the messaging-platform flow authored as a
-  conformant file runs in the studio (both scenarios), its embedded
-  `bsf:test` suite is green, and the very same file runs end-to-end in
-  bpmn-engine through the generic adapter in `spike/` (both scenarios),
-  with bpmnlint clean and the Camunda-compat profile listing exactly the
-  per-element binding points.
+- **Document core + engine** — the engine is its own workspace package
+  (`@bsf/engine`) with a **conformance suite**: seven fixture workflows
+  (conditional routing, pipelines, parallel fork/join, error boundaries,
+  message catches, multi-instance, and the full messaging flow) run in both
+  `@bsf/engine` and bpmn-engine through the package's generic binding-pass
+  adapter, from the same files and payloads, and must agree on end events,
+  executed tasks, iteration counts, and payload values. bpmnlint stays
+  clean and the Camunda-compat profile lists exactly the per-element
+  binding points.
 - **Canvas + build tools** — our own Svelte Flow diagrammer with add /
   connect / move / lanes / auto-layout, DI kept correct on every edit.
 - **Logic, tests, verify loop** — condition/script/mock/binding/doc tools,
