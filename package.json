@@ -32,8 +32,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "npm run package && node tests/engine.test.mjs",
-    "poc": "vite poc --open",
-    "build-poc": "vite build poc --base ./"
+    "poc": "vite poc --open"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
