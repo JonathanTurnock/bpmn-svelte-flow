@@ -1,4 +1,4 @@
-// Empirical spike: run the Dryrun artifact in bpmn-engine (a third-party
+// Empirical spike: run the Lunatic artifact in bpmn-engine (a third-party
 // Node.js BPMN 2.0 workflow engine) and report what happens.
 // Usage: node spike/run-engine.mjs <file.bpmn> <happy|denied>
 import { Engine } from 'bpmn-engine';

@@ -1,4 +1,4 @@
-# Product Brief — Dryrun
+# Product Brief — Lunatic
 
 *Status: design draft v2 for discussion — nothing here is implemented.*
 *v2 change: strict standards conformance — the document must import into any
@@ -58,11 +58,11 @@ What that means concretely:
 | Concern | v1 draft (custom) | v2 (standard) |
 |---|---|---|
 | Gateway routing | script on the gateway returning a flow id | **`bpmn:conditionExpression`** (`tFormalExpression`, declared `language`) on outgoing flows + **`default`** attribute on the gateway |
-| Script logic | `dryrun:script` on any node | **`bpmn:scriptTask`** with **`scriptFormat`** + **`bpmn:script`** where the logic *is* script; other task types keep their standard meaning |
-| Service/user task behaviour in the sim | `dryrun:script` | the task stays a plain standard `serviceTask`/`userTask` (binding is engine-territory by design); the browser-only mock lives in **`dryrun:mock`** inside `extensionElements`, ignored by real engines |
-| Human-readable business logic | `dryrun:doc` | **`bpmn:documentation`** — standard on every element, preserved and displayed by engines and modelers |
+| Script logic | `lunatic:script` on any node | **`bpmn:scriptTask`** with **`scriptFormat`** + **`bpmn:script`** where the logic *is* script; other task types keep their standard meaning |
+| Service/user task behaviour in the sim | `lunatic:script` | the task stays a plain standard `serviceTask`/`userTask` (binding is engine-territory by design); the browser-only mock lives in **`lunatic:mock`** inside `extensionElements`, ignored by real engines |
+| Human-readable business logic | `lunatic:doc` | **`bpmn:documentation`** — standard on every element, preserved and displayed by engines and modelers |
 | Data hand-offs worth modeling | ad-hoc | standard **data objects / data associations / `ioSpecification`** where they add clarity |
-| Scenarios & tests | `dryrun:scenario` / `dryrun:test` | unchanged — **no standard exists**, so they stay as extensions (spec-sanctioned slot, zero portable semantics: an engine that ignores them loses nothing but our sim/test tooling) |
+| Scenarios & tests | `lunatic:scenario` / `lunatic:test` | unchanged — **no standard exists**, so they stay as extensions (spec-sanctioned slot, zero portable semantics: an engine that ignores them loses nothing but our sim/test tooling) |
 | Process flag | — | `isExecutable="true"`; definitions declare `expressionLanguage` and default `scriptFormat` explicitly |
 
 Conformance is enforced, not aspirational:
@@ -95,31 +95,70 @@ declared language, and we choose ONE primary:
   OMG-standard expression language, evaluable in-browser via `feelin`,
   native to Camunda 8, and the natural bridge to DMN later — but weaker for
   imperative mocks.
-- **Current lean: FEEL for `conditionExpression`, JavaScript for
-  `bpmn:script` bodies and `dryrun:mock`** — conditions (the part engines
-  actually re-execute) get the standards-blessed language; mocks (browser-
-  only by definition) get the practical one. Open question #2.
+- **Option C — Lua** (`scriptFormat` = `text/x-lua`): the language of the
+  platform's own production runtime (Rust host + mlua, below). Choosing it
+  for scripts and mocks makes preview and production share one language —
+  and, when the engine ships, one interpreter.
+- **Current lean (updated for the production runtime): FEEL for
+  `conditionExpression`, Lua for `bpmn:script` bodies and `lunatic:mock`** —
+  conditions get the standards-blessed, engine-portable language; scripts
+  and mocks get the language the real platform executes. Until the Rust
+  engine exists, the studio evaluates Lua via a wasm Lua VM (wasmoon-class)
+  behind the same interface. Open question #2.
+
+## The production runtime — Rust host + Lua, previewed as real
+
+The company's own engine (the "build" path made concrete) is **not** the
+browser simulator grown up — it is a **native Rust host embedding Lua**
+(mlua) as the workflow script and binding language. This is one of the most
+battle-proven embedding patterns in industry (OpenResty/nginx, Kong, Redis,
+Tarantool: systems host + Lua orchestration); what has no prior art is the
+combination with standards-BPMN semantics — each half is proven ground.
+
+**Preview parity by construction.** The browser build of Lunatic's engine is
+the *same Rust crate* compiled to a single wasm target (Emscripten-built
+mlua, the wasmoon-proven path; a pure-Rust Lua VM is the fallback if the
+toolchain fights back — settle with a one-day compile spike). The studio
+does not approximate the engine; it runs it. Drift between what the
+modeller watched and what production does becomes structurally impossible.
+
+**The host-function boundary is the mock boundary.** Workflow Lua calls
+host-provided functions (`host.http_post`, `host.kafka_publish`,
+`host.policy_evaluate`). In production the Rust host binds them to real
+infrastructure; in the browser the wasm host binds them to mocks. The
+workflow Lua is byte-identical in both worlds — only the bindings differ —
+and determinism is host-controlled (fixed clock/seed in preview: the dry
+run made literal). `lunatic:mock` therefore targets the host-function
+layer; mock *fidelity* (returning production-shaped data) replaces engine
+drift as the risk to manage.
+
+**Sequencing.** M1 ships on the existing JS simulator behind the
+graph-in/trace-out contract already proven twice in this repo (our
+simulator, the bpmn-engine adapter). The Rust+Lua engine replaces it behind
+the same contract when ready — and simultaneously becomes a first-class
+target in the build-or-buy pack: "build" = this host, and its binding
+inventory is the list of host functions to implement.
 
 ## The file (single source of truth)
 
 One self-contained, schema-valid BPMN 2.0 document. Sketch:
 
 ```xml
-<bpmn:definitions xmlns:dryrun="http://…/poc/1.0"
+<bpmn:definitions xmlns:lunatic="http://…/poc/1.0"
     expressionLanguage="https://www.omg.org/spec/DMN/FEEL/" …>
   <bpmn:process id="P" isExecutable="true">
     <bpmn:extensionElements>
-      <dryrun:scenario name="Happy path" payload='{"amount":5200}'/>
-      <dryrun:test name="large claims go to review" payload='{"amount":5200}'>
+      <lunatic:scenario name="Happy path" payload='{"amount":5200}'/>
+      <lunatic:test name="large claims go to review" payload='{"amount":5200}'>
         assert(state.visited.has('Task_Review'));
-      </dryrun:test>
+      </lunatic:test>
     </bpmn:extensionElements>
 
     <bpmn:serviceTask id="Task_Save" name="Save message (Messages API)">
       <bpmn:documentation>POST /v1/messages → 201 { messageId }.
         Owns durability; emits to Kinesis after commit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <dryrun:mock>payload.messagesApi = { status: 201, messageId: id() };</dryrun:mock>
+        <lunatic:mock>payload.messagesApi = { status: 201, messageId: id() };</lunatic:mock>
       </bpmn:extensionElements>
     </bpmn:serviceTask>
 
@@ -132,7 +171,7 @@ One self-contained, schema-valid BPMN 2.0 document. Sketch:
     …
 ```
 
-Strip every `dryrun:` extension and `bpmn:documentation` stays, routing stays,
+Strip every `lunatic:` extension and `bpmn:documentation` stays, routing stays,
 script tasks stay: **the process is still complete and executable** — that
 is the conformance test in one sentence.
 
@@ -230,12 +269,12 @@ are undoable; results are compact JSON, never pixels.
 │      │            commands; undo/redo; after every mutation:         │
 │      │            schema validation + portability lint               │
 │      ▼                                                               │
-│  Document core ── bpmn-moddle (strict) + dryrun extension schema        │
+│  Document core ── bpmn-moddle (strict) + lunatic extension schema        │
 │      │                                                               │
 │      ├── bpmn-js Modeler (canvas: edit, overlays, token, markers)    │
 │      ├── Execution engine (port of this repo's BpmnSimulation over   │
 │      │     the moddle registry; standard semantics: conditions,      │
-│      │     default flows, script tasks; dryrun:mock for the rest;       │
+│      │     default flows, script tasks; lunatic:mock for the rest;       │
 │      │     step-bounded) + expression evaluator (feelin and/or JS)   │
 │      └── Inspector panel (bpmn:documentation, payload diffs, tests,  │
 │            scenarios — evolved from the poc/ shell)                  │
@@ -248,7 +287,7 @@ are undoable; results are compact JSON, never pixels.
 - **M0 — WebMCP spike (de-risk first).** Register 3 tools on today's static
   `poc/` site (`get_model`, `step_scenario`, `run_scenario`); drive it from
   the real chat client. Answers the client-contract questions empirically.
-- **M1 — Standard document core.** dryrun extension schema, load/export,
+- **M1 — Standard document core.** lunatic extension schema, load/export,
   XSD/lint pipeline, engine executing conditions + default flows + script
   tasks + mocks from the moddle model; scenario runs replace the
   hand-scripted walkthrough. *Exit test: the messaging-platform flow rebuilt
@@ -302,7 +341,15 @@ are undoable; results are compact JSON, never pixels.
 6. **DMN** — business-rule tasks opening dmn-js decision tables (FEEL,
    evaluated by feelin in-sim) is the natural post-M4 act, and doubly so if
    FEEL wins question 2. Confirm as roadmap, not v1.
-7. **Naming** — settled: **Dryrun** (namespace prefix `dryrun:`; the schema URI `https://dryrun.dev/schema/1.0` is a placeholder until a domain is confirmed). Runner-ups considered: Prova, Enact, Maquette — each collides with an existing dev tool.
+7. **Naming** — settled by the owner: **Lunatic** — a play on *Lua* (Portuguese
+   for "moon") and the token *tic*king through the workflow, matching the
+   Rust-host + Lua production runtime. Namespace prefix `lunatic:`; the schema
+   URI `https://lunatic.dev/schema/1.0` is a placeholder until a domain is
+   confirmed. **Known collision, accepted knowingly:** `lunatic` is an existing
+   Erlang-inspired WebAssembly runtime in Rust (lunatic-solutions — owns the
+   crates.io name and lunatic.solutions); expect crate/domain contention if the
+   engine is ever published. Previous working names: PoC Studio, Dryrun;
+   earlier runner-ups (Prova, Enact, Maquette) also collided with dev tools.
 
 ## Success criteria
 

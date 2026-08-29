@@ -1,10 +1,10 @@
-// Empirical spike, part 2: run the UNMODIFIED Dryrun artifact in
+// Empirical spike, part 2: run the UNMODIFIED Lunatic artifact in
 // bpmn-engine through a generic adapter that
 //   1. accepts the standard MIME scriptFormat (text/javascript),
 //   2. evaluates FEEL (the file's declared expressionLanguage) via feelin
 //      for sequence-flow conditions and loopCardinality,
 //   3. binds service/send/businessRule tasks by executing the file's own
-//      dryrun:mock extension blocks (the "bind implementations where the mocks
+//      lunatic:mock extension blocks (the "bind implementations where the mocks
 //      were" story, automated).
 // The adapter is process-agnostic: nothing in it mentions the messaging flow.
 // Usage: node spike/run-engine-adapted.mjs <file.bpmn> <happy|denied>
@@ -121,26 +121,26 @@ function resolveExpression(expression, message) {
   }
 }
 
-// ---- 3: bind tasks by executing the file's dryrun:mock blocks ----------------
+// ---- 3: bind tasks by executing the file's lunatic:mock blocks ----------------
 function localName(type) {
   const i = type.indexOf(':');
   return i >= 0 ? type.slice(i + 1) : type;
 }
 
-function dryrunMockExtension(activity) {
+function lunaticMockExtension(activity) {
   const values = activity.behaviour?.extensionElements?.values ?? [];
   const mock = values.find((v) => localName(v.$type ?? '') === 'mock');
   return mock?.$body?.trim();
 }
 
-function DryrunMockService(activity) {
-  const source = dryrunMockExtension(activity);
+function LunaticMockService(activity) {
+  const source = lunaticMockExtension(activity);
   this.execute = function execute(executionMessage, callback) {
     if (!source) return callback(); // unmocked task: pass through
     const environment = activity.environment;
     const sandbox = createContext({ payload: makePayloadProxy(environment) });
     try {
-      new Script(source, { filename: `dryrun:mock/${activity.id}` }).runInContext(sandbox);
+      new Script(source, { filename: `lunatic:mock/${activity.id}` }).runInContext(sandbox);
       callback();
     } catch (err) {
       callback(err);
@@ -163,9 +163,9 @@ function makePayloadProxy(environment) {
 }
 
 const BOUND_TYPES = new Set(['bpmn:ServiceTask', 'bpmn:SendTask', 'bpmn:BusinessRuleTask']);
-function dryrunBindingExtension(activity, context) {
+function lunaticBindingExtension(activity, context) {
   if (BOUND_TYPES.has(activity.type)) {
-    activity.behaviour.Service = DryrunMockService;
+    activity.behaviour.Service = LunaticMockService;
   }
   // Sequential-MI iteration tracking: a start event whose parent is a
   // multi-instance sub-process fires once per iteration.
@@ -185,7 +185,7 @@ const engine = new Engine({
   variables: payloads[scenario],
   scripts: new AdaptedScripts(),
   expressions: { resolveExpression },
-  extensions: { dryrunBinding: dryrunBindingExtension }
+  extensions: { lunaticBinding: lunaticBindingExtension }
 });
 
 const trail = [];

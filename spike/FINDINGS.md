@@ -1,8 +1,8 @@
-# Spike: run the Dryrun artifact in a real workflow engine
+# Spike: run the Lunatic artifact in a real workflow engine
 
 **Question:** build what the visual PoC designer would build (per
 `PRODUCT_BRIEF.md` v2 — strict BPMN 2.0, FEEL conditions, standard script
-tasks, `bpmn:documentation`, `dryrun:` extensions only for mocks/scenarios/tests),
+tasks, `bpmn:documentation`, `lunatic:` extensions only for mocks/scenarios/tests),
 then try to run it in a standards-compliant workflow engine. What breaks?
 
 **Setup:**
@@ -12,7 +12,7 @@ then try to run it in a standards-compliant workflow engine. What breaks?
   Kinesis message catch → join script task → participants service task →
   sequential multi-instance delivery sub-process with FEEL-routed
   Kafka/webhook branches → error end / done end), with lanes, DI,
-  documentation, and `dryrun:scenario`/`dryrun:test`/`dryrun:mock` extensions.
+  documentation, and `lunatic:scenario`/`lunatic:test`/`lunatic:mock` extensions.
 - Engine: **bpmn-engine 25** (third-party Node.js BPMN 2.0 engine,
   independent codebase). Runners: `run-engine.mjs` (raw), 
   `run-engine-adapted.mjs` (with a generic adapter).
@@ -39,7 +39,7 @@ then try to run it in a standards-compliant workflow engine. What breaks?
 standard XML model is portable; executable *binding* is vendor territory in
 every engine.** The product's job is therefore exactly two layers: a
 canonical standard file, plus per-engine binding (an adapter at runtime, or
-an export pass that injects the engine's extensions). Our `dryrun:mock` blocks
+an export pass that injects the engine's extensions). Our `lunatic:mock` blocks
 even served as the binding implementation: the adapter executes them as the
 engine's service implementations — "bind where the mocks were", automated.
 
@@ -63,7 +63,7 @@ engine's service implementations — "bind where the mocks were", automated.
   `api-request`, which FEEL parses as a subtraction — so the adapter must
   fall back to the raw string on unresolved-variable results.
 - **Task binding**: attach a Service to service/send/business-rule tasks that
-  executes the file's own `dryrun:mock` block against a `payload` proxy over
+  executes the file's own `lunatic:mock` block against a `payload` proxy over
   engine variables.
 - **MI per-instance data**: expose `participant` to conditions/mocks by
   tracking the sequential iteration (start-event-per-iteration counter).
@@ -89,16 +89,16 @@ engine's service implementations — "bind where the mocks were", automated.
   broker fields into process variables. Adapters should pass clean payloads.
 - **Our own in-repo simulator** currently routes gateways by node scripts and
   does not evaluate `conditionExpression`/FEEL — brief M1 must add the FEEL
-  evaluator + condition semantics (and `dryrun:mock` support) so the studio
+  evaluator + condition semantics (and `lunatic:mock` support) so the studio
   executes the same file the engines see. (Our parser already ignores the
-  unknown `dryrun:` elements gracefully and picks up `dryrun:test`.)
+  unknown `lunatic:` elements gracefully and picks up `lunatic:test`.)
 
 ## Verdict for the product brief
 
 - ✅ "Standard constructs for everything the spec covers" survived contact:
   conditions + default flows, script tasks, documentation, messages, errors,
   MI — all imported and (with language adaptation) executed.
-- ✅ `dryrun:` extensions were ignored by the engine exactly as the spec
+- ✅ `lunatic:` extensions were ignored by the engine exactly as the spec
   promises, and doubled as binding implementations.
 - ✅ The FEEL-first lean is validated *as the canonical language*, with the
   caveat now measured: no engine evaluates it from the standard attributes
