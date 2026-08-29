@@ -1,5 +1,23 @@
 <script lang="ts">
-  import { Play, Pause, StepBack, StepForward, RotateCcw } from '@lucide/svelte';
+  import {
+    ChevronRight,
+    CircleAlert,
+    CircleCheck,
+    CircleDot,
+    CirclePlay,
+    Code,
+    Cog,
+    CornerDownRight,
+    Layers,
+    Mail,
+    Merge,
+    Pause,
+    Play,
+    RotateCcw,
+    Split,
+    StepBack,
+    StepForward
+  } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
@@ -9,7 +27,9 @@
   import { Separator } from '$lib/components/ui/separator/index.js';
 
   let scenarioName = $state('');
-  let inspected = $state<number | null>(null);
+  /** Index of the step whose full state is unfolded. */
+  let expanded = $state<number | null>(null);
+  let traceEl = $state<HTMLElement | undefined>(undefined);
 
   const SPEEDS = ['0.5', '1', '1.5', '2'];
   let speedStr = $state('1');
@@ -29,44 +49,147 @@
   /** Mid-timeline: the outcome is not revealed yet. */
   const presenting = $derived(studio.frames.length > 0 && !atEnd);
 
-  // A new run invalidates whichever data point was open.
+  // A new run folds whichever step was open, and playback keeps the newest
+  // steps in view.
   $effect(() => {
     void studio.runVersion;
-    inspected = null;
+    expanded = null;
+    if (traceEl && studio.frames.length) traceEl.scrollTo({ top: traceEl.scrollHeight });
   });
 
-  /** Trace annotated with per-step data-point diffs (vs the previous snapshot). */
-  const trace = $derived.by(() => {
-    if (!run) return [];
+  const ICONS: Record<string, typeof CircleDot> = {
+    started: CirclePlay,
+    ended: CircleCheck,
+    completed: CircleCheck,
+    passed: CircleCheck,
+    merged: CircleCheck,
+    routed: Split,
+    joined: Merge,
+    'script ran': Code,
+    'mock ran': Cog,
+    'sample merged': Mail,
+    'message delivered': Mail,
+    entered: CornerDownRight,
+    'multi-instance': Layers,
+    'boundary caught': CircleAlert
+  };
+
+  function iconClass(action: string): string {
+    if (action === 'ended') return 'text-emerald-600 dark:text-emerald-400';
+    if (action === 'boundary caught' || /error/.test(action))
+      return 'text-rose-600 dark:text-rose-400';
+    return 'text-muted-foreground';
+  }
+
+  interface DiffRow {
+    key: string;
+    kind: 'added' | 'changed' | 'removed' | 'same';
+    before?: string;
+    after?: string;
+  }
+  interface TraceStep {
+    index: number;
+    id?: string;
+    name: string;
+    action: string;
+    caption: string;
+    hasData: boolean;
+    rows: DiffRow[];
+    added: number;
+    changed: number;
+    removed: number;
+  }
+
+  const str = (v: unknown) => JSON.stringify(v) ?? 'undefined';
+
+  /**
+   * The run as readable steps: bare "completed" echoes of the previous entry
+   * fold away, and every step carries the full payload state at that point,
+   * with each key marked added / changed / removed / same versus the state
+   * before the step — the transformation, not just the outcome.
+   */
+  const steps = $derived.by(() => {
+    if (!run) return [] as TraceStep[];
     let previous: Record<string, unknown> = {};
-    return run.trace.map((entry, index) => {
-      let changes: Array<{ kind: '+' | '~' | '-'; key: string }> = [];
+    const out: TraceStep[] = [];
+    for (let index = 0; index < run.trace.length; index++) {
+      const entry = run.trace[index];
+      const last = out[out.length - 1];
+      if (
+        (entry.action === 'completed' || entry.action === 'passed') &&
+        !entry.payload &&
+        last &&
+        last.id === entry.id
+      ) {
+        continue;
+      }
+      let rows: DiffRow[];
+      let added = 0;
+      let changed = 0;
+      let removed = 0;
       if (entry.payload) {
         const current = entry.payload;
+        rows = [];
         for (const key of Object.keys(current)) {
-          if (!(key in previous)) changes.push({ kind: '+', key });
-          else if (JSON.stringify(previous[key]) !== JSON.stringify(current[key]))
-            changes.push({ kind: '~', key });
+          const after = str(current[key]);
+          if (!(key in previous)) {
+            rows.push({ key, kind: 'added', after });
+            added += 1;
+          } else {
+            const before = str(previous[key]);
+            if (before !== after) {
+              rows.push({ key, kind: 'changed', before, after });
+              changed += 1;
+            } else {
+              rows.push({ key, kind: 'same', after });
+            }
+          }
         }
         for (const key of Object.keys(previous)) {
-          if (!(key in current)) changes.push({ kind: '-', key });
+          if (!(key in current)) {
+            rows.push({ key, kind: 'removed', before: str(previous[key]) });
+            removed += 1;
+          }
         }
         previous = current;
+      } else {
+        rows = Object.keys(previous).map((key) => ({
+          key,
+          kind: 'same' as const,
+          after: str(previous[key])
+        }));
       }
-      return { ...entry, index, changes };
-    });
+      out.push({
+        index,
+        id: entry.id,
+        name: entry.name || entry.id || '—',
+        action: entry.action,
+        caption: entry.detail ? `${entry.action} — ${entry.detail}` : entry.action,
+        hasData: !!entry.payload,
+        rows,
+        added,
+        changed,
+        removed
+      });
+    }
+    return out;
   });
 
-  /** During playback the trace only reveals up to the current frame. */
-  const visibleTrace = $derived(
-    studio.frames.length
-      ? trace.slice(0, studio.frames[studio.frameIndex]?.logIndex ?? trace.length)
-      : trace
-  );
-
-  const inspectedEntry = $derived(
-    inspected !== null ? visibleTrace.find((e) => e.index === inspected && e.payload) : undefined
-  );
+  /** Steps grouped by playback beat (flat when there is no timeline). */
+  const groups = $derived.by(() => {
+    const limit = studio.frames.length
+      ? (studio.frames[studio.frameIndex]?.logIndex ?? Infinity)
+      : Infinity;
+    const visible = steps.filter((s) => s.index < limit);
+    if (!studio.frames.length) return [{ beat: null as number | null, steps: visible }];
+    const out: Array<{ beat: number | null; steps: TraceStep[] }> = [];
+    for (let beat = 0; beat <= studio.frameIndex && beat < studio.frames.length; beat++) {
+      const from = beat === 0 ? 0 : studio.frames[beat - 1].logIndex;
+      const inBeat = visible.filter((s) => s.index >= from && s.index < studio.frames[beat].logIndex);
+      if (inBeat.length) out.push({ beat, steps: inBeat });
+    }
+    return out;
+  });
 
   $effect(() => {
     if (scenarios.length && !scenarios.some((s) => s.name === scenarioName)) {
@@ -240,60 +363,123 @@
       </div>
     {/if}
 
-    {#if inspectedEntry}
-      <Card.Root size="sm">
-        <Card.Header>
-          <Card.Title>Data point</Card.Title>
-          <Card.Description>
-            payload after “{inspectedEntry.name || inspectedEntry.id}” ({inspectedEntry.action})
-          </Card.Description>
-          <Card.Action>
-            <Button size="sm" variant="ghost" onclick={() => (inspected = null)}>Close</Button>
-          </Card.Action>
-        </Card.Header>
-        <Card.Content>
-          <pre class="max-h-56 overflow-auto font-mono text-xs leading-snug">{JSON.stringify(
-              inspectedEntry.payload,
-              null,
-              2
-            )}</pre>
-        </Card.Content>
-      </Card.Root>
-    {/if}
-
     <div class="grid min-h-0 flex-1 gap-2">
-      <Label>Trace</Label>
-      <div class="min-h-0 flex-1 overflow-auto rounded-lg bg-muted/50 p-3 font-mono text-xs leading-relaxed">
-        {#each visibleTrace as entry (entry.index)}
-          <div class="flex flex-wrap items-baseline gap-x-1.5">
-            <span class="text-muted-foreground">{entry.action}</span>
+      <Label>Steps</Label>
+      <div
+        bind:this={traceEl}
+        class="min-h-24 flex-1 overflow-y-auto rounded-lg border bg-muted/30"
+        data-testid="trace"
+      >
+        {#each groups as group (group.beat ?? -1)}
+          {#if group.beat !== null}
             <button
               type="button"
-              class="cursor-pointer hover:underline"
-              class:font-semibold={inspected === entry.index}
+              class="flex w-full items-center gap-2 px-2.5 pt-2 pb-1 text-left"
               onclick={() => {
-                studio.selectedId = entry.id ?? null;
-                if (entry.payload) inspected = inspected === entry.index ? null : entry.index;
-              }}>{entry.name || entry.id}</button
+                studio.pause();
+                studio.gotoFrame(group.beat!);
+              }}
+              title="Jump the playback to this beat"
             >
-            {#if entry.detail}<span class="text-muted-foreground">— {entry.detail}</span>{/if}
-            {#each entry.changes as change (change.kind + change.key)}
               <span
-                class="rounded px-1 text-[10px] font-medium"
-                class:bg-success={change.kind === '+'}
-                class:text-white={change.kind === '+'}
-                class:bg-secondary={change.kind === '~'}
-                class:text-secondary-foreground={change.kind === '~'}
-                class:bg-destructive={change.kind === '-'}
-                class:text-destructive-foreground={change.kind === '-'}
-                >{change.kind}{change.key}</span
+                class="text-[10px] font-semibold tracking-wide uppercase {group.beat ===
+                studio.frameIndex
+                  ? 'text-primary'
+                  : 'text-muted-foreground/70'}">beat {group.beat}</span
               >
-            {/each}
-          </div>
+              <span class="h-px flex-1 bg-border"></span>
+            </button>
+          {/if}
+          {#each group.steps as s (s.index)}
+            {@const Icon = ICONS[s.action] ?? CircleDot}
+            <div class={group.beat === studio.frameIndex ? 'bg-accent/40' : ''}>
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 px-2.5 py-1.5 text-left hover:bg-accent/60"
+                onclick={() => {
+                  studio.selectedId = s.id ?? null;
+                  expanded = expanded === s.index ? null : s.index;
+                }}
+              >
+                <Icon class="size-3.5 shrink-0 {iconClass(s.action)}" />
+                <span class="min-w-0 flex-1">
+                  <span
+                    class="block truncate text-[13px] leading-tight"
+                    class:font-semibold={studio.selectedId != null && studio.selectedId === s.id}
+                    >{s.name}</span
+                  >
+                  <span class="block truncate text-[11px] leading-tight text-muted-foreground"
+                    >{s.caption}</span
+                  >
+                </span>
+                {#if s.added}<span
+                    class="shrink-0 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
+                    >+{s.added}</span
+                  >{/if}
+                {#if s.changed}<span
+                    class="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                    >~{s.changed}</span
+                  >{/if}
+                {#if s.removed}<span
+                    class="shrink-0 text-[10px] font-semibold text-rose-600 dark:text-rose-400"
+                    >−{s.removed}</span
+                  >{/if}
+                <ChevronRight
+                  class="size-3 shrink-0 text-muted-foreground transition-transform {expanded ===
+                  s.index
+                    ? 'rotate-90'
+                    : ''}"
+                />
+              </button>
+              {#if expanded === s.index}
+                <div
+                  class="mx-2.5 mb-2 rounded-md border bg-background px-2.5 py-1.5 font-mono text-[11px] leading-relaxed"
+                  data-testid="step-state"
+                >
+                  {#if !s.rows.length}
+                    <span class="text-muted-foreground">empty payload</span>
+                  {/if}
+                  {#each s.rows as r (r.key)}
+                    <div class="flex gap-1.5">
+                      <span
+                        class="shrink-0 {r.kind === 'added'
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : r.kind === 'changed'
+                            ? 'text-amber-700 dark:text-amber-400'
+                            : r.kind === 'removed'
+                              ? 'text-rose-700 dark:text-rose-400'
+                              : 'text-foreground/70'}">{r.key}</span
+                      >
+                      {#if r.kind === 'changed'}
+                        <span class="truncate text-muted-foreground line-through" title={r.before}
+                          >{r.before}</span
+                        >
+                        <span class="shrink-0 text-muted-foreground">→</span>
+                        <span class="truncate text-amber-700 dark:text-amber-400" title={r.after}
+                          >{r.after}</span
+                        >
+                      {:else if r.kind === 'added'}
+                        <span class="truncate text-emerald-700 dark:text-emerald-400" title={r.after}
+                          >{r.after}</span
+                        >
+                      {:else if r.kind === 'removed'}
+                        <span class="truncate text-rose-700 dark:text-rose-400 line-through" title={r.before}
+                          >{r.before}</span
+                        >
+                      {:else}
+                        <span class="truncate text-muted-foreground" title={r.after}>{r.after}</span>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/each}
         {/each}
       </div>
       <p class="text-xs text-muted-foreground">
-        Chips mark payload changes at that step — click a step to see its full data point.
+        Click a step for the full state at that point — additions, changes and removals are
+        colored{studio.frames.length ? '; click a beat label to jump the playback there' : ''}.
       </p>
     </div>
   {/if}
