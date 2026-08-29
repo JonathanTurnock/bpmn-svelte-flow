@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Collaboration — two expanded pools, each split into two horizontal lanes,
+  talking to each other with message flows, plus a black-box (collapsed)
+  participant with a multiplicity marker.
+-->
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Definitions_Collaboration"
+    targetNamespace="http://bpmn-svelte-flow/fixtures">
+
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Pool_Customer" name="Customer" processRef="Process_Customer"/>
+    <bpmn:participant id="Pool_Supplier" name="Supplier" processRef="Process_Supplier"/>
+    <bpmn:participant id="Pool_Payments" name="Payment provider">
+      <bpmn:participantMultiplicity maximum="5"/>
+    </bpmn:participant>
+
+    <bpmn:messageFlow id="MF_Order" name="order" sourceRef="Task_Order" targetRef="Start_S"/>
+    <bpmn:messageFlow id="MF_Invoice" name="invoice" sourceRef="Task_Bill" targetRef="Task_Invoice"/>
+    <bpmn:messageFlow id="MF_Payment" name="payment" sourceRef="Task_Pay" targetRef="Task_Receipt"/>
+    <bpmn:messageFlow id="MF_Auth" name="authorise" sourceRef="Task_Receipt" targetRef="Pool_Payments"/>
+    <bpmn:messageFlow id="MF_Confirm" name="confirmed" sourceRef="Pool_Payments" targetRef="Task_Receipt"/>
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_Customer" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Customer">
+      <bpmn:lane id="Lane_Sales" name="Sales">
+        <bpmn:flowNodeRef>Start_C</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Order</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Accounting" name="Accounting">
+        <bpmn:flowNodeRef>Task_Invoice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Pay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_C</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="Start_C" name="Need identified">
+      <bpmn:outgoing>SF_C1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="Task_Order" name="Place order">
+      <bpmn:incoming>SF_C1</bpmn:incoming>
+      <bpmn:outgoing>SF_C2</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Task_Invoice" name="Receive invoice">
+      <bpmn:incoming>SF_C2</bpmn:incoming>
+      <bpmn:outgoing>SF_C3</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:serviceTask id="Task_Pay" name="Pay invoice">
+      <bpmn:incoming>SF_C3</bpmn:incoming>
+      <bpmn:outgoing>SF_C4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_C" name="Order settled">
+      <bpmn:incoming>SF_C4</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="SF_C1" sourceRef="Start_C" targetRef="Task_Order"/>
+    <bpmn:sequenceFlow id="SF_C2" sourceRef="Task_Order" targetRef="Task_Invoice"/>
+    <bpmn:sequenceFlow id="SF_C3" sourceRef="Task_Invoice" targetRef="Task_Pay"/>
+    <bpmn:sequenceFlow id="SF_C4" sourceRef="Task_Pay" targetRef="End_C"/>
+  </bpmn:process>
+
+  <bpmn:process id="Process_Supplier" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Supplier">
+      <bpmn:lane id="Lane_Fulfilment" name="Fulfilment">
+        <bpmn:flowNodeRef>Start_S</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Fulfil</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Billing" name="Billing">
+        <bpmn:flowNodeRef>Task_Bill</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Receipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_S</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="Start_S" name="Order received">
+      <bpmn:messageEventDefinition id="Start_S_def"/>
+      <bpmn:outgoing>SF_S1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_Fulfil" name="Fulfil order">
+      <bpmn:incoming>SF_S1</bpmn:incoming>
+      <bpmn:outgoing>SF_S2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sendTask id="Task_Bill" name="Send invoice">
+      <bpmn:incoming>SF_S2</bpmn:incoming>
+      <bpmn:outgoing>SF_S3</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:serviceTask id="Task_Receipt" name="Record payment">
+      <bpmn:incoming>SF_S3</bpmn:incoming>
+      <bpmn:outgoing>SF_S4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_S" name="Order closed">
+      <bpmn:incoming>SF_S4</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="SF_S1" sourceRef="Start_S" targetRef="Task_Fulfil"/>
+    <bpmn:sequenceFlow id="SF_S2" sourceRef="Task_Fulfil" targetRef="Task_Bill"/>
+    <bpmn:sequenceFlow id="SF_S3" sourceRef="Task_Bill" targetRef="Task_Receipt"/>
+    <bpmn:sequenceFlow id="SF_S4" sourceRef="Task_Receipt" targetRef="End_S"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_Collaboration">
+    <bpmndi:BPMNPlane id="Plane_Collaboration" bpmnElement="Collaboration_1">
+
+      <bpmndi:BPMNShape id="Pool_Customer_di" bpmnElement="Pool_Customer" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="900" height="240"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Sales_di" bpmnElement="Lane_Sales" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="870" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Accounting_di" bpmnElement="Lane_Accounting" isHorizontal="true">
+        <dc:Bounds x="190" y="200" width="870" height="120"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Start_C_di" bpmnElement="Start_C">
+        <dc:Bounds x="230" y="122" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="198" y="162" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Order_di" bpmnElement="Task_Order">
+        <dc:Bounds x="310" y="100" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Invoice_di" bpmnElement="Task_Invoice">
+        <dc:Bounds x="560" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Pay_di" bpmnElement="Task_Pay">
+        <dc:Bounds x="720" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_C_di" bpmnElement="End_C">
+        <dc:Bounds x="900" y="242" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="868" y="282" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Pool_Supplier_di" bpmnElement="Pool_Supplier" isHorizontal="true">
+        <dc:Bounds x="160" y="400" width="900" height="240"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Fulfilment_di" bpmnElement="Lane_Fulfilment" isHorizontal="true">
+        <dc:Bounds x="190" y="400" width="870" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Billing_di" bpmnElement="Lane_Billing" isHorizontal="true">
+        <dc:Bounds x="190" y="520" width="870" height="120"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Start_S_di" bpmnElement="Start_S">
+        <dc:Bounds x="230" y="442" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="198" y="482" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Fulfil_di" bpmnElement="Task_Fulfil">
+        <dc:Bounds x="310" y="420" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Bill_di" bpmnElement="Task_Bill">
+        <dc:Bounds x="560" y="540" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Receipt_di" bpmnElement="Task_Receipt">
+        <dc:Bounds x="720" y="540" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_S_di" bpmnElement="End_S">
+        <dc:Bounds x="900" y="562" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="868" y="602" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Pool_Payments_di" bpmnElement="Pool_Payments" isHorizontal="true">
+        <dc:Bounds x="160" y="720" width="900" height="70"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="SF_C1_di" bpmnElement="SF_C1">
+        <di:waypoint x="266" y="140"/>
+        <di:waypoint x="310" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_C2_di" bpmnElement="SF_C2">
+        <di:waypoint x="410" y="140"/>
+        <di:waypoint x="485" y="140"/>
+        <di:waypoint x="485" y="260"/>
+        <di:waypoint x="560" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_C3_di" bpmnElement="SF_C3">
+        <di:waypoint x="660" y="260"/>
+        <di:waypoint x="720" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_C4_di" bpmnElement="SF_C4">
+        <di:waypoint x="820" y="260"/>
+        <di:waypoint x="900" y="260"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="SF_S1_di" bpmnElement="SF_S1">
+        <di:waypoint x="266" y="460"/>
+        <di:waypoint x="310" y="460"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_S2_di" bpmnElement="SF_S2">
+        <di:waypoint x="410" y="460"/>
+        <di:waypoint x="485" y="460"/>
+        <di:waypoint x="485" y="580"/>
+        <di:waypoint x="560" y="580"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_S3_di" bpmnElement="SF_S3">
+        <di:waypoint x="660" y="580"/>
+        <di:waypoint x="720" y="580"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_S4_di" bpmnElement="SF_S4">
+        <di:waypoint x="820" y="580"/>
+        <di:waypoint x="900" y="580"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="MF_Order_di" bpmnElement="MF_Order">
+        <di:waypoint x="360" y="180"/>
+        <di:waypoint x="360" y="360"/>
+        <di:waypoint x="248" y="360"/>
+        <di:waypoint x="248" y="442"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="272" y="332" width="60" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_Invoice_di" bpmnElement="MF_Invoice">
+        <di:waypoint x="610" y="540"/>
+        <di:waypoint x="610" y="300"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="616" y="352" width="60" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_Payment_di" bpmnElement="MF_Payment">
+        <di:waypoint x="780" y="300"/>
+        <di:waypoint x="780" y="540"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="786" y="412" width="70" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_Auth_di" bpmnElement="MF_Auth">
+        <di:waypoint x="745" y="620"/>
+        <di:waypoint x="745" y="720"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="655" y="663" width="80" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF_Confirm_di" bpmnElement="MF_Confirm">
+        <di:waypoint x="805" y="720"/>
+        <di:waypoint x="805" y="620"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="815" y="663" width="80" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Event showcase — every BPMN 2.0 event shape, laid out in labelled rows:
+  start, intermediate catch, intermediate throw, end, boundary (interrupting)
+  and boundary (non-interrupting), across all event definitions.
+-->
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Definitions_EventShowcase"
+    targetNamespace="http://bpmn-svelte-flow/fixtures">
+
+  <bpmn:process id="Process_EventShowcase" isExecutable="false">
+
+    <!-- row headers -->
+    <bpmn:textAnnotation id="Note_Start"><bpmn:text>Start events</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_Catch"><bpmn:text>Intermediate catch</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_Throw"><bpmn:text>Intermediate throw</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_End"><bpmn:text>End events</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_BoundaryI"><bpmn:text>Boundary&#10;(interrupting)</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_BoundaryN"><bpmn:text>Boundary&#10;(non-interrupting)</bpmn:text></bpmn:textAnnotation>
+
+    <!-- row 1: start events -->
+    <bpmn:startEvent id="S_None" name="None"/>
+    <bpmn:startEvent id="S_Message" name="Message">
+      <bpmn:messageEventDefinition id="S_Message_def"/>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_Timer" name="Timer">
+      <bpmn:timerEventDefinition id="S_Timer_def"/>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_Conditional" name="Conditional">
+      <bpmn:conditionalEventDefinition id="S_Conditional_def"/>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_Signal" name="Signal">
+      <bpmn:signalEventDefinition id="S_Signal_def"/>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_Multiple" name="Multiple">
+      <bpmn:messageEventDefinition id="S_Multiple_def1"/>
+      <bpmn:signalEventDefinition id="S_Multiple_def2"/>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_ParallelMultiple" name="Parallel multiple" parallelMultiple="true">
+      <bpmn:messageEventDefinition id="S_ParallelMultiple_def1"/>
+      <bpmn:timerEventDefinition id="S_ParallelMultiple_def2"/>
+    </bpmn:startEvent>
+
+    <!-- row 2: intermediate catch events -->
+    <bpmn:intermediateCatchEvent id="IC_Message" name="Message">
+      <bpmn:messageEventDefinition id="IC_Message_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IC_Timer" name="Timer">
+      <bpmn:timerEventDefinition id="IC_Timer_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IC_Conditional" name="Conditional">
+      <bpmn:conditionalEventDefinition id="IC_Conditional_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IC_Link" name="Link (catch)">
+      <bpmn:linkEventDefinition id="IC_Link_def" name="Hop"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IC_Signal" name="Signal">
+      <bpmn:signalEventDefinition id="IC_Signal_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IC_Multiple" name="Multiple">
+      <bpmn:messageEventDefinition id="IC_Multiple_def1"/>
+      <bpmn:signalEventDefinition id="IC_Multiple_def2"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="IC_ParallelMultiple" name="Parallel multiple" parallelMultiple="true">
+      <bpmn:messageEventDefinition id="IC_ParallelMultiple_def1"/>
+      <bpmn:timerEventDefinition id="IC_ParallelMultiple_def2"/>
+    </bpmn:intermediateCatchEvent>
+
+    <!-- row 3: intermediate throw events -->
+    <bpmn:intermediateThrowEvent id="IT_None" name="None"/>
+    <bpmn:intermediateThrowEvent id="IT_Message" name="Message">
+      <bpmn:messageEventDefinition id="IT_Message_def"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="IT_Escalation" name="Escalation">
+      <bpmn:escalationEventDefinition id="IT_Escalation_def"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="IT_Link" name="Link (throw)">
+      <bpmn:linkEventDefinition id="IT_Link_def" name="Hop"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="IT_Compensation" name="Compensation">
+      <bpmn:compensateEventDefinition id="IT_Compensation_def"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="IT_Signal" name="Signal">
+      <bpmn:signalEventDefinition id="IT_Signal_def"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="IT_Multiple" name="Multiple">
+      <bpmn:messageEventDefinition id="IT_Multiple_def1"/>
+      <bpmn:escalationEventDefinition id="IT_Multiple_def2"/>
+    </bpmn:intermediateThrowEvent>
+
+    <!-- row 4: end events -->
+    <bpmn:endEvent id="E_None" name="None"/>
+    <bpmn:endEvent id="E_Message" name="Message">
+      <bpmn:messageEventDefinition id="E_Message_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Escalation" name="Escalation">
+      <bpmn:escalationEventDefinition id="E_Escalation_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Error" name="Error">
+      <bpmn:errorEventDefinition id="E_Error_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Cancel" name="Cancel">
+      <bpmn:cancelEventDefinition id="E_Cancel_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Compensation" name="Compensation">
+      <bpmn:compensateEventDefinition id="E_Compensation_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Signal" name="Signal">
+      <bpmn:signalEventDefinition id="E_Signal_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Terminate" name="Terminate">
+      <bpmn:terminateEventDefinition id="E_Terminate_def"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_Multiple" name="Multiple">
+      <bpmn:messageEventDefinition id="E_Multiple_def1"/>
+      <bpmn:signalEventDefinition id="E_Multiple_def2"/>
+    </bpmn:endEvent>
+
+    <!-- row 5: interrupting boundary events on their hosts -->
+    <bpmn:serviceTask id="Task_BI_Err" name="Charge card"/>
+    <bpmn:boundaryEvent id="BI_Error" name="Error" attachedToRef="Task_BI_Err">
+      <bpmn:errorEventDefinition id="BI_Error_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:transaction id="Tx_BI_Cancel" name="Book trip"/>
+    <bpmn:boundaryEvent id="BI_Cancel" name="Cancel" attachedToRef="Tx_BI_Cancel">
+      <bpmn:cancelEventDefinition id="BI_Cancel_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:task id="Task_BI_Comp" name="Reserve seat"/>
+    <bpmn:boundaryEvent id="BI_Compensation" name="Compensation" attachedToRef="Task_BI_Comp">
+      <bpmn:compensateEventDefinition id="BI_Compensation_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:userTask id="Task_BI_Msg" name="Await approval"/>
+    <bpmn:boundaryEvent id="BI_Message" name="Message" attachedToRef="Task_BI_Msg">
+      <bpmn:messageEventDefinition id="BI_Message_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:task id="Task_BI_Timer" name="Process order"/>
+    <bpmn:boundaryEvent id="BI_Timer" name="Timer" attachedToRef="Task_BI_Timer">
+      <bpmn:timerEventDefinition id="BI_Timer_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:task id="Task_BI_Esc" name="Handle case"/>
+    <bpmn:boundaryEvent id="BI_Escalation" name="Escalation" attachedToRef="Task_BI_Esc">
+      <bpmn:escalationEventDefinition id="BI_Escalation_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:scriptTask id="Task_BI_Sig" name="Run batch"/>
+    <bpmn:boundaryEvent id="BI_Signal" name="Signal" attachedToRef="Task_BI_Sig">
+      <bpmn:signalEventDefinition id="BI_Signal_def"/>
+    </bpmn:boundaryEvent>
+
+    <!-- row 6: non-interrupting boundary events on their hosts -->
+    <bpmn:receiveTask id="Task_BN_Msg" name="Await goods"/>
+    <bpmn:boundaryEvent id="BN_Message" name="Message" attachedToRef="Task_BN_Msg" cancelActivity="false">
+      <bpmn:messageEventDefinition id="BN_Message_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:manualTask id="Task_BN_Timer" name="Assemble kit"/>
+    <bpmn:boundaryEvent id="BN_Timer" name="Timer" attachedToRef="Task_BN_Timer" cancelActivity="false">
+      <bpmn:timerEventDefinition id="BN_Timer_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:userTask id="Task_BN_Esc" name="Review case"/>
+    <bpmn:boundaryEvent id="BN_Escalation" name="Escalation" attachedToRef="Task_BN_Esc" cancelActivity="false">
+      <bpmn:escalationEventDefinition id="BN_Escalation_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:businessRuleTask id="Task_BN_Sig" name="Analyse data"/>
+    <bpmn:boundaryEvent id="BN_Signal" name="Signal" attachedToRef="Task_BN_Sig" cancelActivity="false">
+      <bpmn:signalEventDefinition id="BN_Signal_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:task id="Task_BN_Cond" name="Monitor line"/>
+    <bpmn:boundaryEvent id="BN_Conditional" name="Conditional" attachedToRef="Task_BN_Cond" cancelActivity="false">
+      <bpmn:conditionalEventDefinition id="BN_Conditional_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:sendTask id="Task_BN_Multi" name="Await events"/>
+    <bpmn:boundaryEvent id="BN_Multiple" name="Multiple" attachedToRef="Task_BN_Multi" cancelActivity="false">
+      <bpmn:messageEventDefinition id="BN_Multiple_def1"/>
+      <bpmn:timerEventDefinition id="BN_Multiple_def2"/>
+    </bpmn:boundaryEvent>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_EventShowcase">
+    <bpmndi:BPMNPlane id="Plane_EventShowcase" bpmnElement="Process_EventShowcase">
+
+      <bpmndi:BPMNShape id="Note_Start_di" bpmnElement="Note_Start">
+        <dc:Bounds x="60" y="78" width="210" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Catch_di" bpmnElement="Note_Catch">
+        <dc:Bounds x="60" y="218" width="210" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Throw_di" bpmnElement="Note_Throw">
+        <dc:Bounds x="60" y="358" width="210" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_End_di" bpmnElement="Note_End">
+        <dc:Bounds x="60" y="498" width="210" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_BoundaryI_di" bpmnElement="Note_BoundaryI">
+        <dc:Bounds x="60" y="678" width="210" height="44"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_BoundaryN_di" bpmnElement="Note_BoundaryN">
+        <dc:Bounds x="60" y="848" width="210" height="44"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 1 -->
+      <bpmndi:BPMNShape id="S_None_di" bpmnElement="S_None">
+        <dc:Bounds x="300" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="268" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Message_di" bpmnElement="S_Message">
+        <dc:Bounds x="420" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="388" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Timer_di" bpmnElement="S_Timer">
+        <dc:Bounds x="540" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="508" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Conditional_di" bpmnElement="S_Conditional">
+        <dc:Bounds x="660" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="628" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Signal_di" bpmnElement="S_Signal">
+        <dc:Bounds x="780" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="748" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Multiple_di" bpmnElement="S_Multiple">
+        <dc:Bounds x="900" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="868" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_ParallelMultiple_di" bpmnElement="S_ParallelMultiple">
+        <dc:Bounds x="1020" y="80" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="988" y="124" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- row 2 -->
+      <bpmndi:BPMNShape id="IC_Message_di" bpmnElement="IC_Message">
+        <dc:Bounds x="300" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="268" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IC_Timer_di" bpmnElement="IC_Timer">
+        <dc:Bounds x="420" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="388" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IC_Conditional_di" bpmnElement="IC_Conditional">
+        <dc:Bounds x="540" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="508" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IC_Link_di" bpmnElement="IC_Link">
+        <dc:Bounds x="660" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="628" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IC_Signal_di" bpmnElement="IC_Signal">
+        <dc:Bounds x="780" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="748" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IC_Multiple_di" bpmnElement="IC_Multiple">
+        <dc:Bounds x="900" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="868" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IC_ParallelMultiple_di" bpmnElement="IC_ParallelMultiple">
+        <dc:Bounds x="1020" y="220" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="988" y="264" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- row 3 -->
+      <bpmndi:BPMNShape id="IT_None_di" bpmnElement="IT_None">
+        <dc:Bounds x="300" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="268" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IT_Message_di" bpmnElement="IT_Message">
+        <dc:Bounds x="420" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="388" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IT_Escalation_di" bpmnElement="IT_Escalation">
+        <dc:Bounds x="540" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="508" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IT_Link_di" bpmnElement="IT_Link">
+        <dc:Bounds x="660" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="628" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IT_Compensation_di" bpmnElement="IT_Compensation">
+        <dc:Bounds x="780" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="748" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IT_Signal_di" bpmnElement="IT_Signal">
+        <dc:Bounds x="900" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="868" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IT_Multiple_di" bpmnElement="IT_Multiple">
+        <dc:Bounds x="1020" y="360" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="988" y="404" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- row 4 -->
+      <bpmndi:BPMNShape id="E_None_di" bpmnElement="E_None">
+        <dc:Bounds x="300" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="268" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Message_di" bpmnElement="E_Message">
+        <dc:Bounds x="420" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="388" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Escalation_di" bpmnElement="E_Escalation">
+        <dc:Bounds x="540" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="508" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Error_di" bpmnElement="E_Error">
+        <dc:Bounds x="660" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="628" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Cancel_di" bpmnElement="E_Cancel">
+        <dc:Bounds x="780" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="748" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Compensation_di" bpmnElement="E_Compensation">
+        <dc:Bounds x="900" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="868" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Signal_di" bpmnElement="E_Signal">
+        <dc:Bounds x="1020" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="988" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Terminate_di" bpmnElement="E_Terminate">
+        <dc:Bounds x="1140" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1108" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_Multiple_di" bpmnElement="E_Multiple">
+        <dc:Bounds x="1260" y="500" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1228" y="544" width="100" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- row 5: hosts -->
+      <bpmndi:BPMNShape id="Task_BI_Err_di" bpmnElement="Task_BI_Err">
+        <dc:Bounds x="300" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tx_BI_Cancel_di" bpmnElement="Tx_BI_Cancel">
+        <dc:Bounds x="480" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BI_Comp_di" bpmnElement="Task_BI_Comp">
+        <dc:Bounds x="660" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BI_Msg_di" bpmnElement="Task_BI_Msg">
+        <dc:Bounds x="840" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BI_Timer_di" bpmnElement="Task_BI_Timer">
+        <dc:Bounds x="1020" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BI_Esc_di" bpmnElement="Task_BI_Esc">
+        <dc:Bounds x="1200" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BI_Sig_di" bpmnElement="Task_BI_Sig">
+        <dc:Bounds x="1380" y="660" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 5: boundary events -->
+      <bpmndi:BPMNShape id="BI_Error_di" bpmnElement="BI_Error">
+        <dc:Bounds x="332" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="302" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BI_Cancel_di" bpmnElement="BI_Cancel">
+        <dc:Bounds x="512" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="482" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BI_Compensation_di" bpmnElement="BI_Compensation">
+        <dc:Bounds x="692" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="662" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BI_Message_di" bpmnElement="BI_Message">
+        <dc:Bounds x="872" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="842" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BI_Timer_di" bpmnElement="BI_Timer">
+        <dc:Bounds x="1052" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1022" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BI_Escalation_di" bpmnElement="BI_Escalation">
+        <dc:Bounds x="1232" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1202" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BI_Signal_di" bpmnElement="BI_Signal">
+        <dc:Bounds x="1412" y="722" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1382" y="762" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- row 6: hosts -->
+      <bpmndi:BPMNShape id="Task_BN_Msg_di" bpmnElement="Task_BN_Msg">
+        <dc:Bounds x="300" y="830" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BN_Timer_di" bpmnElement="Task_BN_Timer">
+        <dc:Bounds x="480" y="830" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BN_Esc_di" bpmnElement="Task_BN_Esc">
+        <dc:Bounds x="660" y="830" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BN_Sig_di" bpmnElement="Task_BN_Sig">
+        <dc:Bounds x="840" y="830" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BN_Cond_di" bpmnElement="Task_BN_Cond">
+        <dc:Bounds x="1020" y="830" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BN_Multi_di" bpmnElement="Task_BN_Multi">
+        <dc:Bounds x="1200" y="830" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 6: boundary events -->
+      <bpmndi:BPMNShape id="BN_Message_di" bpmnElement="BN_Message">
+        <dc:Bounds x="332" y="892" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="302" y="932" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BN_Timer_di" bpmnElement="BN_Timer">
+        <dc:Bounds x="512" y="892" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="482" y="932" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BN_Escalation_di" bpmnElement="BN_Escalation">
+        <dc:Bounds x="692" y="892" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="662" y="932" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BN_Signal_di" bpmnElement="BN_Signal">
+        <dc:Bounds x="872" y="892" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="842" y="932" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BN_Conditional_di" bpmnElement="BN_Conditional">
+        <dc:Bounds x="1052" y="892" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1022" y="932" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BN_Multiple_di" bpmnElement="BN_Multiple">
+        <dc:Bounds x="1232" y="892" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1202" y="932" width="96" height="26"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

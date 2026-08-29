@@ -177,4 +177,67 @@ check(
   results[2].passed === false && /low risk/.test(results[2].error ?? '')
 );
 
+// ---------------------------------------------------------------------------
+// Fixture library (src/stories/fixtures/*.bpmn)
+//
+// Every fixture is a complete, standalone BPMN 2.0 document with full DI, so
+// parsing one with zero warnings proves that every BPMNShape resolves, has
+// bounds, and that every BPMNEdge has two or more waypoints and endpoints that
+// exist on the plane. The executable fixtures additionally ship their own
+// bsf:test blocks, which are run headless here.
+// ---------------------------------------------------------------------------
+const { readFileSync } = await import('node:fs');
+
+const FIXTURE_DIR = '/home/user/bpmn-svelte-flow/src/stories/fixtures/';
+
+const renderFixtures = [
+  'quickstart.bpmn',
+  'event-showcase.bpmn',
+  'activity-showcase.bpmn',
+  'gateway-showcase.bpmn',
+  'data-and-artifacts.bpmn',
+  'collaboration.bpmn',
+  'choreography.bpmn',
+  'conversation.bpmn'
+];
+const executableFixtures = ['executable-claims.bpmn', 'executable-parallel.bpmn'];
+
+/** Parses a fixture from disk and asserts it produced a clean, non-empty graph. */
+async function loadFixture(file) {
+  const source = readFileSync(FIXTURE_DIR + file, 'utf8');
+  const { definitions: defs } = await parseBpmn(source);
+  const g = bpmnToFlow(defs);
+  const diShapes = (source.match(/<bpmndi:BPMNShape\b/g) ?? []).length;
+  const diEdges = (source.match(/<bpmndi:BPMNEdge\b/g) ?? []).length;
+  check(
+    `${file} rendered every DI element (${diShapes} shapes, ${diEdges} edges)`,
+    g.nodes.length === diShapes && g.edges.length === diEdges
+  );
+  check(`${file} parsed with no warnings`, g.warnings.length === 0);
+  if (g.warnings.length) console.log(`        ${g.warnings.join('\n        ')}`);
+  return g;
+}
+
+for (const file of renderFixtures) {
+  await loadFixture(file);
+}
+
+for (const file of executableFixtures) {
+  const g = await loadFixture(file);
+  check(`${file} embedded workflow tests found (>= 3)`, g.tests.length >= 3);
+  check(
+    `${file} embedded node scripts found`,
+    g.nodes.filter((n) => n.data.script).length >= 3
+  );
+  const fixtureResults = runWorkflowTests(g, g.tests);
+  check(`${file} ran every embedded test`, fixtureResults.length === g.tests.length);
+  for (const result of fixtureResults) {
+    check(
+      `${file} test "${result.name}"`,
+      result.passed === true
+    );
+    if (!result.passed) console.log(`        ${result.error}`);
+  }
+}
+
 process.exit(pass ? 0 : 1);

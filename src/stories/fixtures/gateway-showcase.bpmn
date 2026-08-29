@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Gateway showcase — one wrapped order-handling flow that walks through the
+  exclusive, parallel, inclusive, complex and event-based gateways, using a
+  default flow and a conditional flow, plus a row of instantiating
+  event-based gateways (exclusive and parallel).
+-->
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Definitions_GatewayShowcase"
+    targetNamespace="http://bpmn-svelte-flow/fixtures">
+
+  <bpmn:process id="Process_GatewayShowcase" isExecutable="false">
+
+    <bpmn:textAnnotation id="Note_Instantiate">
+      <bpmn:text>Instantiating&#10;event-based gateways</bpmn:text>
+    </bpmn:textAnnotation>
+
+    <!-- ===== main flow, first band ===== -->
+    <bpmn:startEvent id="Start_1" name="Order received">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:exclusiveGateway id="Gw_Ex" name="Priority?" default="Flow_Standard">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_Express</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Standard</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_Express" name="Express handling">
+      <bpmn:incoming>Flow_Express</bpmn:incoming>
+      <bpmn:outgoing>Flow_ExpressDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_Standard" name="Standard handling">
+      <bpmn:incoming>Flow_Standard</bpmn:incoming>
+      <bpmn:outgoing>Flow_StandardDone</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gw_ExMerge">
+      <bpmn:incoming>Flow_ExpressDone</bpmn:incoming>
+      <bpmn:incoming>Flow_StandardDone</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToFork</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:parallelGateway id="Gw_Fork">
+      <bpmn:incoming>Flow_ToFork</bpmn:incoming>
+      <bpmn:outgoing>Flow_P1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_P2</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:task id="Task_Pick" name="Pick items">
+      <bpmn:incoming>Flow_P1</bpmn:incoming>
+      <bpmn:outgoing>Flow_P3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:serviceTask id="Task_Invoice" name="Create invoice">
+      <bpmn:incoming>Flow_P2</bpmn:incoming>
+      <bpmn:outgoing>Flow_P4</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:parallelGateway id="Gw_Join">
+      <bpmn:incoming>Flow_P3</bpmn:incoming>
+      <bpmn:incoming>Flow_P4</bpmn:incoming>
+      <bpmn:outgoing>Flow_Wrap</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <!-- ===== main flow, second band ===== -->
+    <bpmn:inclusiveGateway id="Gw_Inc" name="Notify how?" default="Flow_Sms">
+      <bpmn:incoming>Flow_Wrap</bpmn:incoming>
+      <bpmn:outgoing>Flow_Email</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Sms</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+
+    <bpmn:sendTask id="Task_Email" name="Email customer">
+      <bpmn:incoming>Flow_Email</bpmn:incoming>
+      <bpmn:outgoing>Flow_EmailDone</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sendTask id="Task_Sms" name="SMS customer">
+      <bpmn:incoming>Flow_Sms</bpmn:incoming>
+      <bpmn:outgoing>Flow_SmsDone</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:inclusiveGateway id="Gw_IncJoin">
+      <bpmn:incoming>Flow_EmailDone</bpmn:incoming>
+      <bpmn:incoming>Flow_SmsDone</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToComplex</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+
+    <bpmn:complexGateway id="Gw_Complex" name="Complex">
+      <bpmn:incoming>Flow_ToComplex</bpmn:incoming>
+      <bpmn:outgoing>Flow_C1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_C2</bpmn:outgoing>
+    </bpmn:complexGateway>
+
+    <bpmn:scriptTask id="Task_Audit" name="Audit log">
+      <bpmn:incoming>Flow_C1</bpmn:incoming>
+      <bpmn:outgoing>Flow_C3</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:manualTask id="Task_Archive" name="Archive docs">
+      <bpmn:incoming>Flow_C2</bpmn:incoming>
+      <bpmn:outgoing>Flow_C4</bpmn:outgoing>
+    </bpmn:manualTask>
+
+    <bpmn:complexGateway id="Gw_CplxJoin">
+      <bpmn:incoming>Flow_C3</bpmn:incoming>
+      <bpmn:incoming>Flow_C4</bpmn:incoming>
+      <bpmn:outgoing>Flow_ToEvent</bpmn:outgoing>
+    </bpmn:complexGateway>
+
+    <bpmn:eventBasedGateway id="Gw_Event" name="Wait for">
+      <bpmn:incoming>Flow_ToEvent</bpmn:incoming>
+      <bpmn:outgoing>Flow_E1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_E2</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+
+    <bpmn:intermediateCatchEvent id="Ev_Reply" name="Reply received">
+      <bpmn:incoming>Flow_E1</bpmn:incoming>
+      <bpmn:outgoing>Flow_E3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Reply_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Ev_Timeout" name="Timeout">
+      <bpmn:incoming>Flow_E2</bpmn:incoming>
+      <bpmn:outgoing>Flow_E4</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="Ev_Timeout_def"/>
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:endEvent id="End_Confirmed" name="Confirmed">
+      <bpmn:incoming>Flow_E3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Escalated" name="Escalated">
+      <bpmn:incoming>Flow_E4</bpmn:incoming>
+      <bpmn:escalationEventDefinition id="End_Escalated_def"/>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="Start_1" targetRef="Gw_Ex"/>
+    <bpmn:sequenceFlow id="Flow_Express" name="express" sourceRef="Gw_Ex" targetRef="Task_Express"/>
+    <bpmn:sequenceFlow id="Flow_Standard" name="standard" sourceRef="Gw_Ex" targetRef="Task_Standard"/>
+    <bpmn:sequenceFlow id="Flow_ExpressDone" name="in stock" sourceRef="Task_Express" targetRef="Gw_ExMerge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">stock > 0</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_StandardDone" sourceRef="Task_Standard" targetRef="Gw_ExMerge"/>
+    <bpmn:sequenceFlow id="Flow_ToFork" sourceRef="Gw_ExMerge" targetRef="Gw_Fork"/>
+    <bpmn:sequenceFlow id="Flow_P1" sourceRef="Gw_Fork" targetRef="Task_Pick"/>
+    <bpmn:sequenceFlow id="Flow_P2" sourceRef="Gw_Fork" targetRef="Task_Invoice"/>
+    <bpmn:sequenceFlow id="Flow_P3" sourceRef="Task_Pick" targetRef="Gw_Join"/>
+    <bpmn:sequenceFlow id="Flow_P4" sourceRef="Task_Invoice" targetRef="Gw_Join"/>
+    <bpmn:sequenceFlow id="Flow_Wrap" sourceRef="Gw_Join" targetRef="Gw_Inc"/>
+    <bpmn:sequenceFlow id="Flow_Email" name="email" sourceRef="Gw_Inc" targetRef="Task_Email"/>
+    <bpmn:sequenceFlow id="Flow_Sms" name="SMS" sourceRef="Gw_Inc" targetRef="Task_Sms"/>
+    <bpmn:sequenceFlow id="Flow_EmailDone" sourceRef="Task_Email" targetRef="Gw_IncJoin"/>
+    <bpmn:sequenceFlow id="Flow_SmsDone" sourceRef="Task_Sms" targetRef="Gw_IncJoin"/>
+    <bpmn:sequenceFlow id="Flow_ToComplex" sourceRef="Gw_IncJoin" targetRef="Gw_Complex"/>
+    <bpmn:sequenceFlow id="Flow_C1" sourceRef="Gw_Complex" targetRef="Task_Audit"/>
+    <bpmn:sequenceFlow id="Flow_C2" sourceRef="Gw_Complex" targetRef="Task_Archive"/>
+    <bpmn:sequenceFlow id="Flow_C3" sourceRef="Task_Audit" targetRef="Gw_CplxJoin"/>
+    <bpmn:sequenceFlow id="Flow_C4" sourceRef="Task_Archive" targetRef="Gw_CplxJoin"/>
+    <bpmn:sequenceFlow id="Flow_ToEvent" sourceRef="Gw_CplxJoin" targetRef="Gw_Event"/>
+    <bpmn:sequenceFlow id="Flow_E1" sourceRef="Gw_Event" targetRef="Ev_Reply"/>
+    <bpmn:sequenceFlow id="Flow_E2" sourceRef="Gw_Event" targetRef="Ev_Timeout"/>
+    <bpmn:sequenceFlow id="Flow_E3" sourceRef="Ev_Reply" targetRef="End_Confirmed"/>
+    <bpmn:sequenceFlow id="Flow_E4" sourceRef="Ev_Timeout" targetRef="End_Escalated"/>
+
+    <!-- ===== instantiating event-based gateways ===== -->
+    <bpmn:eventBasedGateway id="Gw_EvX" name="Exclusive start" instantiate="true">
+      <bpmn:outgoing>Flow_X1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_X2</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Ev_X1" name="Order message">
+      <bpmn:incoming>Flow_X1</bpmn:incoming>
+      <bpmn:outgoing>Flow_X3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_X1_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Ev_X2" name="Deadline">
+      <bpmn:incoming>Flow_X2</bpmn:incoming>
+      <bpmn:outgoing>Flow_X4</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="Ev_X2_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="Task_X" name="Handle order">
+      <bpmn:incoming>Flow_X3</bpmn:incoming>
+      <bpmn:incoming>Flow_X4</bpmn:incoming>
+      <bpmn:outgoing>Flow_X5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_X" name="Handled">
+      <bpmn:incoming>Flow_X5</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_X1" sourceRef="Gw_EvX" targetRef="Ev_X1"/>
+    <bpmn:sequenceFlow id="Flow_X2" sourceRef="Gw_EvX" targetRef="Ev_X2"/>
+    <bpmn:sequenceFlow id="Flow_X3" sourceRef="Ev_X1" targetRef="Task_X"/>
+    <bpmn:sequenceFlow id="Flow_X4" sourceRef="Ev_X2" targetRef="Task_X"/>
+    <bpmn:sequenceFlow id="Flow_X5" sourceRef="Task_X" targetRef="End_X"/>
+
+    <bpmn:eventBasedGateway id="Gw_EvP" name="Parallel start" instantiate="true" eventGatewayType="Parallel">
+      <bpmn:outgoing>Flow_Y1</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Y2</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Ev_Y1" name="Payment received">
+      <bpmn:incoming>Flow_Y1</bpmn:incoming>
+      <bpmn:outgoing>Flow_Y3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="Ev_Y1_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Ev_Y2" name="Stock signal">
+      <bpmn:incoming>Flow_Y2</bpmn:incoming>
+      <bpmn:outgoing>Flow_Y4</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="Ev_Y2_def"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="Task_Y" name="Fulfil order">
+      <bpmn:incoming>Flow_Y3</bpmn:incoming>
+      <bpmn:incoming>Flow_Y4</bpmn:incoming>
+      <bpmn:outgoing>Flow_Y5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_Y" name="Fulfilled">
+      <bpmn:incoming>Flow_Y5</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_Y1" sourceRef="Gw_EvP" targetRef="Ev_Y1"/>
+    <bpmn:sequenceFlow id="Flow_Y2" sourceRef="Gw_EvP" targetRef="Ev_Y2"/>
+    <bpmn:sequenceFlow id="Flow_Y3" sourceRef="Ev_Y1" targetRef="Task_Y"/>
+    <bpmn:sequenceFlow id="Flow_Y4" sourceRef="Ev_Y2" targetRef="Task_Y"/>
+    <bpmn:sequenceFlow id="Flow_Y5" sourceRef="Task_Y" targetRef="End_Y"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_GatewayShowcase">
+    <bpmndi:BPMNPlane id="Plane_GatewayShowcase" bpmnElement="Process_GatewayShowcase">
+
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1">
+        <dc:Bounds x="120" y="282" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="88" y="324" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Ex_di" bpmnElement="Gw_Ex">
+        <dc:Bounds x="240" y="275" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="167" y="248" width="90" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Express_di" bpmnElement="Task_Express">
+        <dc:Bounds x="370" y="180" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Standard_di" bpmnElement="Task_Standard">
+        <dc:Bounds x="370" y="360" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_ExMerge_di" bpmnElement="Gw_ExMerge">
+        <dc:Bounds x="560" y="275" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Fork_di" bpmnElement="Gw_Fork">
+        <dc:Bounds x="690" y="275" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Pick_di" bpmnElement="Task_Pick">
+        <dc:Bounds x="820" y="180" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Invoice_di" bpmnElement="Task_Invoice">
+        <dc:Bounds x="820" y="360" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Join_di" bpmnElement="Gw_Join">
+        <dc:Bounds x="1010" y="275" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gw_Inc_di" bpmnElement="Gw_Inc">
+        <dc:Bounds x="240" y="675" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="167" y="648" width="90" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Email_di" bpmnElement="Task_Email">
+        <dc:Bounds x="370" y="580" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Sms_di" bpmnElement="Task_Sms">
+        <dc:Bounds x="370" y="760" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_IncJoin_di" bpmnElement="Gw_IncJoin">
+        <dc:Bounds x="560" y="675" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Complex_di" bpmnElement="Gw_Complex">
+        <dc:Bounds x="690" y="675" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="617" y="648" width="90" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Audit_di" bpmnElement="Task_Audit">
+        <dc:Bounds x="820" y="580" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Archive_di" bpmnElement="Task_Archive">
+        <dc:Bounds x="820" y="760" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_CplxJoin_di" bpmnElement="Gw_CplxJoin">
+        <dc:Bounds x="1010" y="675" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Event_di" bpmnElement="Gw_Event">
+        <dc:Bounds x="1140" y="675" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1067" y="648" width="90" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Reply_di" bpmnElement="Ev_Reply">
+        <dc:Bounds x="1270" y="602" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1238" y="644" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Timeout_di" bpmnElement="Ev_Timeout">
+        <dc:Bounds x="1270" y="782" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1238" y="824" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Confirmed_di" bpmnElement="End_Confirmed">
+        <dc:Bounds x="1400" y="602" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1368" y="644" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Escalated_di" bpmnElement="End_Escalated">
+        <dc:Bounds x="1400" y="782" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1368" y="824" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_Start_di" bpmnElement="Flow_Start">
+        <di:waypoint x="156" y="300"/>
+        <di:waypoint x="240" y="300"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Express_di" bpmnElement="Flow_Express">
+        <di:waypoint x="265" y="275"/>
+        <di:waypoint x="265" y="220"/>
+        <di:waypoint x="370" y="220"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="274" y="194" width="60" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Standard_di" bpmnElement="Flow_Standard">
+        <di:waypoint x="265" y="325"/>
+        <di:waypoint x="265" y="400"/>
+        <di:waypoint x="370" y="400"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="274" y="374" width="64" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ExpressDone_di" bpmnElement="Flow_ExpressDone">
+        <di:waypoint x="470" y="220"/>
+        <di:waypoint x="585" y="220"/>
+        <di:waypoint x="585" y="275"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="494" y="194" width="70" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_StandardDone_di" bpmnElement="Flow_StandardDone">
+        <di:waypoint x="470" y="400"/>
+        <di:waypoint x="585" y="400"/>
+        <di:waypoint x="585" y="325"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ToFork_di" bpmnElement="Flow_ToFork">
+        <di:waypoint x="610" y="300"/>
+        <di:waypoint x="690" y="300"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P1_di" bpmnElement="Flow_P1">
+        <di:waypoint x="715" y="275"/>
+        <di:waypoint x="715" y="220"/>
+        <di:waypoint x="820" y="220"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P2_di" bpmnElement="Flow_P2">
+        <di:waypoint x="715" y="325"/>
+        <di:waypoint x="715" y="400"/>
+        <di:waypoint x="820" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P3_di" bpmnElement="Flow_P3">
+        <di:waypoint x="920" y="220"/>
+        <di:waypoint x="1035" y="220"/>
+        <di:waypoint x="1035" y="275"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P4_di" bpmnElement="Flow_P4">
+        <di:waypoint x="920" y="400"/>
+        <di:waypoint x="1035" y="400"/>
+        <di:waypoint x="1035" y="325"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Wrap_di" bpmnElement="Flow_Wrap">
+        <di:waypoint x="1060" y="300"/>
+        <di:waypoint x="1140" y="300"/>
+        <di:waypoint x="1140" y="520"/>
+        <di:waypoint x="140" y="520"/>
+        <di:waypoint x="140" y="700"/>
+        <di:waypoint x="240" y="700"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Email_di" bpmnElement="Flow_Email">
+        <di:waypoint x="265" y="675"/>
+        <di:waypoint x="265" y="620"/>
+        <di:waypoint x="370" y="620"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="274" y="594" width="50" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Sms_di" bpmnElement="Flow_Sms">
+        <di:waypoint x="265" y="725"/>
+        <di:waypoint x="265" y="800"/>
+        <di:waypoint x="370" y="800"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="274" y="774" width="44" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EmailDone_di" bpmnElement="Flow_EmailDone">
+        <di:waypoint x="470" y="620"/>
+        <di:waypoint x="585" y="620"/>
+        <di:waypoint x="585" y="675"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SmsDone_di" bpmnElement="Flow_SmsDone">
+        <di:waypoint x="470" y="800"/>
+        <di:waypoint x="585" y="800"/>
+        <di:waypoint x="585" y="725"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ToComplex_di" bpmnElement="Flow_ToComplex">
+        <di:waypoint x="610" y="700"/>
+        <di:waypoint x="690" y="700"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C1_di" bpmnElement="Flow_C1">
+        <di:waypoint x="715" y="675"/>
+        <di:waypoint x="715" y="620"/>
+        <di:waypoint x="820" y="620"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C2_di" bpmnElement="Flow_C2">
+        <di:waypoint x="715" y="725"/>
+        <di:waypoint x="715" y="800"/>
+        <di:waypoint x="820" y="800"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C3_di" bpmnElement="Flow_C3">
+        <di:waypoint x="920" y="620"/>
+        <di:waypoint x="1035" y="620"/>
+        <di:waypoint x="1035" y="675"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C4_di" bpmnElement="Flow_C4">
+        <di:waypoint x="920" y="800"/>
+        <di:waypoint x="1035" y="800"/>
+        <di:waypoint x="1035" y="725"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ToEvent_di" bpmnElement="Flow_ToEvent">
+        <di:waypoint x="1060" y="700"/>
+        <di:waypoint x="1140" y="700"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_E1_di" bpmnElement="Flow_E1">
+        <di:waypoint x="1165" y="675"/>
+        <di:waypoint x="1165" y="620"/>
+        <di:waypoint x="1270" y="620"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_E2_di" bpmnElement="Flow_E2">
+        <di:waypoint x="1165" y="725"/>
+        <di:waypoint x="1165" y="800"/>
+        <di:waypoint x="1270" y="800"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_E3_di" bpmnElement="Flow_E3">
+        <di:waypoint x="1306" y="620"/>
+        <di:waypoint x="1400" y="620"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_E4_di" bpmnElement="Flow_E4">
+        <di:waypoint x="1306" y="800"/>
+        <di:waypoint x="1400" y="800"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- instantiating event-based gateways -->
+      <bpmndi:BPMNShape id="Note_Instantiate_di" bpmnElement="Note_Instantiate">
+        <dc:Bounds x="60" y="938" width="190" height="44"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_EvX_di" bpmnElement="Gw_EvX">
+        <dc:Bounds x="400" y="935" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="270" y="953" width="120" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_X1_di" bpmnElement="Ev_X1">
+        <dc:Bounds x="530" y="880" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="498" y="922" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_X2_di" bpmnElement="Ev_X2">
+        <dc:Bounds x="530" y="990" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="498" y="1032" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_X_di" bpmnElement="Task_X">
+        <dc:Bounds x="660" y="920" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_X_di" bpmnElement="End_X">
+        <dc:Bounds x="820" y="942" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="788" y="984" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_X1_di" bpmnElement="Flow_X1">
+        <di:waypoint x="425" y="935"/>
+        <di:waypoint x="425" y="898"/>
+        <di:waypoint x="530" y="898"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_X2_di" bpmnElement="Flow_X2">
+        <di:waypoint x="425" y="985"/>
+        <di:waypoint x="425" y="1008"/>
+        <di:waypoint x="530" y="1008"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_X3_di" bpmnElement="Flow_X3">
+        <di:waypoint x="566" y="898"/>
+        <di:waypoint x="620" y="898"/>
+        <di:waypoint x="620" y="940"/>
+        <di:waypoint x="660" y="940"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_X4_di" bpmnElement="Flow_X4">
+        <di:waypoint x="566" y="1008"/>
+        <di:waypoint x="620" y="1008"/>
+        <di:waypoint x="620" y="980"/>
+        <di:waypoint x="660" y="980"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_X5_di" bpmnElement="Flow_X5">
+        <di:waypoint x="760" y="960"/>
+        <di:waypoint x="820" y="960"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNShape id="Gw_EvP_di" bpmnElement="Gw_EvP">
+        <dc:Bounds x="1060" y="935" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="930" y="953" width="120" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Y1_di" bpmnElement="Ev_Y1">
+        <dc:Bounds x="1190" y="880" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1158" y="922" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ev_Y2_di" bpmnElement="Ev_Y2">
+        <dc:Bounds x="1190" y="990" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1158" y="1032" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Y_di" bpmnElement="Task_Y">
+        <dc:Bounds x="1320" y="920" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Y_di" bpmnElement="End_Y">
+        <dc:Bounds x="1480" y="942" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1448" y="984" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Y1_di" bpmnElement="Flow_Y1">
+        <di:waypoint x="1085" y="935"/>
+        <di:waypoint x="1085" y="898"/>
+        <di:waypoint x="1190" y="898"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Y2_di" bpmnElement="Flow_Y2">
+        <di:waypoint x="1085" y="985"/>
+        <di:waypoint x="1085" y="1008"/>
+        <di:waypoint x="1190" y="1008"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Y3_di" bpmnElement="Flow_Y3">
+        <di:waypoint x="1226" y="898"/>
+        <di:waypoint x="1280" y="898"/>
+        <di:waypoint x="1280" y="940"/>
+        <di:waypoint x="1320" y="940"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Y4_di" bpmnElement="Flow_Y4">
+        <di:waypoint x="1226" y="1008"/>
+        <di:waypoint x="1280" y="1008"/>
+        <di:waypoint x="1280" y="980"/>
+        <di:waypoint x="1320" y="980"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Y5_di" bpmnElement="Flow_Y5">
+        <di:waypoint x="1420" y="960"/>
+        <di:waypoint x="1480" y="960"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

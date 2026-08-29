@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Executable order-fulfilment workflow — a parallel fork/join whose payment
+  branch throws, routing the token through an error boundary event and a
+  retry before rejoining. Code blocks and tests are embedded in the file.
+-->
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Definitions_ExecutableParallel"
+    targetNamespace="http://bpmn-svelte-flow/fixtures">
+
+  <bpmn:process id="Process_Fulfilment" isExecutable="true">
+
+    <bpmn:extensionElements>
+      <bsf:test name="the join merges all three branches" payload='{"card": "valid"}'>
+        assert(state.visited.has('Gw_Join'), 'the joining gateway is reached');
+        assert.equal(payload.stockReserved, true, 'stock branch merged');
+        assert.equal(payload.paid, true, 'payment branch merged');
+        assert.equal(payload.labelId, 'LBL-77', 'label branch merged');
+        assert.equal(payloads.length, 1, 'the three tokens merge into one');
+      </bsf:test>
+      <bsf:test name="a declined card takes the error boundary" payload='{"card": "expired"}'>
+        assert(state.visited.has('Bnd_Declined'), 'the error boundary catches the throw');
+        assert(state.visited.has('Task_Retry'), 'the retry task runs');
+        assert.equal(payload.retried, true);
+        assert.equal(payload.paid, true, 'the retry pays the order');
+        assert(state.finished, 'the workflow still completes');
+      </bsf:test>
+      <bsf:test name="a good card never touches the boundary path" payload='{"card": "valid"}'>
+        assert(!state.visited.has('Bnd_Declined'), 'no error is raised');
+        assert(!state.visited.has('Task_Retry'), 'no retry is needed');
+        assert(state.visited.has('Task_Payment'), 'the payment task still runs');
+        assert(state.finished);
+      </bsf:test>
+      <bsf:test name="dispatch happens after every branch merged" payload='{"card": "expired"}'>
+        assert(state.visited.has('Task_Dispatch'), 'dispatch runs once');
+        assert.equal(payload.dispatched, true);
+        assert.equal(payload.stockReserved, true);
+        assert.equal(payload.labelId, 'LBL-77');
+        assert(state.visited.has('End_Ok'), 'the happy end event is reached');
+      </bsf:test>
+    </bpmn:extensionElements>
+
+    <bpmn:startEvent id="Start_1" name="Order placed">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:parallelGateway id="Gw_Fork">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_A</bpmn:outgoing>
+      <bpmn:outgoing>Flow_B</bpmn:outgoing>
+      <bpmn:outgoing>Flow_C</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:serviceTask id="Task_Stock" name="Reserve stock">
+      <bpmn:extensionElements>
+        <bsf:script>payload.stockReserved = true;</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_A</bpmn:incoming>
+      <bpmn:outgoing>Flow_A2</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_Payment" name="Charge card">
+      <bpmn:extensionElements>
+        <bsf:script>if (payload.card !== "valid") {
+  throw new Error("card declined");
+}
+payload.paid = true;</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_B</bpmn:incoming>
+      <bpmn:outgoing>Flow_B2</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:boundaryEvent id="Bnd_Declined" name="Declined" attachedToRef="Task_Payment">
+      <bpmn:outgoing>Flow_Err</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="Bnd_Declined_def"/>
+    </bpmn:boundaryEvent>
+
+    <bpmn:userTask id="Task_Retry" name="Ask for another card">
+      <bpmn:extensionElements>
+        <bsf:script>payload.retried = true;
+payload.paid = true;</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Err</bpmn:incoming>
+      <bpmn:outgoing>Flow_R</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_Label" name="Print label">
+      <bpmn:extensionElements>
+        <bsf:script>payload.labelId = "LBL-77";</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_C</bpmn:incoming>
+      <bpmn:outgoing>Flow_C2</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gw_PayMerge">
+      <bpmn:incoming>Flow_B2</bpmn:incoming>
+      <bpmn:incoming>Flow_R</bpmn:incoming>
+      <bpmn:outgoing>Flow_B3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:parallelGateway id="Gw_Join">
+      <bpmn:incoming>Flow_A2</bpmn:incoming>
+      <bpmn:incoming>Flow_B3</bpmn:incoming>
+      <bpmn:incoming>Flow_C2</bpmn:incoming>
+      <bpmn:outgoing>Flow_D</bpmn:outgoing>
+    </bpmn:parallelGateway>
+
+    <bpmn:sendTask id="Task_Dispatch" name="Dispatch order">
+      <bpmn:extensionElements>
+        <bsf:script>payload.dispatched = true;</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_D</bpmn:incoming>
+      <bpmn:outgoing>Flow_E</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="End_Ok" name="Order shipped">
+      <bpmn:incoming>Flow_E</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_1" targetRef="Gw_Fork"/>
+    <bpmn:sequenceFlow id="Flow_A" sourceRef="Gw_Fork" targetRef="Task_Stock"/>
+    <bpmn:sequenceFlow id="Flow_B" sourceRef="Gw_Fork" targetRef="Task_Payment"/>
+    <bpmn:sequenceFlow id="Flow_C" sourceRef="Gw_Fork" targetRef="Task_Label"/>
+    <bpmn:sequenceFlow id="Flow_A2" sourceRef="Task_Stock" targetRef="Gw_Join"/>
+    <bpmn:sequenceFlow id="Flow_B2" sourceRef="Task_Payment" targetRef="Gw_PayMerge"/>
+    <bpmn:sequenceFlow id="Flow_Err" sourceRef="Bnd_Declined" targetRef="Task_Retry"/>
+    <bpmn:sequenceFlow id="Flow_R" sourceRef="Task_Retry" targetRef="Gw_PayMerge"/>
+    <bpmn:sequenceFlow id="Flow_B3" sourceRef="Gw_PayMerge" targetRef="Gw_Join"/>
+    <bpmn:sequenceFlow id="Flow_C2" sourceRef="Task_Label" targetRef="Gw_Join"/>
+    <bpmn:sequenceFlow id="Flow_D" sourceRef="Gw_Join" targetRef="Task_Dispatch"/>
+    <bpmn:sequenceFlow id="Flow_E" sourceRef="Task_Dispatch" targetRef="End_Ok"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_Fulfilment">
+    <bpmndi:BPMNPlane id="Plane_Fulfilment" bpmnElement="Process_Fulfilment">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1">
+        <dc:Bounds x="160" y="382" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="128" y="424" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Fork_di" bpmnElement="Gw_Fork">
+        <dc:Bounds x="260" y="375" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Stock_di" bpmnElement="Task_Stock">
+        <dc:Bounds x="380" y="180" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Payment_di" bpmnElement="Task_Payment">
+        <dc:Bounds x="380" y="360" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Bnd_Declined_di" bpmnElement="Bnd_Declined">
+        <dc:Bounds x="392" y="422" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="420" y="462" width="96" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Label_di" bpmnElement="Task_Label">
+        <dc:Bounds x="380" y="600" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Retry_di" bpmnElement="Task_Retry">
+        <dc:Bounds x="560" y="520" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_PayMerge_di" bpmnElement="Gw_PayMerge">
+        <dc:Bounds x="720" y="375" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Join_di" bpmnElement="Gw_Join">
+        <dc:Bounds x="880" y="375" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Dispatch_di" bpmnElement="Task_Dispatch">
+        <dc:Bounds x="1000" y="360" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Ok_di" bpmnElement="End_Ok">
+        <dc:Bounds x="1160" y="382" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1128" y="424" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="196" y="400"/>
+        <di:waypoint x="260" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A_di" bpmnElement="Flow_A">
+        <di:waypoint x="285" y="375"/>
+        <di:waypoint x="285" y="220"/>
+        <di:waypoint x="380" y="220"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B_di" bpmnElement="Flow_B">
+        <di:waypoint x="310" y="400"/>
+        <di:waypoint x="380" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C_di" bpmnElement="Flow_C">
+        <di:waypoint x="285" y="425"/>
+        <di:waypoint x="285" y="640"/>
+        <di:waypoint x="380" y="640"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A2_di" bpmnElement="Flow_A2">
+        <di:waypoint x="480" y="220"/>
+        <di:waypoint x="905" y="220"/>
+        <di:waypoint x="905" y="375"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B2_di" bpmnElement="Flow_B2">
+        <di:waypoint x="480" y="400"/>
+        <di:waypoint x="720" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Err_di" bpmnElement="Flow_Err">
+        <di:waypoint x="410" y="458"/>
+        <di:waypoint x="410" y="560"/>
+        <di:waypoint x="560" y="560"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_R_di" bpmnElement="Flow_R">
+        <di:waypoint x="660" y="560"/>
+        <di:waypoint x="745" y="560"/>
+        <di:waypoint x="745" y="425"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B3_di" bpmnElement="Flow_B3">
+        <di:waypoint x="770" y="400"/>
+        <di:waypoint x="880" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_C2_di" bpmnElement="Flow_C2">
+        <di:waypoint x="480" y="640"/>
+        <di:waypoint x="905" y="640"/>
+        <di:waypoint x="905" y="425"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_D_di" bpmnElement="Flow_D">
+        <di:waypoint x="930" y="400"/>
+        <di:waypoint x="1000" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_E_di" bpmnElement="Flow_E">
+        <di:waypoint x="1100" y="400"/>
+        <di:waypoint x="1160" y="400"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

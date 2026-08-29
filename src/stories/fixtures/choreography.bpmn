@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Choreography — choreography tasks with participant bands, a multi-instance
+  choreography task, a collapsed sub-choreography, a call choreography and a
+  multi-instance participant, wired with sequence flows and a gateway.
+-->
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Definitions_Choreography"
+    targetNamespace="http://bpmn-svelte-flow/fixtures">
+
+  <bpmn:choreography id="Choreography_1">
+    <bpmn:participant id="P_Customer" name="Customer"/>
+    <bpmn:participant id="P_Retailer" name="Retailer"/>
+    <bpmn:participant id="P_Shipper" name="Shipper">
+      <bpmn:participantMultiplicity maximum="3"/>
+    </bpmn:participant>
+
+    <bpmn:startEvent id="Start_1" name="Order started">
+      <bpmn:outgoing>SF_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:choreographyTask id="CT_Place" name="Place order" initiatingParticipantRef="P_Customer">
+      <bpmn:incoming>SF_1</bpmn:incoming>
+      <bpmn:outgoing>SF_2</bpmn:outgoing>
+      <bpmn:participantRef>P_Customer</bpmn:participantRef>
+      <bpmn:participantRef>P_Retailer</bpmn:participantRef>
+    </bpmn:choreographyTask>
+
+    <bpmn:choreographyTask id="CT_Confirm" name="Confirm lines" initiatingParticipantRef="P_Retailer" loopType="MultiInstanceParallel">
+      <bpmn:incoming>SF_2</bpmn:incoming>
+      <bpmn:outgoing>SF_3</bpmn:outgoing>
+      <bpmn:participantRef>P_Retailer</bpmn:participantRef>
+      <bpmn:participantRef>P_Customer</bpmn:participantRef>
+    </bpmn:choreographyTask>
+
+    <bpmn:exclusiveGateway id="Gw_Stock" name="In stock?">
+      <bpmn:incoming>SF_3</bpmn:incoming>
+      <bpmn:outgoing>SF_4</bpmn:outgoing>
+      <bpmn:outgoing>SF_5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:subChoreography id="SC_Deliver" name="Arrange delivery" initiatingParticipantRef="P_Retailer">
+      <bpmn:incoming>SF_4</bpmn:incoming>
+      <bpmn:outgoing>SF_6</bpmn:outgoing>
+      <bpmn:participantRef>P_Retailer</bpmn:participantRef>
+      <bpmn:participantRef>P_Shipper</bpmn:participantRef>
+    </bpmn:subChoreography>
+
+    <bpmn:callChoreography id="CC_Refund" name="Handle refund" initiatingParticipantRef="P_Retailer">
+      <bpmn:incoming>SF_5</bpmn:incoming>
+      <bpmn:outgoing>SF_8</bpmn:outgoing>
+      <bpmn:participantRef>P_Retailer</bpmn:participantRef>
+      <bpmn:participantRef>P_Customer</bpmn:participantRef>
+    </bpmn:callChoreography>
+
+    <bpmn:choreographyTask id="CT_Pay" name="Pay invoice" initiatingParticipantRef="P_Customer">
+      <bpmn:incoming>SF_6</bpmn:incoming>
+      <bpmn:outgoing>SF_7</bpmn:outgoing>
+      <bpmn:participantRef>P_Customer</bpmn:participantRef>
+      <bpmn:participantRef>P_Retailer</bpmn:participantRef>
+    </bpmn:choreographyTask>
+
+    <bpmn:endEvent id="End_Delivered" name="Delivered">
+      <bpmn:incoming>SF_7</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Refunded" name="Refunded">
+      <bpmn:incoming>SF_8</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="SF_1" sourceRef="Start_1" targetRef="CT_Place"/>
+    <bpmn:sequenceFlow id="SF_2" sourceRef="CT_Place" targetRef="CT_Confirm"/>
+    <bpmn:sequenceFlow id="SF_3" sourceRef="CT_Confirm" targetRef="Gw_Stock"/>
+    <bpmn:sequenceFlow id="SF_4" name="yes" sourceRef="Gw_Stock" targetRef="SC_Deliver"/>
+    <bpmn:sequenceFlow id="SF_5" name="no" sourceRef="Gw_Stock" targetRef="CC_Refund"/>
+    <bpmn:sequenceFlow id="SF_6" sourceRef="SC_Deliver" targetRef="CT_Pay"/>
+    <bpmn:sequenceFlow id="SF_7" sourceRef="CT_Pay" targetRef="End_Delivered"/>
+    <bpmn:sequenceFlow id="SF_8" sourceRef="CC_Refund" targetRef="End_Refunded"/>
+  </bpmn:choreography>
+
+  <bpmndi:BPMNDiagram id="Diagram_Choreography">
+    <bpmndi:BPMNPlane id="Plane_Choreography" bpmnElement="Choreography_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1">
+        <dc:Bounds x="120" y="282" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="88" y="324" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT_Place_di" bpmnElement="CT_Place">
+        <dc:Bounds x="210" y="245" width="160" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT_Confirm_di" bpmnElement="CT_Confirm">
+        <dc:Bounds x="430" y="245" width="160" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gw_Stock_di" bpmnElement="Gw_Stock">
+        <dc:Bounds x="700" y="275" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="627" y="248" width="90" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SC_Deliver_di" bpmnElement="SC_Deliver" isExpanded="false">
+        <dc:Bounds x="810" y="150" width="160" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CC_Refund_di" bpmnElement="CC_Refund">
+        <dc:Bounds x="810" y="390" width="160" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT_Pay_di" bpmnElement="CT_Pay">
+        <dc:Bounds x="1030" y="150" width="160" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Delivered_di" bpmnElement="End_Delivered">
+        <dc:Bounds x="1250" y="187" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1218" y="229" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Refunded_di" bpmnElement="End_Refunded">
+        <dc:Bounds x="1030" y="427" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="998" y="469" width="100" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="SF_1_di" bpmnElement="SF_1">
+        <di:waypoint x="156" y="300"/>
+        <di:waypoint x="210" y="300"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_2_di" bpmnElement="SF_2">
+        <di:waypoint x="370" y="300"/>
+        <di:waypoint x="430" y="300"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_3_di" bpmnElement="SF_3">
+        <di:waypoint x="590" y="300"/>
+        <di:waypoint x="700" y="300"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_4_di" bpmnElement="SF_4">
+        <di:waypoint x="725" y="275"/>
+        <di:waypoint x="725" y="205"/>
+        <di:waypoint x="810" y="205"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="734" y="181" width="40" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_5_di" bpmnElement="SF_5">
+        <di:waypoint x="725" y="325"/>
+        <di:waypoint x="725" y="445"/>
+        <di:waypoint x="810" y="445"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="734" y="421" width="40" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_6_di" bpmnElement="SF_6">
+        <di:waypoint x="970" y="205"/>
+        <di:waypoint x="1030" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_7_di" bpmnElement="SF_7">
+        <di:waypoint x="1190" y="205"/>
+        <di:waypoint x="1250" y="205"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SF_8_di" bpmnElement="SF_8">
+        <di:waypoint x="970" y="445"/>
+        <di:waypoint x="1030" y="445"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Activity showcase — every task type, every activity marker, collapsed and
+  expanded sub-processes (embedded, transaction, ad-hoc, event sub-process),
+  a call activity in both forms, and a compensation handler.
+-->
+<bpmn:definitions
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Definitions_ActivityShowcase"
+    targetNamespace="http://bpmn-svelte-flow/fixtures">
+
+  <bpmn:process id="Process_ActivityShowcase" isExecutable="false">
+
+    <bpmn:textAnnotation id="Note_Types"><bpmn:text>Task types</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_Markers"><bpmn:text>Markers and&#10;collapsed activities</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_Expanded"><bpmn:text>Expanded sub-process&#10;and transaction</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_AdHoc"><bpmn:text>Ad-hoc and&#10;event sub-process</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_Comp"><bpmn:text>Compensation handler and&#10;a call activity in context</bpmn:text></bpmn:textAnnotation>
+
+    <!-- row 1: task types -->
+    <bpmn:task id="Task_Abstract" name="Abstract task"/>
+    <bpmn:userTask id="Task_User" name="User task"/>
+    <bpmn:serviceTask id="Task_Service" name="Service task"/>
+    <bpmn:scriptTask id="Task_Script" name="Script task"/>
+    <bpmn:manualTask id="Task_Manual" name="Manual task"/>
+    <bpmn:sendTask id="Task_Send" name="Send task"/>
+    <bpmn:receiveTask id="Task_Receive" name="Receive task"/>
+    <bpmn:businessRuleTask id="Task_Rule" name="Business rule task"/>
+
+    <!-- row 2: markers and collapsed activities -->
+    <bpmn:task id="Task_Loop" name="Loop">
+      <bpmn:standardLoopCharacteristics id="Loop_1"/>
+    </bpmn:task>
+    <bpmn:userTask id="Task_MiPar" name="Parallel multi-instance">
+      <bpmn:multiInstanceLoopCharacteristics id="Mi_1" isSequential="false"/>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_MiSeq" name="Sequential multi-instance">
+      <bpmn:multiInstanceLoopCharacteristics id="Mi_2" isSequential="true"/>
+    </bpmn:serviceTask>
+    <bpmn:task id="Task_CompMarker" name="Compensation activity" isForCompensation="true"/>
+    <bpmn:subProcess id="Sub_Collapsed" name="Collapsed sub-process"/>
+    <bpmn:adHocSubProcess id="AdHoc_Collapsed" name="Collapsed ad-hoc"/>
+    <bpmn:transaction id="Tx_Collapsed" name="Collapsed transaction"/>
+    <bpmn:callActivity id="Call_Collapsed" name="Call activity" calledElement="Process_Quickstart"/>
+
+    <!-- row 3: expanded embedded sub-process -->
+    <bpmn:subProcess id="Sub_Expanded" name="Handle order">
+      <bpmn:startEvent id="Sub_Start">
+        <bpmn:outgoing>Sub_F1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:task id="Sub_Task" name="Pick goods">
+        <bpmn:incoming>Sub_F1</bpmn:incoming>
+        <bpmn:outgoing>Sub_F2</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:endEvent id="Sub_End">
+        <bpmn:incoming>Sub_F2</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Sub_F1" sourceRef="Sub_Start" targetRef="Sub_Task"/>
+      <bpmn:sequenceFlow id="Sub_F2" sourceRef="Sub_Task" targetRef="Sub_End"/>
+    </bpmn:subProcess>
+
+    <!-- row 3: expanded transaction with a cancel boundary event -->
+    <bpmn:transaction id="Tx_Expanded" name="Book trip">
+      <bpmn:startEvent id="Tx_Start">
+        <bpmn:outgoing>Tx_F1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="Tx_Task" name="Reserve seat">
+        <bpmn:incoming>Tx_F1</bpmn:incoming>
+        <bpmn:outgoing>Tx_F2</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="Tx_End">
+        <bpmn:incoming>Tx_F2</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Tx_F1" sourceRef="Tx_Start" targetRef="Tx_Task"/>
+      <bpmn:sequenceFlow id="Tx_F2" sourceRef="Tx_Task" targetRef="Tx_End"/>
+    </bpmn:transaction>
+    <bpmn:boundaryEvent id="Tx_Cancel" name="Cancelled" attachedToRef="Tx_Expanded">
+      <bpmn:cancelEventDefinition id="Tx_Cancel_def"/>
+    </bpmn:boundaryEvent>
+
+    <!-- row 4: expanded ad-hoc sub-process -->
+    <bpmn:adHocSubProcess id="AdHoc_Expanded" name="Manage content">
+      <bpmn:task id="AdHoc_Task1" name="Write copy"/>
+      <bpmn:task id="AdHoc_Task2" name="Add images"/>
+    </bpmn:adHocSubProcess>
+
+    <!-- row 4: expanded event sub-process, non-interrupting escalation start -->
+    <bpmn:subProcess id="EventSub_Expanded" name="Escalation handler" triggeredByEvent="true">
+      <bpmn:startEvent id="EventSub_Start" name="Escalated" isInterrupting="false">
+        <bpmn:escalationEventDefinition id="EventSub_Start_def"/>
+        <bpmn:outgoing>EventSub_F1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:userTask id="EventSub_Task" name="Notify manager">
+        <bpmn:incoming>EventSub_F1</bpmn:incoming>
+        <bpmn:outgoing>EventSub_F2</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:endEvent id="EventSub_End">
+        <bpmn:incoming>EventSub_F2</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="EventSub_F1" sourceRef="EventSub_Start" targetRef="EventSub_Task"/>
+      <bpmn:sequenceFlow id="EventSub_F2" sourceRef="EventSub_Task" targetRef="EventSub_End"/>
+    </bpmn:subProcess>
+
+    <!-- row 5: compensation handler and an expanded call activity -->
+    <bpmn:serviceTask id="Task_Book" name="Book flight"/>
+    <bpmn:boundaryEvent id="Boundary_Comp" name="Compensate" attachedToRef="Task_Book">
+      <bpmn:compensateEventDefinition id="Boundary_Comp_def"/>
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="Task_CancelFlight" name="Cancel flight" isForCompensation="true"/>
+    <bpmn:association id="Assoc_Comp" associationDirection="One" sourceRef="Boundary_Comp" targetRef="Task_CancelFlight"/>
+
+    <bpmn:subProcess id="Sub_Credit" name="Check credit">
+      <bpmn:callActivity id="Call_Score" name="Score applicant" calledElement="Process_Scoring"/>
+    </bpmn:subProcess>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_ActivityShowcase">
+    <bpmndi:BPMNPlane id="Plane_ActivityShowcase" bpmnElement="Process_ActivityShowcase">
+
+      <bpmndi:BPMNShape id="Note_Types_di" bpmnElement="Note_Types">
+        <dc:Bounds x="60" y="100" width="210" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Markers_di" bpmnElement="Note_Markers">
+        <dc:Bounds x="60" y="248" width="210" height="44"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Expanded_di" bpmnElement="Note_Expanded">
+        <dc:Bounds x="60" y="468" width="210" height="44"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_AdHoc_di" bpmnElement="Note_AdHoc">
+        <dc:Bounds x="60" y="768" width="210" height="44"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Comp_di" bpmnElement="Note_Comp">
+        <dc:Bounds x="60" y="988" width="210" height="44"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 1 -->
+      <bpmndi:BPMNShape id="Task_Abstract_di" bpmnElement="Task_Abstract">
+        <dc:Bounds x="300" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_User_di" bpmnElement="Task_User">
+        <dc:Bounds x="430" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Service_di" bpmnElement="Task_Service">
+        <dc:Bounds x="560" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Script_di" bpmnElement="Task_Script">
+        <dc:Bounds x="690" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Manual_di" bpmnElement="Task_Manual">
+        <dc:Bounds x="820" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Send_di" bpmnElement="Task_Send">
+        <dc:Bounds x="950" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Receive_di" bpmnElement="Task_Receive">
+        <dc:Bounds x="1080" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Rule_di" bpmnElement="Task_Rule">
+        <dc:Bounds x="1210" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 2 -->
+      <bpmndi:BPMNShape id="Task_Loop_di" bpmnElement="Task_Loop">
+        <dc:Bounds x="300" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MiPar_di" bpmnElement="Task_MiPar">
+        <dc:Bounds x="430" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MiSeq_di" bpmnElement="Task_MiSeq">
+        <dc:Bounds x="560" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CompMarker_di" bpmnElement="Task_CompMarker">
+        <dc:Bounds x="690" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_Collapsed_di" bpmnElement="Sub_Collapsed" isExpanded="false">
+        <dc:Bounds x="820" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AdHoc_Collapsed_di" bpmnElement="AdHoc_Collapsed" isExpanded="false">
+        <dc:Bounds x="950" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tx_Collapsed_di" bpmnElement="Tx_Collapsed" isExpanded="false">
+        <dc:Bounds x="1080" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Call_Collapsed_di" bpmnElement="Call_Collapsed" isExpanded="false">
+        <dc:Bounds x="1210" y="230" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 3: expanded sub-process -->
+      <bpmndi:BPMNShape id="Sub_Expanded_di" bpmnElement="Sub_Expanded" isExpanded="true">
+        <dc:Bounds x="300" y="400" width="380" height="200"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_Start_di" bpmnElement="Sub_Start">
+        <dc:Bounds x="340" y="482" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_Task_di" bpmnElement="Sub_Task">
+        <dc:Bounds x="430" y="460" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_End_di" bpmnElement="Sub_End">
+        <dc:Bounds x="600" y="482" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Sub_F1_di" bpmnElement="Sub_F1">
+        <di:waypoint x="376" y="500"/>
+        <di:waypoint x="430" y="500"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Sub_F2_di" bpmnElement="Sub_F2">
+        <di:waypoint x="530" y="500"/>
+        <di:waypoint x="600" y="500"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- row 3: expanded transaction -->
+      <bpmndi:BPMNShape id="Tx_Expanded_di" bpmnElement="Tx_Expanded" isExpanded="true">
+        <dc:Bounds x="760" y="400" width="380" height="200"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tx_Start_di" bpmnElement="Tx_Start">
+        <dc:Bounds x="800" y="482" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tx_Task_di" bpmnElement="Tx_Task">
+        <dc:Bounds x="890" y="460" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tx_End_di" bpmnElement="Tx_End">
+        <dc:Bounds x="1060" y="482" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tx_Cancel_di" bpmnElement="Tx_Cancel">
+        <dc:Bounds x="900" y="582" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="870" y="622" width="96" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Tx_F1_di" bpmnElement="Tx_F1">
+        <di:waypoint x="836" y="500"/>
+        <di:waypoint x="890" y="500"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Tx_F2_di" bpmnElement="Tx_F2">
+        <di:waypoint x="990" y="500"/>
+        <di:waypoint x="1060" y="500"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- row 4: expanded ad-hoc sub-process -->
+      <bpmndi:BPMNShape id="AdHoc_Expanded_di" bpmnElement="AdHoc_Expanded" isExpanded="true">
+        <dc:Bounds x="300" y="700" width="380" height="200"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AdHoc_Task1_di" bpmnElement="AdHoc_Task1">
+        <dc:Bounds x="340" y="760" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AdHoc_Task2_di" bpmnElement="AdHoc_Task2">
+        <dc:Bounds x="500" y="760" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <!-- row 4: expanded event sub-process -->
+      <bpmndi:BPMNShape id="EventSub_Expanded_di" bpmnElement="EventSub_Expanded" isExpanded="true">
+        <dc:Bounds x="760" y="700" width="380" height="200"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EventSub_Start_di" bpmnElement="EventSub_Start">
+        <dc:Bounds x="800" y="782" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EventSub_Task_di" bpmnElement="EventSub_Task">
+        <dc:Bounds x="890" y="760" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EventSub_End_di" bpmnElement="EventSub_End">
+        <dc:Bounds x="1060" y="782" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="EventSub_F1_di" bpmnElement="EventSub_F1">
+        <di:waypoint x="836" y="800"/>
+        <di:waypoint x="890" y="800"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="EventSub_F2_di" bpmnElement="EventSub_F2">
+        <di:waypoint x="990" y="800"/>
+        <di:waypoint x="1060" y="800"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- row 5: compensation -->
+      <bpmndi:BPMNShape id="Task_Book_di" bpmnElement="Task_Book">
+        <dc:Bounds x="300" y="960" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Comp_di" bpmnElement="Boundary_Comp">
+        <dc:Bounds x="332" y="1022" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="302" y="1062" width="96" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CancelFlight_di" bpmnElement="Task_CancelFlight">
+        <dc:Bounds x="500" y="1000" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Assoc_Comp_di" bpmnElement="Assoc_Comp">
+        <di:waypoint x="368" y="1040"/>
+        <di:waypoint x="500" y="1040"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- row 5: a call activity inside an expanded sub-process -->
+      <bpmndi:BPMNShape id="Sub_Credit_di" bpmnElement="Sub_Credit" isExpanded="true">
+        <dc:Bounds x="760" y="940" width="320" height="160"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Call_Score_di" bpmnElement="Call_Score" isExpanded="false">
+        <dc:Bounds x="870" y="1000" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
