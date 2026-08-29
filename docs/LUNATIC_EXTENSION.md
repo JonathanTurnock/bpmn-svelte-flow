@@ -1,18 +1,17 @@
 # The `lunatic:` execution extension (design spec, v0.1)
 
-*Companion to `PRODUCT_BRIEF.md`; grounded by `spike/FINDINGS.md`.*
+*Companion to `PRODUCT_BRIEF.md`.*
 
 ## Position
 
 BPMN 2.0 pins down structure, control-flow semantics, routing
 (`conditionExpression` + default flows), script-task bodies, and
 documentation — those all live in **standard constructs and never in this
-extension**. What the spec deliberately leaves open is **task implementation
-binding** (every engine fills that hole with its own dialect: `zeebe:*`,
-`camunda:*`, `flowable:*`) plus two things no engine carries at all
-(**scenarios** and **tests**).
+extension**. What the spec leaves open to each tool is **task implementation
+binding** (engines declare it in their own dialects: `zeebe:*`, `camunda:*`,
+`flowable:*`), plus **scenarios** and **tests**.
 
-`lunatic:` is our dialect for exactly that gap — the browser runtime's
+`lunatic:` is our dialect for exactly that space — the browser runtime's
 equivalent of `zeebe:TaskDefinition` — declared under
 `bpmn:extensionElements` so every conformant tool ignores and preserves it.
 
@@ -25,8 +24,7 @@ equivalent of `zeebe:TaskDefinition` — declared under
 3. Everything is inspectable text: JS bodies, JSON payloads, name/value
    properties. No opaque blobs.
 
-Namespace: `xmlns:lunatic="https://lunatic.dev/schema/1.0"` (name/URI is an
-open question in the brief).
+Namespace: `xmlns:lunatic="https://lunatic.dev/schema/1.0"`.
 
 ## Vocabulary
 
@@ -34,8 +32,9 @@ open question in the brief).
 On service / send / receive / user / business-rule tasks and call
 activities. JS body run by the studio simulator when the token arrives;
 mutates `payload` (and sees `participant` inside a multi-instance scope).
-This is what the spike's engine adapter also executed as the real binding —
-proving mocks double as reference implementations.
+Mocks double as reference implementations: an engine adapter can execute
+them directly as the task binding, and the binding pass can hand them to a
+target engine as worker stubs.
 
 ```xml
 <bpmn:serviceTask id="Task_Save" name="Save message (Messages API)">
@@ -47,11 +46,10 @@ proving mocks double as reference implementations.
 
 ### `lunatic:binding` — declared real-world implementation intent
 Optional, same elements as `lunatic:mock`. *Descriptive, not executable*: a
-`type` plus open name/value properties — deliberately mirroring how thin
-`zeebe:TaskDefinition` is, and deliberately NOT a connector framework (the
-spec's WSDL machinery died of that ambition). Three consumers:
-the **binding inventory** (build-or-buy pack) prints it; the **binding
-pass** maps it to a target engine's dialect; the simulator ignores it.
+thin declaration — a `type` plus open name/value properties, the same shape
+as `zeebe:TaskDefinition`. Three consumers: the **binding inventory**
+(build-or-buy pack) prints it; the **binding pass** maps it to a target
+engine's dialect; the simulator runs the mock alongside it.
 
 ```xml
 <bpmn:extensionElements>
@@ -64,8 +62,8 @@ pass** maps it to a target engine's dialect; the simulator ignores it.
 ```
 
 Suggested starter `type` values: `http`, `kafka-producer`, `queue`,
-`decision`, `stream-consumer`, `manual`, `custom`. Unknown types are legal —
-they just render as "custom" in the inventory.
+`decision`, `stream-consumer`, `manual`, `custom`. The type list is open —
+a type the inventory has no template for renders as "custom".
 
 ### `lunatic:test` — embedded acceptance test
 On the process (or definitions). Runs a fresh headless simulation with the
@@ -75,23 +73,24 @@ On the process (or definitions). Runs a fresh headless simulation with the
 ### `lunatic:scenario` — named walkthrough input
 On the process. `name`, `payload` (JSON), optional `description`. Drives the
 interactive token walkthrough; a test is conceptually a scenario with
-assertions (brief open question #4 proposes unifying them in schema).
+assertions.
 
 ### `lunatic:collection` — multi-instance data binding
-On `bpmn:multiInstanceLoopCharacteristics`. The spec's own per-instance
-mechanism (`loopDataInputRef`/`inputDataItem`) is unusable in practice —
-every engine invented this exact extension, so we need ours too:
+On `bpmn:multiInstanceLoopCharacteristics`: names the collection to iterate
+and the per-instance variable — the same shape as
+`zeebe:LoopCharacteristics` and `camunda:collection`/`elementVariable`, so
+the binding pass maps it directly:
 
 ```xml
 <bpmn:multiInstanceLoopCharacteristics isSequential="true">
-  <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">count(participants)</bpmn:loopCardinality>
+  <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">payload.participants.length</bpmn:loopCardinality>
   <lunatic:collection expression="participants" elementVariable="participant"/>
 </bpmn:multiInstanceLoopCharacteristics>
 ```
 
-The standard `loopCardinality` stays (rule 1: engines that only need a count
-still get it); `lunatic:collection` adds what the simulator and binding pass
-need. Without it the sim falls back to cardinality-only (spike behaviour).
+The standard `loopCardinality` stays (rule 1: a consumer that only needs a
+count gets it from the standard attribute); `lunatic:collection` adds the
+per-instance binding the simulator and binding pass use.
 
 ### `lunatic:sample` — message/signal payload for simulation
 Optional, on `bpmn:message` (or signal). What the simulator injects when the
@@ -114,7 +113,7 @@ catch event fires, and the correlation hint the binding pass uses:
 | Binding pass (per-engine export) | passes through | optional worker-stub source | **maps to engine dialect** | — | maps (e.g. `zeebe:LoopCharacteristics`, `zeebe:Subscription`) |
 | Build-or-buy inventory | documentation + contracts | reference behaviour | **the implementation list** | acceptance criteria | — |
 
-## Binding-pass mapping sketch (per spike findings)
+## Binding-pass mapping sketch
 
 | `lunatic:` | Camunda 8 | Camunda 7 / Flowable |
 |---|---|---|
@@ -129,7 +128,7 @@ catch event fires, and the correlation hint the binding pass uses:
 
 ```json
 {
-  "name": "Lunatic", "prefix": "poc",
+  "name": "Lunatic", "prefix": "lunatic",
   "uri": "https://lunatic.dev/schema/1.0",
   "types": [
     { "name": "Mock", "superClass": ["Element"], "properties": [
@@ -157,15 +156,3 @@ catch event fires, and the correlation hint the binding pass uses:
   ]
 }
 ```
-
-## Honest edges
-
-- `lunatic:collection` carries execution-relevant data (like every engine's MI
-  extension). The *diagram* survives without it; per-instance fidelity does
-  not. This is the closest the extension comes to bending rule 2, and it is
-  the same bend every vendor made for the same reason.
-- `lunatic:mock` bodies are JS by definition (browser runtime); a `language`
-  attribute is reserved for the future but not v1.
-- `lunatic:binding` types are a folksonomy, not a registry — the inventory
-  degrades gracefully to "custom", and that is fine: its job is evidence
-  for humans, not machine-executable config.

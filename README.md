@@ -62,10 +62,9 @@ peer dependency; `@xyflow/svelte` and `bpmn-moddle` are pulled in automatically.
 
 ## Simulation
 
-`<BpmnSimulator>` adds token-flow simulation on top of the renderer. Instead of
-implementing an expression language, behaviour is attached to nodes as small
-**JavaScript attachment boxes**: click a node on the canvas and write plain JS
-against the payload.
+`<BpmnSimulator>` adds token-flow simulation on top of the renderer. Behaviour
+is attached to nodes as small **JavaScript attachment boxes**: click a node on
+the canvas and write plain JS against the payload.
 
 ```svelte
 <script>

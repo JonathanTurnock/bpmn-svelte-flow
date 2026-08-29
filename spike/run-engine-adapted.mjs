@@ -1,5 +1,5 @@
-// Empirical spike, part 2: run the UNMODIFIED Lunatic artifact in
-// bpmn-engine through a generic adapter that
+// Run the UNMODIFIED Lunatic artifact in bpmn-engine through a generic
+// adapter that
 //   1. accepts the standard MIME scriptFormat (text/javascript),
 //   2. evaluates FEEL (the file's declared expressionLanguage) via feelin
 //      for sequence-flow conditions and loopCardinality,

@@ -10,9 +10,9 @@ import type {
 } from '../types.js';
 
 /**
- * A friendly JSON authoring format for diagrams. It is NOT BPMN DI — shapes
- * get sensible default sizes and edges are auto-routed between node borders
- * when waypoints are omitted, so documents stay terse:
+ * A friendly JSON authoring format for diagrams: shapes get sensible default
+ * sizes and edges are auto-routed between node borders when waypoints are
+ * omitted, so documents stay terse:
  *
  * ```json
  * {

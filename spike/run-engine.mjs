@@ -1,5 +1,7 @@
-// Empirical spike: run the Lunatic artifact in bpmn-engine (a third-party
-// Node.js BPMN 2.0 workflow engine) and report what happens.
+// Run the Lunatic artifact in bpmn-engine (a third-party Node.js BPMN 2.0
+// workflow engine) with task implementations bound natively through the
+// engine's services API — the "build" exit: engineers implement the ports
+// the model declares.
 // Usage: node spike/run-engine.mjs <file.bpmn> <happy|denied>
 import { Engine } from 'bpmn-engine';
 import { readFileSync } from 'node:fs';
