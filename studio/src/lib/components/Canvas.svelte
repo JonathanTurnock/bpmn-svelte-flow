@@ -37,9 +37,11 @@
         .filter(Boolean)
         .join(' ')
     }));
+    const tokens = studio.tokenEdges;
     edges = graph.edges.map((e) => ({
       ...e,
-      class: traversed.has(e.id) ? 'bsf-traversed' : ''
+      class: traversed.has(e.id) ? 'bsf-traversed' : '',
+      data: { ...e.data!, token: tokens[e.id] }
     }));
   });
 

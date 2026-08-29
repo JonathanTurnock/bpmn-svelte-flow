@@ -116,6 +116,12 @@ class StudioStore {
   definitions: any = null;
   engine: BsfEngine | null = null;
   runScenarioName = '';
+  /** True while an animated (token-playback) run is advancing on its timer. */
+  playing = $state(false);
+  /** Edges a token crossed in the latest playback tick: edge id -> replay seq. */
+  tokenEdges: Record<string, number> = {};
+  private playTimer: ReturnType<typeof setInterval> | null = null;
+  private tokenSeq = 0;
   private moddle = new BpmnModdle({ bsf: bsfSchema });
   private undoStack: string[] = [];
   private redoStack: string[] = [];
@@ -1049,6 +1055,7 @@ class StudioStore {
   }
 
   startRun(opts: { scenario?: string; payload?: Record<string, unknown> } = {}) {
+    this.stopPlayback();
     const initial = opts.payload !== undefined ? opts.payload : this.scenarioPayload(opts.scenario);
     this.engine = new BsfEngine(this.definitions, this.process);
     this.engine.start(JSON.parse(JSON.stringify(initial)));
@@ -1064,6 +1071,57 @@ class StudioStore {
     return this.engine!.state;
   }
 
+  /**
+   * Animated run: advances the engine one step at a time on a timer so tokens
+   * visibly travel the diagram — each tick marks the edges crossed in that
+   * step, which the canvas renders as dots moving along the edge paths.
+   */
+  playRun(opts: { scenario?: string; payload?: Record<string, unknown> } = {}, intervalMs = 500) {
+    this.startRun(opts);
+    this.playing = true;
+    this.playTimer = setInterval(() => this.playTick(), intervalMs);
+    return this.engine!.state;
+  }
+
+  private playTick() {
+    const engine = this.engine;
+    if (!engine || engine.state.finished) {
+      this.stopPlayback();
+      return;
+    }
+    const before = engine.state.traversedEdges;
+    const beforeSnapshot = new Set(before);
+    engine.step();
+    const crossed: Record<string, number> = {};
+    for (const id of engine.state.traversedEdges) {
+      if (!beforeSnapshot.has(id)) crossed[id] = ++this.tokenSeq;
+    }
+    this.tokenEdges = crossed;
+    if (engine.state.finished) this.stopPlayback(false);
+    this.runVersion += 1;
+  }
+
+  /** Stops the playback timer; the run itself keeps whatever state it has. */
+  stopPlayback(clearTokens = true) {
+    if (this.playTimer) clearInterval(this.playTimer);
+    this.playTimer = null;
+    this.playing = false;
+    if (clearTokens && Object.keys(this.tokenEdges).length) {
+      this.tokenEdges = {};
+      this.runVersion += 1;
+    }
+  }
+
+  /** Fast-forward: abandon the animation and complete the run instantly. */
+  finishRun() {
+    this.stopPlayback();
+    if (this.engine && !this.engine.state.finished) {
+      this.engine.runToEnd();
+      this.runVersion += 1;
+    }
+    return this.engine?.state ?? null;
+  }
+
   runToEnd(opts: { scenario?: string; payload?: Record<string, unknown> } = {}) {
     this.startRun(opts);
     this.engine!.runToEnd();
@@ -1072,6 +1130,7 @@ class StudioStore {
   }
 
   resetRun() {
+    this.stopPlayback();
     this.engine = null;
     this.runScenarioName = '';
     this.runVersion += 1;

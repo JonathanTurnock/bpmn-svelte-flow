@@ -148,6 +148,14 @@ export interface BpmnEdgeData extends Record<string, unknown> {
   associationDirection?: 'None' | 'One' | 'Both';
   /** Absolute DI label bounds (if present in the diagram interchange). */
   labelBounds?: Bounds;
+  /**
+   * Simulation token: when set (and > 0), a dot animates once along the edge.
+   * Bump the number to replay the animation (e.g. a loop crossing the same
+   * edge again); clear it to remove the dot.
+   */
+  token?: number;
+  /** Token travel time in seconds (default 0.4). */
+  tokenDur?: number;
 }
 
 export type BpmnFlowNode = Node<BpmnNodeData>;

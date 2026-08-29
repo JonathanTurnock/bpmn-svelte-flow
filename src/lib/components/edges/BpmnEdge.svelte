@@ -217,6 +217,15 @@
       />
     {/if}
 
+    {#if edgeData?.token}
+      {#key edgeData.token}
+        <!-- Simulation token: a dot travelling the edge (SMIL restarts on mount). -->
+        <circle r="5.5" class="bpmn-token">
+          <animateMotion dur="{edgeData.tokenDur ?? 0.4}s" path={trimmedPath} fill="freeze" />
+        </circle>
+      {/key}
+    {/if}
+
     {#if labelLines.length > 0}
       <text
         class="bpmn-edge-label"
@@ -251,5 +260,11 @@
   }
   .bpmn-edge.selected .bpmn-edge-label {
     fill: var(--bpmn-selected, #2563eb);
+  }
+  .bpmn-token {
+    fill: var(--bpmn-token, #2563eb);
+    stroke: var(--bpmn-canvas-bg, #ffffff);
+    stroke-width: 1.5px;
+    pointer-events: none;
   }
 </style>

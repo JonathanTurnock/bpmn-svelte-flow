@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Play, StepForward, RotateCcw } from '@lucide/svelte';
+  import { Play, FastForward, StepForward, RotateCcw } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
@@ -83,8 +83,16 @@
   </div>
 
   <div class="flex gap-2">
-    <Button size="sm" onclick={() => studio.runToEnd(opts())} data-testid="run-button">
-      <Play /> Run
+    <Button
+      size="sm"
+      onclick={() => (studio.playing ? studio.finishRun() : studio.playRun(opts()))}
+      data-testid="run-button"
+    >
+      {#if studio.playing}
+        <FastForward /> Skip
+      {:else}
+        <Play /> Run
+      {/if}
     </Button>
     <Button
       size="sm"
