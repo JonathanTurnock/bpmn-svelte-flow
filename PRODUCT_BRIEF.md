@@ -1,9 +1,12 @@
 # Product Brief — Lunatic
 
-*Status: design draft v2 for discussion — nothing here is implemented.*
+*Status: design draft v3 for discussion — nothing here is implemented.*
 *v2 change: strict standards conformance — the document must import into any
 standards-compliant workflow engine; custom extensions are confined to the
 spec's own extension mechanism and carry no portable semantics.*
+*v3 change: the production-engine ambition (Rust host + Lua) is **dropped as
+an engineering pit**. The browser engine — plain JavaScript, already built —
+is the only engine Lunatic ships. JavaScript is the single script language.*
 *Builds on: the bpmn.io ecosystem, the execution semantics and test-runner
 contract proven in this repo, the buildless `poc/` walkthrough site, and a
 WebMCP-compliant chat client in Chrome (already built, external to this
@@ -79,74 +82,44 @@ Conformance is enforced, not aspirational:
   Camunda Modeler and Flowable's modeler. (Import ≠ run: see the expression
   caveat below.)
 
-**The honest caveat — expression & script language.** XML-level portability
-is fully achievable. *Semantic* portability of expressions is where "any
-engine" is genuinely fuzzy: the spec lets you declare the condition/script
-language but doesn't make engines support any particular one (C7/Flowable
-favour JUEL + JSR-223 scripting; Camunda 8 mandates FEEL; the spec's own
-default is XPath 1.0). Our in-browser engine must therefore evaluate a
-declared language, and we choose ONE primary:
+**The language decision — settled: JavaScript, everywhere.** Script task
+bodies, `lunatic:mock` blocks, and `conditionExpression` bodies are all
+JavaScript, declared honestly in the file (`scriptFormat` /
+`conditionExpression language` = `text/javascript`). Rationale: it is the
+browser engine's native language, richest for mocks, and the spike measured
+that **no** language choice avoids per-engine translation anyway — Camunda 8
+mandates FEEL, C7/Flowable favour JUEL, the spec's default is XPath; whatever
+we pick, the binding pass re-expresses conditions for the target engine, so
+we pick the one with zero cost where the artifact actually executes. FEEL/DMN
+remain a possible future compatibility mode (alongside decision tables), not
+scope.
 
-- **Option A — JavaScript** (`scriptFormat`/`language` = `text/javascript`):
-  richest for mocks, runs natively in the browser, honestly declared in the
-  file; engines with JS scripting run it as-is, others rewrite expressions
-  at binding time.
-- **Option B — FEEL** (`https://www.omg.org/spec/DMN/FEEL/`): the only
-  OMG-standard expression language, evaluable in-browser via `feelin`,
-  native to Camunda 8, and the natural bridge to DMN later — but weaker for
-  imperative mocks.
-- **Option C — Lua** (`scriptFormat` = `text/x-lua`): the language of the
-  platform's own production runtime (Rust host + mlua, below). Choosing it
-  for scripts and mocks makes preview and production share one language —
-  and, when the engine ships, one interpreter.
-- **Current lean (updated for the production runtime): FEEL for
-  `conditionExpression`, Lua for `bpmn:script` bodies and `lunatic:mock`** —
-  conditions get the standards-blessed, engine-portable language; scripts
-  and mocks get the language the real platform executes. Until the Rust
-  engine exists, the studio evaluates Lua via a wasm Lua VM (wasmoon-class)
-  behind the same interface. Open question #2.
+## Decision: no production engine
 
-## The production runtime — Rust host + Lua, previewed as real
+Considered at length and **rejected**: a Lunatic production runtime (a Rust
+host embedding Lua was the candidate). Every line of inquiry — the
+bpmn-engine spike, the Camunda gap ledger, the durable-state and
+reconciliation analysis — converged on the same verdict: another workflow
+engine is an engineering pit, and none of Lunatic's value depends on owning
+one. The value is the **artifact**: modeled, executable-in-browser,
+tested, standards-portable. Production execution belongs to the build-or-buy
+outcome — the team's own code, or a vendor engine the binding pass targets.
 
-The company's own engine (the "build" path made concrete) is **not** the
-browser simulator grown up — it is a **native Rust host embedding Lua**
-(mlua) as the workflow script and binding language. This is one of the most
-battle-proven embedding patterns in industry (OpenResty/nginx, Kong, Redis,
-Tarantool: systems host + Lua orchestration); what has no prior art is the
-combination with standards-BPMN semantics — each half is proven ground.
-
-**Preview parity by construction.** The browser build of Lunatic's engine is
-the *same Rust crate* compiled to a single wasm target (Emscripten-built
-mlua, the wasmoon-proven path; a pure-Rust Lua VM is the fallback if the
-toolchain fights back — settle with a one-day compile spike). The studio
-does not approximate the engine; it runs it. Drift between what the
-modeller watched and what production does becomes structurally impossible.
-
-**The host-function boundary is the mock boundary.** Workflow Lua calls
-host-provided functions (`host.http_post`, `host.kafka_publish`,
-`host.policy_evaluate`). In production the Rust host binds them to real
-infrastructure; in the browser the wasm host binds them to mocks. The
-workflow Lua is byte-identical in both worlds — only the bindings differ —
-and determinism is host-controlled (fixed clock/seed in preview: the dry
-run made literal). `lunatic:mock` therefore targets the host-function
-layer; mock *fidelity* (returning production-shaped data) replaces engine
-drift as the risk to manage.
-
-**Sequencing.** M1 ships on the existing JS simulator behind the
-graph-in/trace-out contract already proven twice in this repo (our
-simulator, the bpmn-engine adapter). The Rust+Lua engine replaces it behind
-the same contract when ready — and simultaneously becomes a first-class
-target in the build-or-buy pack: "build" = this host, and its binding
-inventory is the list of host functions to implement.
+The **browser engine** stays, deliberately boring: the JavaScript simulator
+already built and verified in this repo, extended only to execute the
+canonical file's standard semantics (condition expressions, default flows,
+script tasks) and `lunatic:mock` blocks. It exists to make the artifact
+run, watchable, and testable — nothing more.
 
 ## Positioning: a flow library, not a platform
 
 An explicit non-goal, stated because the comparison invites the confusion:
-Lunatic's engine is **not** a turnkey workflow platform for organisations
-without engineers. It is a **code-organisation discipline made executable**
-— the separation of business logic from infrastructure, DDD-style, with the
-BPMN model as the application/use-case layer and engineers still owning
-every integration.
+Lunatic is **not** a turnkey workflow platform, and (per the decision above)
+ships no production engine at all. What the artifact carries into the real
+build is a **code-organisation discipline**: the separation of business
+logic from infrastructure, DDD-style, with the BPMN model as the
+application/use-case layer and engineers owning every integration — however
+they choose to implement it.
 
 The mapping is direct:
 
@@ -160,14 +133,12 @@ The mapping is direct:
 | Error boundary | Failure policy | model |
 | Payload | The aggregate/DTO moving through the use case | model |
 
-**The one requirement this stance imposes on the engine: externalized
-state.** Execution is deterministic between wait states; at every wait
-state (message catch, timer, user task) the engine suspends and hands the
-host a serializable snapshot (token positions + variables). The host — the
-engineer's code — decides where that snapshot lives and when to resume.
-The engine owns semantics; it never owns storage, clocks, transport, or
-retry policy. This is a snapshot API, not a consensus cluster, and it is
-what makes "integrate your own durability provider" an honest contract.
+**Recommended contract for the build path** (guidance the decision pack
+hands implementers — not a Lunatic engine spec): keep flow position
+explicit and serializable (deterministic segments between wait states;
+suspend/resume snapshots), so recovery loads state instead of re-deriving
+it from side effects. Semantics in the flow layer; storage, clocks,
+transport, and retry policy in adapters.
 
 **Why this doesn't reproduce "any other app's" reconciliation smear.**
 The objection to bring-your-own-durability is real: most apps recover by
@@ -393,10 +364,10 @@ are undoable; results are compact JSON, never pixels.
 1. **Chat client contract** — max tools? result sizes? permission per call
    or per session? can the page push events ("test failed") or only
    respond? M0 answers most of this.
-2. **Expression/script languages** — ratify the lean (FEEL conditions + JS
-   scripts/mocks)? Or single-language-everywhere (all-FEEL is purest but
-   weak mocks; all-JS is pragmatic but Camunda-8 conditions would need
-   translation)?
+2. **Expression/script languages** — settled: JavaScript everywhere (see
+   the language decision above). FEEL/DMN deferred to a possible future
+   compatibility mode.
+
 3. **Engine-compat profiles** — is warning-free import into stock modelers
    enough, or do we target a named engine's *runnable* profile (e.g.
    Camunda 8 with FEEL) as a supported export mode?
@@ -409,8 +380,9 @@ are undoable; results are compact JSON, never pixels.
    evaluated by feelin in-sim) is the natural post-M4 act, and doubly so if
    FEEL wins question 2. Confirm as roadmap, not v1.
 7. **Naming** — settled by the owner: **Lunatic** — a play on *Lua* (Portuguese
-   for "moon") and the token *tic*king through the workflow, matching the
-   Rust-host + Lua production runtime. Namespace prefix `lunatic:`; the schema
+   for "moon") and the token *tic*king through the workflow (the Lua
+   production-runtime idea that seeded the pun was later dropped; the name
+   stays). Namespace prefix `lunatic:`; the schema
    URI `https://lunatic.dev/schema/1.0` is a placeholder until a domain is
    confirmed. **Known collision, accepted knowingly:** `lunatic` is an existing
    Erlang-inspired WebAssembly runtime in Rust (lunatic-solutions — owns the
