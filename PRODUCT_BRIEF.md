@@ -169,6 +169,33 @@ The engine owns semantics; it never owns storage, clocks, transport, or
 retry policy. This is a snapshot API, not a consensus cluster, and it is
 what makes "integrate your own durability provider" an honest contract.
 
+**Why this doesn't reproduce "any other app's" reconciliation smear.**
+The objection to bring-your-own-durability is real: most apps recover by
+archaeology — re-deriving flow position from status columns and side
+effects, with bespoke reconciliation everywhere. That horror has two
+causes: implicit position, and non-atomic effect-plus-record. The engine
+therefore *mandates* (not suggests) the discipline that removes both:
+
+1. **Explicit position** — the snapshot is the position; recovery never
+   re-derives state from side effects.
+2. **Deterministic idempotency keys in the host ABI** — the engine derives
+   an effect id per (instance, node, attempt) and passes it into every
+   port call; at-least-once + idempotent consumption = effectively-once,
+   and the key cannot be forgotten because the ABI supplies it.
+3. **The commit envelope** — each tick emits snapshot + pending outbound
+   effects as one unit; the host persists then dispatches (the outbox
+   pattern made structural by the API's shape).
+
+Result: reconciliation collapses to one generic resume loop — expired
+lease → load envelope → resume → replay; re-fired effects are harmless.
+Written once per storage backend, not per feature. (This is the durable-
+execution insight — Temporal's raison d'être — carried by contract rather
+than by a vendored cluster.) The honest residue: a non-idempotent
+*external* system still needs compensating logic no engine can synthesise
+— and BPMN gives exactly that a modeled home: **compensation boundary
+events**, designed on the canvas, asserted by `lunatic:test`, instead of
+living as a hidden cron.
+
 Consequence for the platform-engine comparison: Camunda-class capabilities
 (durable state, timers, correlation, retries/incidents, migration, ops
 UIs) are not *gaps* here — they are **ports, deliberately unowned**,
