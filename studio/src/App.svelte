@@ -22,9 +22,11 @@
     });
   });
 
-  // A canvas selection pulls the inspector forward.
+  // A canvas click pulls the inspector forward; panel-driven selection
+  // (trace steps, issues) highlights on the canvas without switching tabs.
   $effect(() => {
-    if (studio.selectedId) tab = 'inspector';
+    void studio.inspectRequest;
+    if (studio.inspectRequest && studio.selectedId) tab = 'inspector';
   });
 
   const TABS = [

@@ -195,5 +195,53 @@ check('multi-instance task iterates the bsf:collection', () => {
   assert.equal(JSON.stringify(payload.notified), '["x","y","z"]');
 });
 
+
+// -- engine-dialect conditions + data-point snapshots ------------------------
+
+const dialect = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    id="Defs_Dialect" targetNamespace="http://bpmn-svelte-flow/tests">
+  <bpmn:process id="P_Dialect" isExecutable="true">
+    <bpmn:startEvent id="S"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:scriptTask id="Decide" scriptFormat="text/javascript">
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:script>payload.approved = payload.amount &lt; 1000;</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:exclusiveGateway id="GW" default="f_no">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f_yes</bpmn:outgoing><bpmn:outgoing>f_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndYes"><bpmn:incoming>f_yes</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="EndNo"><bpmn:incoming>f_no</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="S" targetRef="Decide"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Decide" targetRef="GW"/>
+    <bpmn:sequenceFlow id="f_yes" sourceRef="GW" targetRef="EndYes">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">\${approved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f_no" sourceRef="GW" targetRef="EndNo"/>
+  </bpmn:process>
+</bpmn:definitions>`;
+
+const { rootElement: dialectDefs } = await moddle.fromXML(dialect);
+
+check('camunda-style ${...} conditions route on payload fields', () => {
+  const yes = new BsfEngine(dialectDefs).runToEnd({ amount: 400 });
+  assert(yes.visited.has('EndYes'), 'approved path taken');
+  const no = new BsfEngine(dialectDefs).runToEnd({ amount: 4000 });
+  assert(no.visited.has('EndNo'), 'default path taken');
+});
+
+check('the log snapshots the payload at data-changing steps', () => {
+  const engine = new BsfEngine(dialectDefs);
+  const state = engine.runToEnd({ amount: 400 });
+  const scripted = state.log.find((e) => e.id === 'Decide' && e.action === 'script ran');
+  assert(scripted && scripted.payload.approved === true, 'script step carries its data point');
+  const ended = state.log.find((e) => e.id === 'EndYes' && e.action === 'ended');
+  assert(ended && ended.payload.amount === 400, 'end step carries the final payload');
+  const routed = state.log.find((e) => e.action === 'routed');
+  assert(routed && routed.payload === undefined, 'non-mutating steps carry no snapshot');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

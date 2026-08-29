@@ -5,6 +5,7 @@
 // must come out of bpmnToFlow as a node or edge with no import warnings.
 import { readFileSync, readdirSync } from 'node:fs';
 import { parseBpmn, bpmnToFlow } from '../dist/headless.js';
+import { BsfEngine } from '@bsf/engine';
 
 let pass = 0;
 let fail = 0;
@@ -58,6 +59,31 @@ for (const file of files.sort()) {
     `missing: ${missingEdges.join(', ')}`
   );
   check(`${file}: no import warnings`, graph.warnings.length === 0, graph.warnings.join('; '));
+}
+
+
+// The unmodified Camunda invoice also EXECUTES in the BSF engine: its
+// Camunda-dialect ${...} conditions route on payload fields, user/service
+// tasks pass through unmocked. (approved:false + clarified:true loops
+// review->approve by design - that path needs a human to flip `approved`.)
+{
+  const xml = readFileSync(new URL('./reference/invoice.bpmn', import.meta.url), 'utf8');
+  const { definitions } = await parseBpmn(xml);
+  const happy = new BsfEngine(definitions).runToEnd({ approved: true });
+  check(
+    'invoice.bpmn: approved path executes to invoiceProcessed',
+    happy.finished && happy.errors.length === 0 && happy.results[0]?.endId === 'invoiceProcessed',
+    JSON.stringify({ errors: happy.errors, ends: happy.results.map((r) => r.endId) })
+  );
+  const rejected = new BsfEngine(definitions).runToEnd({ approved: false, clarified: false });
+  check(
+    'invoice.bpmn: rejection path executes through review to invoiceNotProcessed',
+    rejected.finished &&
+      rejected.errors.length === 0 &&
+      rejected.visited.has('reviewInvoice') &&
+      rejected.results[0]?.endId === 'invoiceNotProcessed',
+    JSON.stringify({ errors: rejected.errors, ends: rejected.results.map((r) => r.endId) })
+  );
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

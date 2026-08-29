@@ -7,6 +7,8 @@ export interface EngineLogEntry {
   type?: string;
   action: string;
   detail?: string;
+  /** Snapshot of the payload after this step, present when the step changed it. */
+  payload?: Record<string, unknown>;
 }
 
 export interface EngineResult {

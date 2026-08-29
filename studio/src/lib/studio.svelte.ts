@@ -105,6 +105,9 @@ class StudioStore {
   modelVersion = $state(0);
   /** Bumped when a different document is loaded — the canvas re-fits on it. */
   docVersion = $state(0);
+  /** Bumped by canvas clicks — pulls the inspector tab forward. Panel-driven
+   * selection (e.g. clicking a trace step) highlights without switching tabs. */
+  inspectRequest = $state(0);
   canUndo = $state(false);
   canRedo = $state(false);
   workspaceVersion = $state(0);

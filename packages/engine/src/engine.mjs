@@ -70,6 +70,14 @@ function runScript(body, payload, state) {
 }
 
 function evalExpression(body, payload) {
+  // Engine-dialect expressions (Camunda/JUEL-style `${approved}` or
+  // `#{approved}`) evaluate their inner expression with payload fields in
+  // scope, so unmodified third-party files route in the studio too.
+  const dialect = /^[$#]\{([\s\S]*)\}$/.exec(body.trim());
+  if (dialect) {
+    const fn = new Function('payload', `with (payload) { return (${dialect[1]}); }`);
+    return fn(payload);
+  }
   const fn = new Function('payload', `"use strict"; return (${body});`);
   return fn(payload);
 }
@@ -244,14 +252,16 @@ export class BsfEngine {
     }
   }
 
-  log(element, action, detail) {
+  /** `payload` (when passed) is snapshotted — the data point at this step. */
+  log(element, action, detail, payload) {
     this.state.log.push({
       step: this.state.steps,
       id: element?.id,
       name: element?.name || '',
       type: element?.$type,
       action,
-      ...(detail !== undefined ? { detail } : {})
+      ...(detail !== undefined ? { detail } : {}),
+      ...(payload !== undefined ? { payload: clone(payload) } : {})
     });
   }
 
@@ -286,7 +296,7 @@ export class BsfEngine {
 
   startEvent(token) {
     this.mergeSample(token);
-    this.log(token.at, 'started');
+    this.log(token.at, 'started', undefined, token.payload);
     this.moveAlong(token, outgoing(token.at));
   }
 
@@ -311,7 +321,7 @@ export class BsfEngine {
     const body = message && extensionBody(message, 'sample');
     if (!body) return;
     Object.assign(token.payload, JSON.parse(body));
-    this.log(token.at, 'sample merged', message.name || message.id);
+    this.log(token.at, 'sample merged', message.name || message.id, token.payload);
   }
 
   // -- activities -----------------------------------------------------------
@@ -341,7 +351,7 @@ export class BsfEngine {
         }
         const returned = runScript(body, token.payload, this.publicState());
         if (returned !== undefined) token.payload = returned;
-        this.log(el, 'script ran');
+        this.log(el, 'script ran', undefined, token.payload);
       }
       return;
     }
@@ -356,7 +366,7 @@ export class BsfEngine {
     if (mock) {
       const returned = runScript(mock, token.payload, this.publicState());
       if (returned !== undefined) token.payload = returned;
-      this.log(el, 'mock ran', item !== undefined ? `item ${JSON.stringify(item)}` : undefined);
+      this.log(el, 'mock ran', item !== undefined ? `item ${JSON.stringify(item)}` : undefined, token.payload);
     }
   }
 
@@ -518,7 +528,7 @@ export class BsfEngine {
     }
     token.status = 'queued';
     token.payload = merged;
-    this.log(token.at, 'joined', `${join.tokens.length} token(s)`);
+    this.log(token.at, 'joined', `${join.tokens.length} token(s)`, merged);
     return true;
   }
 
@@ -555,7 +565,7 @@ export class BsfEngine {
       this.log(el, 'error end', code);
       return this.propagateError(token, new Error(code), errDef.errorRef);
     }
-    this.log(el, 'ended');
+    this.log(el, 'ended', undefined, token.scope.parent ? undefined : token.payload);
     if (!token.scope.parent) {
       this.state.results.push({ endId: el.id, name: el.name || '', payload: clone(token.payload) });
     }
