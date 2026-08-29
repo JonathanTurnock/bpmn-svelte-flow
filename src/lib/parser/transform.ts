@@ -7,6 +7,7 @@ import type {
   BpmnFlowGraph,
   BpmnFlowNode,
   BpmnNodeData,
+  BpmnWorkflowTest,
   EventKind,
   GatewayKind,
   Point
@@ -47,6 +48,43 @@ const GATEWAY_KINDS: Record<string, GatewayKind> = {
 
 function is(element: any, type: string): boolean {
   return typeof element?.$instanceOf === 'function' ? element.$instanceOf(type) : element?.$type === type;
+}
+
+/** 'bsf:script' → 'script' (extension elements are matched prefix-agnostically). */
+function localName(type: string): string {
+  const i = type.indexOf(':');
+  return i >= 0 ? type.slice(i + 1) : type;
+}
+
+/** JavaScript block attached to an element via a <bsf:script> extension. */
+function extensionScript(element: any): string | undefined {
+  const values = element?.extensionElements?.values ?? [];
+  const scriptEl = values.find((v: any) => localName(v?.$type ?? '') === 'script');
+  const body = scriptEl?.$body?.trim();
+  return body || undefined;
+}
+
+/** <bsf:test> extensions on the definitions or any root element (process, …). */
+function collectTests(definitions: any, warnings: string[]): BpmnWorkflowTest[] {
+  const holders = [definitions, ...(definitions?.rootElements ?? [])];
+  const tests: BpmnWorkflowTest[] = [];
+  for (const holder of holders) {
+    for (const v of holder?.extensionElements?.values ?? []) {
+      if (localName(v?.$type ?? '') !== 'test') continue;
+      const script = v.$body?.trim();
+      if (!script) continue;
+      let payload: Record<string, unknown> | undefined;
+      if (v.payload) {
+        try {
+          payload = JSON.parse(v.payload);
+        } catch {
+          warnings.push(`Workflow test "${v.name ?? '?'}" has an invalid payload attribute (must be JSON)`);
+        }
+      }
+      tests.push({ name: v.name ?? `test ${tests.length + 1}`, payload, script });
+    }
+  }
+  return tests;
 }
 
 function toBounds(b: any): Bounds {
@@ -135,7 +173,8 @@ function shapeToNode(di: any, warnings: string[]): BpmnFlowNode | undefined {
     label: element.name ?? undefined,
     width: bounds.width,
     height: bounds.height,
-    labelBounds: relativeLabelBounds(di, bounds)
+    labelBounds: relativeLabelBounds(di, bounds),
+    script: extensionScript(element)
   };
 
   let nodeType: string;
@@ -339,9 +378,15 @@ function findPlane(definitions: any, diagramId?: string): any | undefined {
  */
 export function bpmnToFlow(definitions: any, options: { diagramId?: string } = {}): BpmnFlowGraph {
   const warnings: string[] = [];
+  const tests = collectTests(definitions, warnings);
   const plane = findPlane(definitions, options.diagramId);
   if (!plane) {
-    return { nodes: [], edges: [], warnings: ['No BPMNDiagram/BPMNPlane found in definitions'] };
+    return {
+      nodes: [],
+      edges: [],
+      warnings: [...warnings, 'No BPMNDiagram/BPMNPlane found in definitions'],
+      tests
+    };
   }
 
   const planeElements: any[] = plane.planeElement ?? [];
@@ -367,5 +412,5 @@ export function bpmnToFlow(definitions: any, options: { diagramId?: string } = {
   // Render containers first so flow nodes stack above them at equal z-index.
   nodes.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 
-  return { nodes, edges, warnings };
+  return { nodes, edges, warnings, tests };
 }

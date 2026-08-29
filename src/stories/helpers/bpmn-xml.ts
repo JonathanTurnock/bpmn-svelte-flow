@@ -14,6 +14,7 @@ export function bpmnDefinitions(semantic: string, di: string): string {
     xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
     xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
     id="Definitions_1"
     targetNamespace="http://bpmn.io/schema/bpmn">
 ${semantic}

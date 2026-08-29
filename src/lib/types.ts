@@ -105,6 +105,25 @@ export interface BpmnNodeData extends Record<string, unknown> {
    * Components use it to place external labels (events, gateways, data, …).
    */
   labelBounds?: Bounds;
+
+  /**
+   * JavaScript block attached to the element in the workflow file via
+   * `<bsf:script>` inside `<bpmn:extensionElements>`. Used by the simulator.
+   */
+  script?: string;
+}
+
+/**
+ * A test embedded in the workflow file via `<bsf:test>` inside the process's
+ * (or definitions') `<bpmn:extensionElements>`. The script body runs after a
+ * headless simulation and asserts on the outcome.
+ */
+export interface BpmnWorkflowTest {
+  name: string;
+  /** Initial payload for the test run (the element's `payload` attribute, JSON). */
+  payload?: Record<string, unknown>;
+  /** JavaScript body run with (state, payloads, payload, assert). */
+  script: string;
 }
 
 /** BPMN connecting object kinds. */
@@ -140,4 +159,6 @@ export interface BpmnFlowGraph {
   edges: BpmnFlowEdge[];
   /** Warnings raised during import (unknown elements, missing DI, …). */
   warnings: string[];
+  /** Workflow tests embedded in the file via bsf:test extension elements. */
+  tests: BpmnWorkflowTest[];
 }

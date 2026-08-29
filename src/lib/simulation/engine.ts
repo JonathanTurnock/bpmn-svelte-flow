@@ -45,6 +45,14 @@ export interface SimulationTraversal {
   to: string;
 }
 
+/** Payload of a token consumed at an end event. */
+export interface SimulationResult {
+  tokenId: number;
+  /** The end event the token was consumed at. */
+  elementId: string;
+  payload: Record<string, unknown>;
+}
+
 export interface SimulationState {
   tokens: SimulationToken[];
   /** Elements a token currently sits on. */
@@ -53,6 +61,8 @@ export interface SimulationState {
   visited: Set<string>;
   /** Sequence flows any token has traversed. */
   traversedEdges: Set<string>;
+  /** Payloads of tokens consumed at end events, in order of consumption. */
+  results: SimulationResult[];
   log: SimulationLogEntry[];
   finished: boolean;
   stepCount: number;
@@ -82,9 +92,14 @@ function isStart(node: BpmnFlowNode): boolean {
 }
 
 function clone<T>(value: T): T {
-  return typeof structuredClone === 'function'
-    ? structuredClone(value)
-    : JSON.parse(JSON.stringify(value ?? {}));
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(value);
+    } catch {
+      // e.g. reactive proxies — fall through to the JSON round-trip
+    }
+  }
+  return JSON.parse(JSON.stringify(value ?? {}));
 }
 
 export class BpmnSimulation {
@@ -106,7 +121,13 @@ export class BpmnSimulation {
     private graph: Pick<BpmnFlowGraph, 'nodes' | 'edges'>,
     options: SimulationOptions = {}
   ) {
-    this.scripts = { ...(options.scripts ?? {}) };
+    // Scripts embedded in the workflow file (bsf:script extension elements)
+    // are the base; explicitly passed scripts override them.
+    const fileScripts: Record<string, string> = {};
+    for (const node of graph.nodes) {
+      if (node.data.script) fileScripts[node.id] = node.data.script;
+    }
+    this.scripts = { ...fileScripts, ...(options.scripts ?? {}) };
     this.initialPayload = clone(options.payload ?? {});
     for (const node of graph.nodes) {
       this.nodesById.set(node.id, node);
@@ -131,6 +152,7 @@ export class BpmnSimulation {
       active: new Set(),
       visited: new Set(),
       traversedEdges: new Set(),
+      results: [],
       log: [],
       finished: false,
       stepCount: 0
@@ -161,6 +183,7 @@ export class BpmnSimulation {
     s.active.clear();
     s.visited.clear();
     s.traversedEdges.clear();
+    s.results = [];
     s.log = [];
     s.finished = false;
     s.stepCount = 0;
@@ -250,6 +273,13 @@ export class BpmnSimulation {
     if (arrivals && [...arrivals.values()].includes(token)) return;
 
     if (END_TYPES.has(type)) {
+      // Run the end event's attachment (final payload tweaks) before consuming.
+      this.runScript(node, token, 'event');
+      this.state.results.push({
+        tokenId: token.id,
+        elementId: node.id,
+        payload: clone(token.payload)
+      });
       this.log(node, `token #${token.id} consumed`, 'end', token.payload);
       return this.consume(token);
     }

@@ -11,9 +11,15 @@ function isStart(node) {
     return node.data.element === 'bpmn:StartEvent';
 }
 function clone(value) {
-    return typeof structuredClone === 'function'
-        ? structuredClone(value)
-        : JSON.parse(JSON.stringify(value ?? {}));
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value);
+        }
+        catch {
+            // e.g. reactive proxies — fall through to the JSON round-trip
+        }
+    }
+    return JSON.parse(JSON.stringify(value ?? {}));
 }
 export class BpmnSimulation {
     graph;
@@ -31,7 +37,14 @@ export class BpmnSimulation {
     lastTraversals = [];
     constructor(graph, options = {}) {
         this.graph = graph;
-        this.scripts = { ...(options.scripts ?? {}) };
+        // Scripts embedded in the workflow file (bsf:script extension elements)
+        // are the base; explicitly passed scripts override them.
+        const fileScripts = {};
+        for (const node of graph.nodes) {
+            if (node.data.script)
+                fileScripts[node.id] = node.data.script;
+        }
+        this.scripts = { ...fileScripts, ...(options.scripts ?? {}) };
         this.initialPayload = clone(options.payload ?? {});
         for (const node of graph.nodes) {
             this.nodesById.set(node.id, node);
@@ -57,6 +70,7 @@ export class BpmnSimulation {
             active: new Set(),
             visited: new Set(),
             traversedEdges: new Set(),
+            results: [],
             log: [],
             finished: false,
             stepCount: 0
@@ -84,6 +98,7 @@ export class BpmnSimulation {
         s.active.clear();
         s.visited.clear();
         s.traversedEdges.clear();
+        s.results = [];
         s.log = [];
         s.finished = false;
         s.stepCount = 0;
@@ -165,6 +180,13 @@ export class BpmnSimulation {
         if (arrivals && [...arrivals.values()].includes(token))
             return;
         if (END_TYPES.has(type)) {
+            // Run the end event's attachment (final payload tweaks) before consuming.
+            this.runScript(node, token, 'event');
+            this.state.results.push({
+                tokenId: token.id,
+                elementId: node.id,
+                payload: clone(token.payload)
+            });
             this.log(node, `token #${token.id} consumed`, 'end', token.payload);
             return this.consume(token);
         }

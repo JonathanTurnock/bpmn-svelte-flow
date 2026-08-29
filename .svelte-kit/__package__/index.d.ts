@@ -1,7 +1,8 @@
 export { default as BpmnDiagram } from './components/BpmnDiagram.svelte';
 export { default as BpmnSimulator } from './components/BpmnSimulator.svelte';
 export { bpmnNodeTypes, bpmnEdgeTypes } from './components/registry.js';
-export { BpmnSimulation, type SimulationLogEntry, type SimulationOptions, type SimulationState, type SimulationToken, type SimulationTraversal } from './simulation/engine.js';
+export { BpmnSimulation, type SimulationLogEntry, type SimulationOptions, type SimulationResult, type SimulationState, type SimulationToken, type SimulationTraversal } from './simulation/engine.js';
+export { runWorkflowTests, type BpmnTestResult } from './simulation/testing.js';
 export { parseBpmn, type ParseResult } from './parser/parse.js';
 export { bpmnToFlow } from './parser/transform.js';
 export { default as BpmnEdge } from './components/edges/BpmnEdge.svelte';
@@ -17,4 +18,4 @@ export { default as TextAnnotationNode } from './components/nodes/TextAnnotation
 export { default as GroupNode } from './components/nodes/GroupNode.svelte';
 export { default as ConversationNode } from './components/nodes/ConversationNode.svelte';
 export { default as ChoreographyNode } from './components/nodes/ChoreographyNode.svelte';
-export type { ActivityMarker, Bounds, BpmnEdgeData, BpmnEdgeKind, BpmnFlowEdge, BpmnFlowGraph, BpmnFlowNode, BpmnNodeData, EventKind, GatewayKind, Point } from './types.js';
+export type { ActivityMarker, Bounds, BpmnEdgeData, BpmnEdgeKind, BpmnFlowEdge, BpmnFlowGraph, BpmnFlowNode, BpmnNodeData, BpmnWorkflowTest, EventKind, GatewayKind, Point } from './types.js';

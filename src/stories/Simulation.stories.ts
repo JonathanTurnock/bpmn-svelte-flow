@@ -94,6 +94,128 @@ const approvalXml = bpmnDefinitions(
   ].join('\n')
 );
 
+// ---------------------------------------------------------------------------
+// Fully executable workflow file: the node code blocks AND the tests are
+// embedded in the BPMN XML itself via bsf:script / bsf:test extension
+// elements — nothing is passed in from the outside.
+// ---------------------------------------------------------------------------
+const executableXml = bpmnDefinitions(
+  `  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:test name="large claims go to manual review" payload='{"amount": 5200}'>
+        assert(state.visited.has('Task_Manual'), 'manual review should run');
+        assert(!state.visited.has('Task_Auto'), 'auto-approval must be skipped');
+        assert.equal(payload.approvedBy, 'supervisor');
+        assert(state.finished, 'workflow should complete');
+      </bsf:test>
+      <bsf:test name="small claims auto-approve" payload='{"amount": 120}'>
+        assert(state.visited.has('Task_Auto'), 'auto-approval should run');
+        assert(!state.visited.has('Task_Manual'), 'no manual review needed');
+        assert.equal(payload.risk, 'low');
+      </bsf:test>
+      <bsf:test name="every run settles the claim" payload='{"amount": 1}'>
+        assert.equal(payloads.length, 1, 'exactly one token reaches an end event');
+        assert(state.visited.has('End_1'));
+      </bsf:test>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start_1" name="Claim received">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:businessRuleTask id="Task_Score" name="Score claim">
+      <bpmn:extensionElements>
+        <bsf:script>payload.risk = payload.amount > 1000 ? "high" : "low";</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="Gw_Amount" name="Large claim?" default="Flow_auto">
+      <bpmn:extensionElements>
+        <bsf:script>return payload.risk === "high" ? "Flow_manual" : "Flow_auto";</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_auto</bpmn:outgoing>
+      <bpmn:outgoing>Flow_manual</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Auto" name="Auto-approve">
+      <bpmn:extensionElements>
+        <bsf:script>payload.approvedBy = "system";</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_auto</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_Manual" name="Manual review">
+      <bpmn:extensionElements>
+        <bsf:script>payload.approvedBy = "supervisor";</bsf:script>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_manual</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gw_Merge">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_1" name="Claim settled">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_1" targetRef="Task_Score"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_Score" targetRef="Gw_Amount"/>
+    <bpmn:sequenceFlow id="Flow_auto" name="small" sourceRef="Gw_Amount" targetRef="Task_Auto"/>
+    <bpmn:sequenceFlow id="Flow_manual" name="large" sourceRef="Gw_Amount" targetRef="Task_Manual"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_Auto" targetRef="Gw_Merge"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_Manual" targetRef="Gw_Merge"/>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Gw_Merge" targetRef="End_1"/>
+  </bpmn:process>`,
+  [
+    shape('Start_1', 152, 202, 36, 36),
+    shape('Task_Score', 240, 180, 100, 80),
+    shape('Gw_Amount', 395, 195, 50, 50, { label: [385, 168, 70, 14] }),
+    shape('Task_Auto', 500, 120, 100, 80),
+    shape('Task_Manual', 500, 280, 100, 80),
+    shape('Gw_Merge', 655, 195, 50, 50),
+    shape('End_1', 760, 202, 36, 36),
+    edge('Flow_1', [
+      [188, 220],
+      [240, 220]
+    ]),
+    edge('Flow_2', [
+      [340, 220],
+      [395, 220]
+    ]),
+    edge('Flow_auto', [
+      [420, 195],
+      [420, 160],
+      [500, 160]
+    ]),
+    edge('Flow_manual', [
+      [420, 245],
+      [420, 320],
+      [500, 320]
+    ]),
+    edge('Flow_3', [
+      [600, 160],
+      [680, 160],
+      [680, 195]
+    ]),
+    edge('Flow_4', [
+      [600, 320],
+      [680, 320],
+      [680, 245]
+    ]),
+    edge('Flow_5', [
+      [705, 220],
+      [760, 220]
+    ])
+  ].join('\n')
+);
+
+export const ExecutableWorkflowFile = {
+  args: {
+    xml: executableXml,
+    payload: { amount: 5200 }
+  }
+};
+
 export const PayloadRouting = {
   args: {
     xml: approvalXml,

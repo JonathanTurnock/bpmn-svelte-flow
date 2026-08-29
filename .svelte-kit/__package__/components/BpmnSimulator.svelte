@@ -4,7 +4,8 @@
   import { parseBpmn } from '../parser/parse.js';
   import { bpmnToFlow } from '../parser/transform.js';
   import { BpmnSimulation, type SimulationLogEntry } from '../simulation/engine.js';
-  import type { BpmnFlowEdge, BpmnFlowNode, Point } from '../types.js';
+  import { runWorkflowTests, type BpmnTestResult } from '../simulation/testing.js';
+  import type { BpmnFlowEdge, BpmnFlowNode, BpmnWorkflowTest, Point } from '../types.js';
   import { bpmnEdgeTypes, bpmnNodeTypes } from './registry.js';
 
   let {
@@ -42,7 +43,8 @@
   let finished = $state(false);
   let stepCount = $state(0);
   let playing = $state(false);
-  let scriptedIds = $state<string[]>([]);
+  let workflowTests = $state.raw<BpmnWorkflowTest[]>([]);
+  let testResults = $state<BpmnTestResult[] | undefined>(undefined);
   let dots = $state<Array<{ id: number; x: number; y: number }>>([]);
   let playTimer: ReturnType<typeof setTimeout> | undefined;
   let raf: number | undefined;
@@ -59,6 +61,8 @@
         const graph = bpmnToFlow(definitions);
         baseNodes = graph.nodes;
         baseEdges = graph.edges;
+        workflowTests = graph.tests;
+        testResults = undefined;
         sim = new BpmnSimulation(graph, { scripts, payload });
         payloadText = JSON.stringify(payload, null, 2);
         parseError = undefined;
@@ -96,7 +100,6 @@
     logEntries = [...st.log].reverse();
     finished = st.finished;
     stepCount = st.stepCount;
-    scriptedIds = Object.keys(sim.allScripts);
     dots = st.tokens.map((t) => ({ id: t.id, ...nodeCenter(t.at) }));
   }
 
@@ -203,7 +206,14 @@
   function saveScript(): void {
     if (!sim || !selectedId) return;
     sim.setScript(selectedId, scriptDraft);
-    scriptedIds = Object.keys(sim.allScripts);
+  }
+
+  /** Runs the tests embedded in the workflow file (with any script edits applied). */
+  function runTests(): void {
+    if (!sim) return;
+    testResults = runWorkflowTests({ nodes: baseNodes, edges: baseEdges }, workflowTests, {
+      scripts: sim.allScripts
+    });
   }
 
   const scriptPlaceholder = $derived.by(() => {
@@ -238,18 +248,6 @@
       <ViewportPortal target="front">
         {#each dots as dot (dot.id)}
           <div class="sim-token" style={`left: ${dot.x}px; top: ${dot.y}px;`}>{dot.id}</div>
-        {/each}
-        {#each scriptedIds as id (id)}
-          {@const n = baseNodes.find((x) => x.id === id)}
-          {#if n}
-            <div
-              class="sim-script-badge"
-              style={`left: ${n.position.x + (n.width ?? 0) - 6}px; top: ${n.position.y - 6}px;`}
-              title="Has a JavaScript attachment"
-            >
-              ƒ
-            </div>
-          {/if}
         {/each}
       </ViewportPortal>
     </SvelteFlow>
@@ -294,6 +292,26 @@
           <div class="sim-hint">Click a node on the canvas to attach a script.</div>
         {/if}
       </section>
+
+      {#if workflowTests.length > 0}
+        <section>
+          <h4>Workflow tests</h4>
+          <button class="sim-run-tests" onclick={runTests}>Run tests ({workflowTests.length})</button>
+          {#if testResults}
+            <ul class="sim-tests">
+              {#each testResults as result (result.name)}
+                <li class={result.passed ? 'sim-test-pass' : 'sim-test-fail'}>
+                  <span class="sim-test-mark">{result.passed ? '✓' : '✗'}</span>
+                  {result.name}
+                  {#if result.error}<code>{result.error}</code>{/if}
+                </li>
+              {/each}
+            </ul>
+          {:else}
+            <div class="sim-hint">Defined as JS blocks in the workflow file.</div>
+          {/if}
+        </section>
+      {/if}
 
       <section class="sim-log-section">
         <h4>Log</h4>
@@ -367,20 +385,42 @@
     pointer-events: none;
     z-index: 10;
   }
-  .sim-script-badge {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--bpmn-sim-badge, #6366f1);
-    color: #fff;
+  .sim-run-tests {
+    padding: 4px 12px;
+    border: 1px solid #c6cad2;
+    border-radius: 5px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .sim-run-tests:hover {
+    background: #eef1f5;
+  }
+  .sim-tests {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+  }
+  .sim-tests li {
+    padding: 3px 0;
+    line-height: 1.35;
+  }
+  .sim-tests code {
+    display: block;
     font-size: 10px;
-    font-style: italic;
+    overflow-wrap: anywhere;
+    color: #8a4a44;
+  }
+  .sim-test-mark {
+    display: inline-block;
+    min-width: 14px;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
+  }
+  .sim-test-pass .sim-test-mark {
+    color: #0f766e;
+  }
+  .sim-test-fail {
+    color: #b3261e;
   }
 
   .sim-panel {

@@ -8,10 +8,12 @@ export {
   BpmnSimulation,
   type SimulationLogEntry,
   type SimulationOptions,
+  type SimulationResult,
   type SimulationState,
   type SimulationToken,
   type SimulationTraversal
 } from './simulation/engine.js';
+export { runWorkflowTests, type BpmnTestResult } from './simulation/testing.js';
 
 export { parseBpmn, type ParseResult } from './parser/parse.js';
 export { bpmnToFlow } from './parser/transform.js';
@@ -39,6 +41,7 @@ export type {
   BpmnFlowGraph,
   BpmnFlowNode,
   BpmnNodeData,
+  BpmnWorkflowTest,
   EventKind,
   GatewayKind,
   Point

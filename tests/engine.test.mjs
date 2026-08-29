@@ -94,4 +94,87 @@ const sim3 = new BpmnSimulation(graph, {});
 sim3.run(50);
 check('case3 scriptless run finishes via default flow', sim3.state.finished && sim3.state.visited.has('TB'));
 
+
+
+// ---------------------------------------------------------------------------
+// Embedded scripts + workflow tests (bsf:script / bsf:test extension elements)
+// ---------------------------------------------------------------------------
+const { runWorkflowTests } = await import('../dist/simulation/testing.js');
+
+const execXml = `<?xml version='1.0'?>
+<bpmn:definitions xmlns:bpmn='http://www.omg.org/spec/BPMN/20100524/MODEL' xmlns:bpmndi='http://www.omg.org/spec/BPMN/20100524/DI' xmlns:dc='http://www.omg.org/spec/DD/20100524/DC' xmlns:di='http://www.omg.org/spec/DD/20100524/DI' xmlns:bsf='http://bpmn-svelte-flow/schema/1.0' targetNamespace='x'>
+<bpmn:process id='P1'>
+  <bpmn:extensionElements>
+    <bsf:test name='high goes to A' payload='{"amount": 5000}'>
+      assert(state.visited.has('TA'), 'TA should be visited');
+      assert(!state.visited.has('TB'));
+      assert.equal(payload.risk, 'high');
+    </bsf:test>
+    <bsf:test name='low goes to B' payload='{"amount": 5}'>
+      assert(state.visited.has('TB'));
+      assert.equal(payload.risk, 'low');
+    </bsf:test>
+    <bsf:test name='deliberately failing' payload='{"amount": 5}'>
+      assert.equal(payload.risk, 'high', 'should fail: low amount is low risk');
+    </bsf:test>
+  </bpmn:extensionElements>
+  <bpmn:startEvent id='S'/>
+  <bpmn:task id='T1' name='Score'>
+    <bpmn:extensionElements>
+      <bsf:script>payload.risk = payload.amount > 1000 ? 'high' : 'low';</bsf:script>
+    </bpmn:extensionElements>
+  </bpmn:task>
+  <bpmn:exclusiveGateway id='G' default='Fb'>
+    <bpmn:extensionElements>
+      <bsf:script>return payload.risk === 'high' ? 'Fa' : 'Fb';</bsf:script>
+    </bpmn:extensionElements>
+  </bpmn:exclusiveGateway>
+  <bpmn:task id='TA'/><bpmn:task id='TB'/>
+  <bpmn:endEvent id='E1'/>
+  <bpmn:sequenceFlow id='F1' sourceRef='S' targetRef='T1'/>
+  <bpmn:sequenceFlow id='F2' sourceRef='T1' targetRef='G'/>
+  <bpmn:sequenceFlow id='Fa' sourceRef='G' targetRef='TA'/>
+  <bpmn:sequenceFlow id='Fb' sourceRef='G' targetRef='TB'/>
+  <bpmn:sequenceFlow id='F3' sourceRef='TA' targetRef='E1'/>
+  <bpmn:sequenceFlow id='F4' sourceRef='TB' targetRef='E1'/>
+</bpmn:process>
+<bpmndi:BPMNDiagram id='D'><bpmndi:BPMNPlane id='PL' bpmnElement='P1'>
+${['S', 'T1', 'G', 'TA', 'TB', 'E1']
+  .map(
+    (e, i) =>
+      `<bpmndi:BPMNShape id='${e}_di' bpmnElement='${e}'><dc:Bounds x='${i * 120}' y='100' width='80' height='60'/></bpmndi:BPMNShape>`
+  )
+  .join('')}
+${['F1', 'F2', 'Fa', 'Fb', 'F3', 'F4']
+  .map(
+    (f) =>
+      `<bpmndi:BPMNEdge id='${f}_di' bpmnElement='${f}'><di:waypoint x='0' y='0'/><di:waypoint x='10' y='10'/></bpmndi:BPMNEdge>`
+  )
+  .join('')}
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>`;
+
+const { definitions: execDefs } = await parseBpmn(execXml);
+const execGraph = bpmnToFlow(execDefs);
+check('embedded tests parsed from file', execGraph.tests.length === 3);
+check(
+  'embedded node scripts parsed from file',
+  execGraph.nodes.find((n) => n.id === 'T1')?.data.script?.includes('payload.risk') === true
+);
+
+const simEmbedded = new BpmnSimulation(execGraph, { payload: { amount: 9000 } });
+simEmbedded.run(50);
+check('embedded scripts drive routing without props', simEmbedded.state.visited.has('TA'));
+check(
+  'end-event results recorded with final payload',
+  simEmbedded.state.results.length === 1 && simEmbedded.state.results[0].payload.risk === 'high'
+);
+
+const results = runWorkflowTests(execGraph, execGraph.tests);
+check('workflow test 1 passes', results[0].passed === true);
+check('workflow test 2 passes', results[1].passed === true);
+check(
+  'deliberately failing test fails with its message',
+  results[2].passed === false && /low risk/.test(results[2].error ?? '')
+);
+
 process.exit(pass ? 0 : 1);

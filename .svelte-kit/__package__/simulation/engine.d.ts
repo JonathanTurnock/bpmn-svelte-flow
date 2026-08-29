@@ -40,6 +40,13 @@ export interface SimulationTraversal {
     from: string;
     to: string;
 }
+/** Payload of a token consumed at an end event. */
+export interface SimulationResult {
+    tokenId: number;
+    /** The end event the token was consumed at. */
+    elementId: string;
+    payload: Record<string, unknown>;
+}
 export interface SimulationState {
     tokens: SimulationToken[];
     /** Elements a token currently sits on. */
@@ -48,6 +55,8 @@ export interface SimulationState {
     visited: Set<string>;
     /** Sequence flows any token has traversed. */
     traversedEdges: Set<string>;
+    /** Payloads of tokens consumed at end events, in order of consumption. */
+    results: SimulationResult[];
     log: SimulationLogEntry[];
     finished: boolean;
     stepCount: number;

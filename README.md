@@ -93,10 +93,44 @@ against the payload.
   merging payloads.
 
 The component provides Step / Play / Reset controls, an initial-payload JSON
-editor, per-node script editors (ƒ badges mark scripted nodes), a payload log,
-live highlighting of the control flow, and token dots animated along the real
-edge waypoints. The engine is also exported headless as `BpmnSimulation` for
+editor, per-node script editors (click any node), a payload log, live
+highlighting of the control flow, and token dots animated along the real edge
+waypoints. The engine is also exported headless as `BpmnSimulation` for
 driving your own UI, and `npm test` exercises it in Node.
+
+### Executable workflow files
+
+Code blocks and tests can live **in the BPMN file itself** via extension
+elements (namespace `xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"`), so a
+workflow ships as a single self-contained, executable, tested document:
+
+```xml
+<bpmn:process id="Process_1" isExecutable="true">
+  <bpmn:extensionElements>
+    <bsf:test name="large claims go to manual review" payload='{"amount": 5200}'>
+      assert(state.visited.has('Task_Manual'), 'manual review reached');
+      assert.equal(payload.approvedBy, 'supervisor');
+    </bsf:test>
+  </bpmn:extensionElements>
+
+  <bpmn:userTask id="Task_Manual" name="Manual review">
+    <bpmn:extensionElements>
+      <bsf:script>payload.approvedBy = "supervisor";</bsf:script>
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  …
+```
+
+- `<bsf:script>` on any flow node is its code block (same contract as above);
+  scripts passed via the `scripts` prop override file scripts per element id.
+- `<bsf:test>` on the process (or definitions) defines a workflow test: each
+  test runs a fresh headless simulation with its `payload` attribute (JSON),
+  then executes its body with `state` (visited/traversedEdges Sets, log,
+  finished), `payloads` (final payload of every token consumed at an end
+  event), `payload` (= `payloads[0]`) and `assert`/`assert.equal`.
+- Parsed tests are returned as `bpmnToFlow(...).tests`; run them headless with
+  `runWorkflowTests(graph, graph.tests)`, or from the simulator's
+  **Workflow tests** panel, which shows per-test pass/fail results.
 
 ### Lower-level API
 
