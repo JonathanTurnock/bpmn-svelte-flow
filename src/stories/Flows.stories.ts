@@ -76,7 +76,7 @@ const sequenceFlows = bpmnDefinitions(
     shape('Task_A', 240, 236, 100, 80),
     shape('Task_B', 440, 140, 100, 80),
     shape('Task_C', 440, 340, 100, 80),
-    shape('Gateway_1', 620, 251, 50, 50, { label: [603, 306, 84, 14] }),
+    shape('Gateway_1', 620, 251, 50, 50, { label: [676, 246, 84, 14] }),
     shape('End_1', 760, 170, 36, 36, { label: [736, 212, 84, 14] }),
     shape('End_2', 760, 350, 36, 36, { label: [736, 392, 84, 14] }),
     edge('Flow_1', [
@@ -355,7 +355,7 @@ const bentFlows = bpmnDefinitions(
         [400, 158],
         [300, 158]
       ],
-      [408, 214, 68, 14]
+      [320, 214, 64, 14]
     ),
     labelledEdge(
       'F3',

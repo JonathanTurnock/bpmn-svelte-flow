@@ -156,7 +156,7 @@ const multiParty = bpmnDefinitions(
   [
     shape('Start_1', 120, 292, 36, 36),
     shape('CT1', 210, 250, 160, 120),
-    shape('Gw_1', 430, 285, 50, 50, { label: [412, 340, 86, 14] }),
+    shape('Gw_1', 430, 285, 50, 50, { label: [490, 296, 86, 14] }),
     shape('CT2', 550, 130, 160, 120),
     shape('CT3', 550, 390, 160, 120),
     shape('End_1', 780, 172, 36, 36),

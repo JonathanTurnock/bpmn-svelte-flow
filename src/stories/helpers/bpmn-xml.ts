@@ -54,11 +54,18 @@ export function shape(
 }
 
 /** Shorthand for a BPMNEdge DI entry. */
-export function edge(element: string, waypoints: Array<[number, number]>): string {
+export function edge(
+  element: string,
+  waypoints: Array<[number, number]>,
+  extra: { label?: [number, number, number, number] } = {}
+): string {
   const points = waypoints
     .map(([x, y]) => `        <di:waypoint x="${x}" y="${y}"/>`)
     .join('\n');
+  const label = extra.label
+    ? `\n        <bpmndi:BPMNLabel><dc:Bounds x="${extra.label[0]}" y="${extra.label[1]}" width="${extra.label[2]}" height="${extra.label[3]}"/></bpmndi:BPMNLabel>`
+    : '';
   return `      <bpmndi:BPMNEdge id="${element}_di" bpmnElement="${element}">
-${points}
+${points}${label}
       </bpmndi:BPMNEdge>`;
 }

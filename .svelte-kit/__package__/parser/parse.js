@@ -1,5 +1,5 @@
-// @ts-expect-error - bpmn-moddle ships no type declarations
-import BpmnModdle from 'bpmn-moddle';
+// @ts-expect-error - bpmn-moddle ships no bundled type declarations for its entry
+import { BpmnModdle } from 'bpmn-moddle';
 const moddle = new BpmnModdle();
 /**
  * Parses a BPMN 2.0 XML document into a bpmn-moddle definitions tree.

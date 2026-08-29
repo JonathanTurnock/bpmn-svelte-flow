@@ -100,6 +100,9 @@
     border-bottom-color: var(--bpmn-selected, #1a70ef);
   }
   .bpmn-pool-title {
+    /* The band is narrower than the (unrotated) title box — never let flex
+       shrink it, or the text ellipses at the band width instead of the pool's. */
+    flex: 0 0 auto;
     font-family: var(--bpmn-font-family, Arial, sans-serif);
     font-size: 12px;
     font-weight: 600;

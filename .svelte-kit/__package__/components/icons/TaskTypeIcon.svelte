@@ -32,24 +32,42 @@
       <circle cx="10" cy="6.5" r="3.4" fill="none" stroke={stroke} stroke-width="1.4" />
       <path d="M 3.5,17.5 C 3.5,12.8 6.4,11 10,11 C 13.6,11 16.5,12.8 16.5,17.5" fill="none" stroke={stroke} stroke-width="1.4" />
     {:else if kind === 'service'}
-      <circle cx="10" cy="10" r="3" fill="none" stroke={stroke} stroke-width="1.4" />
-      {#each Array.from({ length: 8 }) as _, i}
-        <line
-          x1={10 + 4.4 * Math.cos((i * Math.PI) / 4)}
-          y1={10 + 4.4 * Math.sin((i * Math.PI) / 4)}
-          x2={10 + 6.6 * Math.cos((i * Math.PI) / 4)}
-          y2={10 + 6.6 * Math.sin((i * Math.PI) / 4)}
-          stroke={stroke}
-          stroke-width="1.6"
-        />
+      <!-- bpmn.io-style pair of offset gears: a smaller one upper-left, a
+           larger one lower-right, each a ring of short teeth around a body
+           circle with a hollow hub. -->
+      {#each [
+        { cx: 6.6, cy: 6.8, body: 2.5, tooth: 1.3, hub: 0.9, count: 6 },
+        { cx: 13.2, cy: 13, body: 3.4, tooth: 1.5, hub: 1.2, count: 6 }
+      ] as g}
+        <circle cx={g.cx} cy={g.cy} r={g.body} fill="none" stroke={stroke} stroke-width="1.2" />
+        <circle cx={g.cx} cy={g.cy} r={g.hub} fill="none" stroke={stroke} stroke-width="1" />
+        {#each Array.from({ length: g.count }) as _, i}
+          <rect
+            x={g.cx - g.tooth / 2}
+            y={g.cy - g.body - g.tooth}
+            width={g.tooth}
+            height={g.tooth}
+            fill={stroke}
+            transform={`rotate(${(360 / g.count) * i} ${g.cx} ${g.cy})`}
+          />
+        {/each}
       {/each}
     {:else if kind === 'script'}
-      <path d="M 6,3.5 C 3.5,5 3.5,6.5 6,8 C 8.5,9.5 8.5,11 6,12.5 C 3.5,14 3.5,15.5 6,16.5 L 14,16.5 C 16.5,15 16.5,13.5 14,12 C 11.5,10.5 11.5,9 14,7.5 C 16.5,6 16.5,4.5 14,3.5 Z" fill="none" stroke={stroke} stroke-width="1.3" />
-      {#each [6.2, 9.2, 12.2] as y}
-        <line x1="7" y1={y} x2="13" y2={y} stroke={stroke} stroke-width="1.2" />
-      {/each}
+      <!-- Page with a folded corner, plus a scripted (wavy) line of text
+           under two straight lines -- reads as a document/script glyph. -->
+      <path d="M 4,3 L 12.5,3 L 16.5,7 L 16.5,17 L 4,17 Z" fill="none" stroke={stroke} stroke-width="1.2" stroke-linejoin="round" />
+      <path d="M 12.5,3 L 12.5,7 L 16.5,7" fill="none" stroke={stroke} stroke-width="1.1" stroke-linejoin="round" />
+      <line x1="6.2" y1="10" x2="14.3" y2="10" stroke={stroke} stroke-width="1.1" />
+      <path d="M 6.2,13.2 C 7.2,11.9 8,14.5 9,13.2 C 10,11.9 10.8,14.5 11.8,13.2 C 12.6,12.1 13.4,13.6 14.3,13.2" fill="none" stroke={stroke} stroke-width="1.1" stroke-linecap="round" />
     {:else if kind === 'manual'}
-      <path d="M 3,9 C 3,7.5 4,6.5 5.5,6.5 L 9,6.5 L 7.5,4.5 C 7,3.7 8,2.8 8.8,3.5 L 12.5,6.5 L 15.5,6.5 C 16.5,6.5 17,7.2 17,8 C 17,8.8 16.5,9.3 15.5,9.3 L 16,9.3 C 17,9.3 17.4,10 17.4,10.7 C 17.4,11.5 16.8,12 16,12 C 16.8,12.2 17.2,12.7 17,13.5 C 16.9,14.2 16.3,14.5 15.5,14.5 C 16,14.8 16.2,15.4 16,16 C 15.8,16.7 15.2,17 14.4,17 L 7,17 C 4.5,17 3,15.5 3,13 Z" fill="none" stroke={stroke} stroke-width="1.2" />
+      <!-- Stylized open hand: four splayed fingers over a palm, with a
+           thumb hooking out to the side -- reads clearly as "manual" work. -->
+      <rect x="3.5" y="10.5" width="10" height="6.2" rx="2.4" fill="none" stroke={stroke} stroke-width="1.2" stroke-linejoin="round" />
+      <rect x="4.2" y="4.3" width="1.7" height="6.6" rx="0.85" fill="none" stroke={stroke} stroke-width="1.1" />
+      <rect x="6.5" y="3" width="1.7" height="7.9" rx="0.85" fill="none" stroke={stroke} stroke-width="1.1" />
+      <rect x="8.8" y="3.6" width="1.7" height="7.3" rx="0.85" fill="none" stroke={stroke} stroke-width="1.1" />
+      <rect x="11.1" y="5.2" width="1.7" height="5.7" rx="0.85" fill="none" stroke={stroke} stroke-width="1.1" />
+      <rect x="1" y="10.2" width="1.7" height="4.6" rx="0.85" fill="none" stroke={stroke} stroke-width="1.1" transform="rotate(-42 1.85 12.5)" />
     {:else if kind === 'send'}
       <rect x="2.5" y="5" width="15" height="10" rx="0.8" fill={stroke} />
       <path d="M 3,5.8 L 10,10.6 L 17,5.8" fill="none" stroke="var(--bpmn-fill, #ffffff)" stroke-width="1.4" />

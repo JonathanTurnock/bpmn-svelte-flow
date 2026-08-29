@@ -124,7 +124,12 @@ function shapeToNode(di, warnings) {
     if (EVENT_TYPES.has(type)) {
         nodeType = 'bpmn-event';
         data.eventKind = eventKindOf(element);
-        data.eventDefinitions = (element.eventDefinitions ?? []).map((d) => d.$type);
+        // Event definitions may be contained (eventDefinitions) or referenced
+        // (eventDefinitionRef pointing at definitions hoisted to bpmn:Definitions).
+        data.eventDefinitions = [
+            ...(element.eventDefinitions ?? []),
+            ...(element.eventDefinitionRef ?? [])
+        ].map((d) => d.$type);
         data.parallelMultiple = !!element.parallelMultiple;
         if (type === 'bpmn:StartEvent') {
             data.interrupting = element.isInterrupting !== false;
@@ -202,18 +207,28 @@ function shapeToNode(di, warnings) {
         data.isCall = type === 'bpmn:CallChoreography';
         const isExpanded = di.isExpanded === true;
         data.isExpanded = isExpanded;
-        if (type !== 'bpmn:ChoreographyTask' && !isExpanded)
+        if (type === 'bpmn:SubChoreography' && !isExpanded)
             data.markers = ['sub-process'];
-        data.participants = (element.participantRefs ?? []).map((p) => ({
+        // ChoreographyActivity uses the singular (isMany) participantRef property.
+        data.participants = (element.participantRef ?? []).map((p) => ({
             id: p.id,
             name: p.name,
             initiating: element.initiatingParticipantRef === p,
             multiplicity: !!p.participantMultiplicity
         }));
-        data.markers = [
+        const markers = [
             ...(data.markers ?? []),
             ...activityMarkersOf(element, isExpanded).filter((m) => m !== 'sub-process')
         ];
+        // Choreography multiplicity lives on the loopType attribute, not on
+        // loopCharacteristics.
+        if (element.loopType === 'MultiInstanceParallel')
+            markers.push('parallel-mi');
+        else if (element.loopType === 'MultiInstanceSequential')
+            markers.push('sequential-mi');
+        else if (element.loopType === 'Standard')
+            markers.push('loop');
+        data.markers = markers;
     }
     else if (type === 'bpmn:TextAnnotation') {
         nodeType = 'bpmn-annotation';

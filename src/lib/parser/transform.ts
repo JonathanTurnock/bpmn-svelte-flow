@@ -219,17 +219,24 @@ function shapeToNode(di: any, warnings: string[]): BpmnFlowNode | undefined {
     data.isCall = type === 'bpmn:CallChoreography';
     const isExpanded = di.isExpanded === true;
     data.isExpanded = isExpanded;
-    if (type !== 'bpmn:ChoreographyTask' && !isExpanded) data.markers = ['sub-process'];
-    data.participants = (element.participantRefs ?? []).map((p: any) => ({
+    if (type === 'bpmn:SubChoreography' && !isExpanded) data.markers = ['sub-process'];
+    // ChoreographyActivity uses the singular (isMany) participantRef property.
+    data.participants = (element.participantRef ?? []).map((p: any) => ({
       id: p.id,
       name: p.name,
       initiating: element.initiatingParticipantRef === p,
       multiplicity: !!p.participantMultiplicity
     }));
-    data.markers = [
+    const markers: ActivityMarker[] = [
       ...((data.markers as ActivityMarker[] | undefined) ?? []),
       ...activityMarkersOf(element, isExpanded).filter((m) => m !== 'sub-process')
     ];
+    // Choreography multiplicity lives on the loopType attribute, not on
+    // loopCharacteristics.
+    if (element.loopType === 'MultiInstanceParallel') markers.push('parallel-mi');
+    else if (element.loopType === 'MultiInstanceSequential') markers.push('sequential-mi');
+    else if (element.loopType === 'Standard') markers.push('loop');
+    data.markers = markers;
   } else if (type === 'bpmn:TextAnnotation') {
     nodeType = 'bpmn-annotation';
     data.label = element.text ?? element.name ?? undefined;

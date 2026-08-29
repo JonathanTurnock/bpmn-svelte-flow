@@ -114,14 +114,14 @@ const orderProcess = bpmnDefinitions(
     shape('Sub_Pick', 680, 250, 100, 80),
     shape('Sub_Pack', 800, 250, 100, 80),
     shape('Sub_End', 912, 272, 36, 36),
-    shape('Bound_OutOfStock', 752, 362, 36, 36, { label: [700, 402, 90, 14] }),
+    shape('Bound_OutOfStock', 752, 362, 36, 36, { label: [655, 430, 90, 14] }),
     shape('Task_Notify', 830, 460, 100, 80),
     shape('End_Delayed', 990, 482, 36, 36),
     shape('Task_Confirm', 1010, 240, 100, 80),
     shape('Data_Invoice', 1040, 380, 36, 50, { label: [1030, 434, 60, 14] }),
     shape('Store_1', 310, 420, 50, 50, { label: [305, 474, 60, 14] }),
     shape('End_Done', 1180, 262, 36, 36),
-    shape('Anno_1', 240, 150, 200, 40),
+    shape('Anno_1', 540, 108, 260, 40),
     edge('MsgFlow_1', [
       [250, 100],
       [250, 262]
@@ -148,8 +148,9 @@ const orderProcess = bpmnDefinitions(
     ]),
     edge('Flow_5', [
       [550, 420],
-      [770, 420],
-      [770, 380]
+      [570, 420],
+      [570, 310],
+      [590, 310]
     ]),
     edge('Flow_6', [
       [950, 280],
@@ -189,8 +190,8 @@ const orderProcess = bpmnDefinitions(
       [1058, 320]
     ]),
     edge('Assoc_1', [
-      [360, 240],
-      [345, 190]
+      [400, 245],
+      [560, 148]
     ])
   ].join('\n')
 );

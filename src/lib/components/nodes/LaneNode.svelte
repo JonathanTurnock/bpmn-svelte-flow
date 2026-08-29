@@ -35,7 +35,7 @@
   .bpmn-lane {
     position: relative;
     box-sizing: border-box;
-    border: 1.2px solid var(--bpmn-stroke, #22242a);
+    border: 1px solid var(--bpmn-stroke, #22242a);
     background: transparent;
   }
   .bpmn-lane.selected {
@@ -54,16 +54,18 @@
     left: 0;
     bottom: 0;
     width: 30px;
-    border-right: 1.2px solid var(--bpmn-stroke, #22242a);
+    border-right: 1px solid var(--bpmn-stroke, #22242a);
   }
   .bpmn-lane-band-top {
     top: 0;
     left: 0;
     right: 0;
     height: 30px;
-    border-bottom: 1.2px solid var(--bpmn-stroke, #22242a);
+    border-bottom: 1px solid var(--bpmn-stroke, #22242a);
   }
   .bpmn-lane-title {
+    /* Never shrink to the band width — the rotated title spans the lane. */
+    flex: 0 0 auto;
     font-family: var(--bpmn-font-family, Arial, sans-serif);
     font-size: 11.5px;
     line-height: 1.2;

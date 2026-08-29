@@ -1,6 +1,14 @@
 <script lang="ts">
-  // Glyph for a BPMN event definition, drawn inside a 36x36 viewBox.
-  // `filled` renders the solid variant used by throw events.
+  // Glyph for a BPMN event definition, drawn inside a 36x36 viewBox that is
+  // stretched over the event circle.
+  //
+  // Rendering rules (BPMN 2.0 §10.4.3 + bpmn.io house style):
+  //   * catch events (start / intermediate catch / boundary) use OUTLINE glyphs
+  //   * throw events (intermediate throw / end) use FILLED glyphs
+  //   * the parallel-multiple plus is NEVER filled, even on a throw event
+  //   * terminate is always a solid disc
+  //   * timer / conditional only ever occur on catch events, so they stay
+  //     unfilled regardless of `filled`
   let {
     definition,
     filled = false,
@@ -8,8 +16,10 @@
   }: { definition?: string; filled?: boolean; parallelMultiple?: boolean } = $props();
 
   const stroke = 'var(--bpmn-stroke, #22242a)';
-  const fill = $derived(filled ? 'var(--bpmn-stroke, #22242a)' : 'none');
-  const contrast = $derived(filled ? 'var(--bpmn-fill, #ffffff)' : 'var(--bpmn-stroke, #22242a)');
+  /** Solid body colour for throw variants. */
+  const body = $derived(filled ? stroke : 'none');
+  /** Colour that has to stay readable on top of a filled body. */
+  const contrast = $derived(filled ? 'var(--bpmn-fill, #ffffff)' : stroke);
 
   const kind = $derived.by(() => {
     if (parallelMultiple) return 'parallel-multiple';
@@ -40,49 +50,146 @@
         return undefined;
     }
   });
+
+  /** Clock-face tick marks, 12 evenly spaced, drawn inside the dial. */
+  const timerTicks = Array.from({ length: 12 }, (_, i) => {
+    const a = (i * Math.PI) / 6;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    return {
+      x1: 18 + 7.6 * cos,
+      y1: 18 + 7.6 * sin,
+      x2: 18 + 9.6 * cos,
+      y2: 18 + 9.6 * sin
+    };
+  });
 </script>
 
 {#if kind}
-  <svg class="bpmn-event-icon" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true">
+  <svg
+    class="bpmn-event-icon"
+    viewBox="0 0 36 36"
+    width="100%"
+    height="100%"
+    preserveAspectRatio="xMidYMid meet"
+    aria-hidden="true"
+  >
     {#if kind === 'message'}
-      <rect x="9" y="12" width="18" height="12.5" rx="1" fill={filled ? stroke : 'none'} stroke={stroke} stroke-width="1.6" />
-      <path d="M 9.5,13 L 18,19 L 26.5,13" fill="none" stroke={contrast} stroke-width="1.6" />
+      <!-- envelope: body + folded flap -->
+      <rect
+        x="8.6"
+        y="11.6"
+        width="18.8"
+        height="13.4"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M 8.6,11.6 L 18,18.9 L 27.4,11.6"
+        fill="none"
+        stroke={contrast}
+        stroke-width="1.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      />
     {:else if kind === 'timer'}
-      <circle cx="18" cy="18" r="9.5" fill="none" stroke={stroke} stroke-width="1.6" />
-      {#each Array.from({ length: 12 }) as _, i}
-        <line
-          x1={18 + 8 * Math.cos((i * Math.PI) / 6)}
-          y1={18 + 8 * Math.sin((i * Math.PI) / 6)}
-          x2={18 + 9.5 * Math.cos((i * Math.PI) / 6)}
-          y2={18 + 9.5 * Math.sin((i * Math.PI) / 6)}
-          stroke={stroke}
-          stroke-width="1.2"
-        />
+      <!-- clock dial, 12 ticks, hour + minute hand -->
+      <circle cx="18" cy="18" r="9.6" fill="none" stroke={stroke} stroke-width="1.6" />
+      {#each timerTicks as t}
+        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={stroke} stroke-width="1.1" />
       {/each}
-      <path d="M 18,12.5 L 18,18 L 22.5,20.5" fill="none" stroke={stroke} stroke-width="1.6" stroke-linecap="round" />
+      <path
+        d="M 18,18 L 18,11.4 M 18,18 L 22.6,20.6"
+        fill="none"
+        stroke={stroke}
+        stroke-width="1.6"
+        stroke-linecap="round"
+      />
     {:else if kind === 'signal'}
-      <path d="M 18,9.8 L 27,25 L 9,25 Z" fill={fill} stroke={stroke} stroke-width="1.6" stroke-linejoin="round" />
+      <!-- equilateral triangle, apex up -->
+      <path
+        d="M 18,8.4 L 27.5,25 L 8.5,25 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.6"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'error'}
-      <path d="M 10.5,25.5 L 15.2,11 L 20.4,20.6 L 25.5,10.5 L 20.8,25 L 15.6,15.4 Z" fill={fill} stroke={stroke} stroke-width="1.4" stroke-linejoin="round" />
+      <!-- lightning bolt: a four-pointed zigzag band, symmetric about (18,18) -->
+      <path
+        d="M 10,26.2 L 15.6,11.6 L 19.8,17.4 L 26,9.8 L 20.4,24.4 L 16.2,18.6 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.3"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'escalation'}
-      <path d="M 18,9.5 L 25.5,25.5 L 18,18.5 L 10.5,25.5 Z" fill={fill} stroke={stroke} stroke-width="1.5" stroke-linejoin="round" />
+      <!-- upward arrowhead with a deep notched base -->
+      <path
+        d="M 18,8.4 L 24.8,26.4 L 18,17.2 L 11.2,26.4 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.4"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'compensate'}
-      <path d="M 17.5,11 L 17.5,25 L 9.5,18 Z M 26,11 L 26,25 L 18,18 Z" fill={fill} stroke={stroke} stroke-width="1.4" stroke-linejoin="round" />
+      <!-- double "rewind" triangles pointing left -->
+      <path
+        d="M 17.6,10.6 L 17.6,25.4 L 9.4,18 Z M 26.4,10.6 L 26.4,25.4 L 18.2,18 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.4"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'conditional'}
-      <rect x="10.5" y="9.5" width="15" height="17" fill="none" stroke={stroke} stroke-width="1.5" />
-      {#each [13, 16.5, 20, 23.5] as y}
-        <line x1="12.5" y1={y} x2="23.5" y2={y} stroke={stroke} stroke-width="1.4" />
+      <!-- ruled page (conditional only ever occurs as a catch event) -->
+      <rect x="10.8" y="9" width="14.4" height="18" fill="none" stroke={stroke} stroke-width="1.5" />
+      {#each [12.9, 16.3, 19.7, 23.1] as y}
+        <line x1="13.2" y1={y} x2="22.8" y2={y} stroke={stroke} stroke-width="1.25" />
       {/each}
     {:else if kind === 'link'}
-      <path d="M 10,15 L 19,15 L 19,11 L 27,18 L 19,25 L 19,21 L 10,21 Z" fill={fill} stroke={stroke} stroke-width="1.5" stroke-linejoin="round" />
+      <!-- rightward block arrow -->
+      <path
+        d="M 9.4,15 L 18.6,15 L 18.6,10.8 L 26.8,18 L 18.6,25.2 L 18.6,21 L 9.4,21 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'terminate'}
-      <circle cx="18" cy="18" r="8.5" fill={stroke} stroke={stroke} />
+      <!-- always a solid disc -->
+      <circle cx="18" cy="18" r="8.6" fill={stroke} stroke={stroke} stroke-width="1" />
     {:else if kind === 'cancel'}
-      <path d="M 11.5,14 L 14,11.5 L 18,15.5 L 22,11.5 L 24.5,14 L 20.5,18 L 24.5,22 L 22,24.5 L 18,20.5 L 14,24.5 L 11.5,22 L 15.5,18 Z" fill={fill} stroke={stroke} stroke-width="1.4" stroke-linejoin="round" />
+      <!-- 45°-rotated cross -->
+      <path
+        d="M 18,21.68 L 13.33,26.34 L 9.66,22.67 L 14.32,18 L 9.66,13.33 L 13.33,9.66 L 18,14.32
+           L 22.67,9.66 L 26.34,13.33 L 21.68,18 L 26.34,22.67 L 22.67,26.34 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.4"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'multiple'}
-      <path d="M 18,9.5 L 26.8,16 L 23.4,26 L 12.6,26 L 9.2,16 Z" fill={fill} stroke={stroke} stroke-width="1.5" stroke-linejoin="round" />
+      <!-- regular pentagon, apex up -->
+      <path
+        d="M 18,8.8 L 26.75,15.16 L 23.41,25.44 L 12.59,25.44 L 9.25,15.16 Z"
+        fill={body}
+        stroke={stroke}
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
     {:else if kind === 'parallel-multiple'}
-      <path d="M 15.5,10 L 20.5,10 L 20.5,15.5 L 26,15.5 L 26,20.5 L 20.5,20.5 L 20.5,26 L 15.5,26 L 15.5,20.5 L 10,20.5 L 10,15.5 L 15.5,15.5 Z" fill="none" stroke={stroke} stroke-width="1.5" stroke-linejoin="round" />
+      <!-- plus sign; per spec this glyph is never filled -->
+      <path
+        d="M 20.5,20.5 L 20.5,26.6 L 15.5,26.6 L 15.5,20.5 L 9.4,20.5 L 9.4,15.5 L 15.5,15.5
+           L 15.5,9.4 L 20.5,9.4 L 20.5,15.5 L 26.6,15.5 L 26.6,20.5 Z"
+        fill="none"
+        stroke={stroke}
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
     {/if}
   </svg>
 {/if}
@@ -92,5 +199,6 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
+    overflow: visible;
   }
 </style>
