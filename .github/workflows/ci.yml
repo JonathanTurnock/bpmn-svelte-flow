@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [claude/svelte-flow-bpmn-renderer-obs7vm, main, master]
+    branches: [main]
   pull_request:
 
 jobs:
