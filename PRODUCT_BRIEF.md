@@ -31,6 +31,11 @@ other conformant engine tomorrow.
   **deployable skeleton**. When devs build the real thing on an engine, they
   import the very same file and bind implementations to elements that are
   already modeled, routed, and documented.
+- Because the artifact is engine-neutral and executable, it becomes the
+  company's **build-or-buy instrument**: once the business modelling is done
+  and verified, the same file prices both paths — deploy it onto a candidate
+  engine (buy) or implement it in code against its embedded acceptance tests
+  (build) — and the comparison is measured, not argued.
 
 ## What it is / is not
 
@@ -146,9 +151,38 @@ is the conformance test in one sentence.
 4. **Verify (the differentiator).** The agent runs `run_tests` /
    `run_scenario` itself, reads the trace, and iterates until green — it
    ships a passing PoC, not a picture. Portability lint is part of green.
-5. **Hand off — two exits.** (a) Read-only walkthrough bundle for Pages;
-   (b) **the file itself into a real engine**, implementations bound where
-   the mocks were.
+5. **Hand off — three exits from one artifact.**
+   (a) *Communicate*: read-only walkthrough bundle for Pages.
+   (b) *Build*: the file is the spec — devs implement the services; the
+   embedded scenarios/tests are the acceptance criteria the real
+   implementation must satisfy (runnable against it as black-box payload
+   assertions).
+   (c) *Buy*: a binding pass targets a chosen engine — injecting its
+   binding extensions (e.g. `zeebe:TaskDefinition` job types where the
+   mocks were, message subscriptions for the catch events) so the same
+   model deploys and the mocks become the worker stubs to replace.
+
+### The build-or-buy decision pack
+
+Because exits (b) and (c) consume the *same* verified artifact, the studio
+can emit a decision pack that turns build-vs-buy into measured deltas
+(empirically grounded by `spike/FINDINGS.md`):
+
+- **Per-engine compatibility report** — bpmnlint engine profiles (e.g.
+  camunda-compat) run against the artifact; every violation is a concrete
+  binding task, so the count and class of violations ≈ integration effort.
+  (The spike measured exactly this: general lint clean; Camunda 8 profile:
+  9 errors, all of one class — binding extensions.)
+- **Binding inventory** — the list of elements needing implementations
+  either way: each service/send/rule task with its documentation, mock, and
+  payload contract at that hop. For *build* it's the backlog; for *buy*
+  it's the worker/connector list.
+- **What the engine gives you vs. what you write regardless** — the model,
+  routing, retries/timers/persistence come with *buy*; the task
+  implementations (the binding inventory) are written under **both** paths.
+  The pack makes that symmetry visible — often the decisive fact.
+- **The walkthrough itself** — so the people making the call watch the
+  behaviour they're deciding about, with the tests green on screen.
 
 ## WebMCP tool surface (draft v2 — ~18 tools)
 
@@ -224,8 +258,11 @@ are undoable; results are compact JSON, never pixels.
 - **M3 — Logic, tests, verify loop.** Condition/script/mock/doc tools, tests
   panel, the acceptance demo: agent builds the messaging PoC from a blank
   canvas by conversation, runs it, fixes it until tests + lint are green.
-- **M4 — Hand-off.** Walkthrough export for Pages; engine-compat lint
-  profiles (opt-in); polish.
+- **M4 — Hand-off & decision pack.** Walkthrough export for Pages;
+  engine-compat lint profiles; the binding inventory; a first binding pass
+  for one named engine (generalising the spike's adapter). Exit test: the
+  messaging artifact produces a build-or-buy pack a team could actually
+  take to a decision meeting.
 
 ## Risks & mitigations
 
@@ -274,3 +311,7 @@ minutes later there is a diagram that executes in the browser, a payload
 they watched transform at every hop, green tests capturing the rules — and
 the file passes portability lint, opens untouched in any BPMN modeler, and
 imports into the team's workflow engine as the skeleton of the real build.
+
+And when the modelling is done, the company puts the same artifact on the
+table and decides **build or buy** from evidence: the compat report, the
+binding inventory, and a process everyone in the room has watched run.
