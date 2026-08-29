@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { MousePointerClick } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
@@ -92,59 +93,69 @@
 </script>
 
 {#if !detail}
-  <div class="p-4 text-sm text-muted-foreground">
-    Select an element on the canvas — or drive the studio from the chat: every panel here has a
-    WebMCP tool equivalent.
+  <div class="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
+    <MousePointerClick class="size-8 text-muted-foreground/50" />
+    <p class="text-sm font-medium">Nothing selected</p>
+    <p class="text-sm text-muted-foreground">
+      Select an element on the canvas, or drive the studio from the chat — every panel has a WebMCP
+      tool equivalent.
+    </p>
   </div>
 {:else}
-  <div class="flex h-full flex-col gap-3 overflow-y-auto p-3" data-testid="inspector">
-    <div class="flex items-center gap-2">
+  <div class="flex h-full flex-col gap-4 overflow-y-auto p-4" data-testid="inspector">
+    <div class="flex flex-wrap items-center gap-1.5">
       <Badge variant="secondary">{detail.type}</Badge>
-      <span class="truncate font-mono text-xs text-muted-foreground">{detail.id}</span>
       {#if detail.eventDefinition}<Badge variant="outline">{detail.eventDefinition}</Badge>{/if}
       {#if detail.multiInstance}<Badge variant="outline">multi-instance</Badge>{/if}
       {#if detail.default}<Badge variant="outline">default</Badge>{/if}
+      <span class="truncate font-mono text-xs text-muted-foreground">{detail.id}</span>
     </div>
 
-    <div class="grid gap-1">
-      <Label>Name</Label>
-      <Input bind:value={name} oninput={() => (dirty = true)} placeholder="name" />
+    <div class="grid gap-2">
+      <Label for="inspector-name">Name</Label>
+      <Input id="inspector-name" bind:value={name} oninput={() => (dirty = true)} placeholder="name" />
     </div>
 
-    <div class="grid gap-1">
-      <Label>Documentation (bpmn:documentation)</Label>
-      <Textarea bind:value={documentation} oninput={() => (dirty = true)} rows={3} />
+    <div class="grid gap-2">
+      <Label for="inspector-doc">Documentation</Label>
+      <Textarea id="inspector-doc" bind:value={documentation} oninput={() => (dirty = true)} rows={3} />
+      <p class="text-xs text-muted-foreground">bpmn:documentation — the business logic in prose.</p>
     </div>
 
     {#if isFlow}
-      <div class="grid min-h-[90px] gap-1">
-        <Label>Condition (JavaScript over payload)</Label>
+      <div class="grid min-h-[90px] gap-2">
+        <Label>Condition</Label>
         <CodeEditor bind:value={condition} onchange={() => (dirty = true)} />
+        <p class="text-xs text-muted-foreground">JavaScript over <code>payload</code>, e.g. payload.amount &gt; 1000.</p>
       </div>
       <Button variant="outline" size="sm" onclick={makeDefault}>Mark as default flow</Button>
     {/if}
 
     {#if hasScript}
-      <div class="grid min-h-[140px] flex-1 gap-1">
-        <Label>Script (bpmn:script, text/javascript)</Label>
+      <div class="grid min-h-[150px] flex-1 gap-2">
+        <Label>Script</Label>
         <CodeEditor bind:value={code} onchange={() => (dirty = true)} minHeight="120px" />
+        <p class="text-xs text-muted-foreground">bpmn:script, text/javascript — mutates <code>payload</code>.</p>
       </div>
     {:else if hasMock}
-      <div class="grid min-h-[140px] flex-1 gap-1">
-        <Label>Mock (bsf:mock — browser stand-in)</Label>
+      <div class="grid min-h-[150px] flex-1 gap-2">
+        <Label>Mock</Label>
         <CodeEditor bind:value={code} onchange={() => (dirty = true)} minHeight="120px" />
+        <p class="text-xs text-muted-foreground">bsf:mock — the browser stand-in for this task.</p>
       </div>
-      <div class="grid gap-1">
-        <Label>Binding type (bsf:binding)</Label>
+      <div class="grid gap-2">
+        <Label for="inspector-binding">Binding type</Label>
         <Input
+          id="inspector-binding"
           bind:value={bindingType}
           oninput={() => (dirty = true)}
           placeholder="http · kafka-producer · decision · …"
         />
+        <p class="text-xs text-muted-foreground">bsf:binding — real-world implementation intent.</p>
       </div>
       {#if bindingType}
-        <div class="grid min-h-[70px] gap-1">
-          <Label>Binding properties (JSON name/value list)</Label>
+        <div class="grid min-h-[70px] gap-2">
+          <Label>Binding properties</Label>
           <CodeEditor bind:value={bindingProps} language="json" onchange={() => (dirty = true)} minHeight="60px" />
         </div>
       {/if}

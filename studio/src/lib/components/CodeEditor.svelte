@@ -68,4 +68,8 @@
   });
 </script>
 
-<div bind:this={container} class="min-h-0 w-full overflow-hidden"></div>
+<!-- Chrome mirrors the stock shadcn input: border-input + ring on focus. -->
+<div
+  bind:this={container}
+  class="min-h-0 w-full overflow-hidden rounded-lg border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-input/30"
+></div>

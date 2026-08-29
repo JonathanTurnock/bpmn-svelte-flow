@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Background, BackgroundVariant, Controls, MiniMap, SvelteFlow } from '@xyflow/svelte';
+  import { Background, BackgroundVariant, Controls, SvelteFlow } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import { bpmnNodeTypes, bpmnEdgeTypes } from '$bsf/components/registry.js';
   import '$bsf/styles.css';
@@ -71,6 +71,5 @@
   >
     <Background variant={BackgroundVariant.Dots} gap={18} size={1} />
     <Controls showLock={false} />
-    <MiniMap />
   </SvelteFlow>
 </div>

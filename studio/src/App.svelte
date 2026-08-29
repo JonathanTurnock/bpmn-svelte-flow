@@ -52,25 +52,27 @@
     </main>
     <aside class="flex w-[400px] shrink-0 flex-col">
       <Tabs.Root bind:value={tab} class="flex min-h-0 flex-1 flex-col gap-0">
-        <Tabs.List class="w-full justify-start rounded-none border-b bg-card px-2 py-1.5">
-          {#each TABS as [id, label] (id)}
-            <Tabs.Trigger value={id} data-testid={`tab-${id}`}>
-              {label}
-              {#if id === 'issues' && issueCount}
-                <Badge variant="destructive" class="ml-1 px-1.5 py-0">{issueCount}</Badge>
-              {/if}
-            </Tabs.Trigger>
-          {/each}
-        </Tabs.List>
+        <div class="border-b px-3 pt-2 pb-1.5">
+          <Tabs.List variant="line" class="w-full">
+            {#each TABS as [id, label] (id)}
+              <Tabs.Trigger value={id} data-testid={`tab-${id}`}>
+                {label}
+                {#if id === 'issues' && issueCount}
+                  <Badge variant="destructive">{issueCount}</Badge>
+                {/if}
+              </Tabs.Trigger>
+            {/each}
+          </Tabs.List>
+        </div>
         <Tabs.Content value="inspector" class="min-h-0 flex-1"><InspectorPanel /></Tabs.Content>
         <Tabs.Content value="run" class="min-h-0 flex-1"><RunPanel /></Tabs.Content>
         <Tabs.Content value="tests" class="min-h-0 flex-1"><TestsPanel /></Tabs.Content>
         <Tabs.Content value="issues" class="min-h-0 flex-1"><IssuesPanel /></Tabs.Content>
         <Tabs.Content value="xml" class="min-h-0 flex-1"><XmlPanel /></Tabs.Content>
       </Tabs.Root>
-      <footer class="border-t bg-card px-3 py-1.5 text-[11px] text-muted-foreground">
+      <footer class="border-t px-4 py-2 text-xs text-muted-foreground">
         {#if mcp}
-          WebMCP: {mcp.tools} tools via {mcp.api}
+          WebMCP · {mcp.tools} tools via <span class="font-mono">{mcp.api}</span>
         {/if}
       </footer>
     </aside>

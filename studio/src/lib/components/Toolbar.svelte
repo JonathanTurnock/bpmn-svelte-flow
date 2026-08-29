@@ -3,12 +3,12 @@
     Download,
     FilePlus,
     FolderOpen,
-    Moon,
     Plus,
     Redo2,
     Save,
     Undo2,
-    Upload
+    Upload,
+    Workflow
   } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import { download } from '../utils.js';
@@ -63,10 +63,12 @@
   }
 </script>
 
-<header class="flex items-center gap-2 border-b bg-card px-3 py-2">
-  <Moon class="size-5" />
-  <span class="text-sm font-semibold tracking-tight">BSF Studio</span>
-  <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-5" />
+<header class="flex items-center gap-2 border-b px-4 py-2">
+  <div class="flex items-center gap-2">
+    <Workflow class="size-4" />
+    <span class="text-sm font-semibold tracking-tight">BSF Studio</span>
+  </div>
+  <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-4" />
 
   <Input class="w-44" bind:value={studio.docName} aria-label="document name" />
   <Button size="sm" variant="outline" onclick={() => studio.saveDocument()} title="Save to browser workspace">
@@ -80,7 +82,7 @@
       openSelect = '';
     }}
   >
-    <Select.Trigger size="sm" class="w-32" aria-label="open document">Open…</Select.Trigger>
+    <Select.Trigger size="sm" aria-label="open document">Open…</Select.Trigger>
     <Select.Content>
       {#each documents as d (d.name)}
         <Select.Item value={d.name} label={d.name} />
@@ -130,11 +132,11 @@
     <Button size="sm" variant="secondary" onclick={addElement} title="Add after the selected element" data-testid="add-element">
       <Plus /> Add
     </Button>
-    <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-5" />
-    <Button size="icon" variant="ghost" onclick={() => studio.undo()} disabled={!studio.canUndo} title="Undo">
+    <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-4" />
+    <Button size="icon-sm" variant="ghost" onclick={() => studio.undo()} disabled={!studio.canUndo} title="Undo">
       <Undo2 />
     </Button>
-    <Button size="icon" variant="ghost" onclick={() => studio.redo()} disabled={!studio.canRedo} title="Redo">
+    <Button size="icon-sm" variant="ghost" onclick={() => studio.redo()} disabled={!studio.canRedo} title="Redo">
       <Redo2 />
     </Button>
   </div>

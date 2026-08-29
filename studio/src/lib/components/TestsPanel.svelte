@@ -6,14 +6,14 @@
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
-  import { Separator } from '$lib/components/ui/separator/index.js';
+  import * as Card from '$lib/components/ui/card/index.js';
   import CodeEditor from './CodeEditor.svelte';
 
   let results = $state.raw<TestResult[] | null>(null);
   let adding = $state(false);
   let newName = $state('');
   let newPayload = $state('{}');
-  let newScript = $state("assert(state.finished);");
+  let newScript = $state('assert(state.finished);');
 
   const tests = $derived.by(() => {
     void studio.modelVersion;
@@ -40,7 +40,7 @@
   }
 </script>
 
-<div class="flex h-full flex-col gap-3 overflow-y-auto p-3" data-testid="tests-panel">
+<div class="flex h-full flex-col gap-4 overflow-y-auto p-4" data-testid="tests-panel">
   <div class="flex items-center gap-2">
     <Button size="sm" onclick={runAll} data-testid="run-tests-button">
       <FlaskConical /> Run tests
@@ -56,41 +56,59 @@
   </div>
 
   {#if adding}
-    <div class="grid gap-2 rounded-md border bg-card p-2">
-      <Label>Name</Label>
-      <Input bind:value={newName} placeholder="what this test asserts" />
-      <Label>Payload (JSON)</Label>
-      <CodeEditor bind:value={newPayload} language="json" minHeight="50px" />
-      <Label>Assertions — state, payloads, payload, assert</Label>
-      <CodeEditor bind:value={newScript} minHeight="80px" />
-      <div class="flex gap-2">
-        <Button size="sm" onclick={addTest}>Add bsf:test</Button>
-        <Button size="sm" variant="ghost" onclick={() => (adding = false)}>Cancel</Button>
-      </div>
-    </div>
-    <Separator />
+    <Card.Root size="sm">
+      <Card.Header>
+        <Card.Title>New test</Card.Title>
+        <Card.Description>Saved into the file as a bsf:test extension.</Card.Description>
+      </Card.Header>
+      <Card.Content class="grid gap-3">
+        <div class="grid gap-2">
+          <Label for="test-name">Name</Label>
+          <Input id="test-name" bind:value={newName} placeholder="what this test asserts" />
+        </div>
+        <div class="grid gap-2">
+          <Label>Payload (JSON)</Label>
+          <CodeEditor bind:value={newPayload} language="json" minHeight="50px" />
+        </div>
+        <div class="grid gap-2">
+          <Label>Assertions</Label>
+          <CodeEditor bind:value={newScript} minHeight="80px" />
+          <p class="text-xs text-muted-foreground">
+            Runs after a fresh simulation with state, payloads, payload, and assert.
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <Button size="sm" onclick={addTest}>Add test</Button>
+          <Button size="sm" variant="ghost" onclick={() => (adding = false)}>Cancel</Button>
+        </div>
+      </Card.Content>
+    </Card.Root>
   {/if}
 
-  <div class="grid gap-2" data-testid="test-results">
+  <div class="grid gap-3" data-testid="test-results">
     {#each tests as t (t.name)}
       {@const result = results?.find((r) => r.name === t.name)}
-      <div class="rounded-md border bg-card p-2">
-        <div class="flex items-center gap-2">
-          {#if result}
-            <Badge variant={result.ok ? 'success' : 'destructive'}>{result.ok ? 'pass' : 'fail'}</Badge>
-          {:else}
-            <Badge variant="outline">not run</Badge>
+      <Card.Root size="sm">
+        <Card.Header>
+          <Card.Title>{t.name}</Card.Title>
+          <Card.Action>
+            {#if result}
+              <Badge variant={result.ok ? 'success' : 'destructive'}>{result.ok ? 'pass' : 'fail'}</Badge>
+            {:else}
+              <Badge variant="outline">not run</Badge>
+            {/if}
+          </Card.Action>
+        </Card.Header>
+        <Card.Content>
+          {#if result && !result.ok}
+            <p class="mb-2 text-xs text-destructive">{result.error}</p>
           {/if}
-          <span class="text-sm">{t.name}</span>
-        </div>
-        {#if result && !result.ok}
-          <p class="mt-1 text-xs text-destructive">{result.error}</p>
-        {/if}
-        <pre class="mt-1 overflow-x-auto font-mono text-[11px] text-muted-foreground">{t.body}</pre>
-      </div>
+          <pre class="overflow-x-auto font-mono text-xs text-muted-foreground">{t.body}</pre>
+        </Card.Content>
+      </Card.Root>
     {:else}
       <p class="text-sm text-muted-foreground">
-        No bsf:test blocks in this file yet — add one here or via the add_test tool.
+        No tests in this file yet — add one here or via the add_test tool.
       </p>
     {/each}
   </div>
