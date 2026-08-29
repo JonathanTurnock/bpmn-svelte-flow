@@ -1,0 +1,62 @@
+{
+  "name": "bpmn-svelte-flow",
+  "version": "0.1.0",
+  "description": "A Svelte Flow based BPMN 2.0 diagram renderer for Svelte 5. Renders BPMN XML on an interactive canvas with full-spec notation coverage.",
+  "license": "MIT",
+  "type": "module",
+  "svelte": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*"
+  ],
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "build": "npm run package",
+    "package": "svelte-package -i src/lib -o dist && node scripts/copy-styles.js",
+    "prepare": "npm run package",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonathanTurnock/bpmn-svelte-flow.git"
+  },
+  "keywords": [
+    "bpmn",
+    "bpmn2",
+    "svelte",
+    "svelte-flow",
+    "xyflow",
+    "diagram",
+    "renderer",
+    "workflow"
+  ],
+  "dependencies": {
+    "@xyflow/svelte": "^1.6.5",
+    "bpmn-moddle": "^10.2.0"
+  },
+  "devDependencies": {
+    "@storybook/svelte-vite": "^10.5.10",
+    "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "storybook": "^10.5.10",
+    "svelte": "^5.57.0",
+    "svelte-check": "^4.7.6",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.2"
+  }
+}
