@@ -187,7 +187,7 @@ check(
 // ---------------------------------------------------------------------------
 const { readFileSync } = await import('node:fs');
 
-const FIXTURE_DIR = '/home/user/bpmn-svelte-flow/src/stories/fixtures/';
+const FIXTURE_DIR = new URL('../src/stories/fixtures/', import.meta.url).pathname;
 
 const renderFixtures = [
   'quickstart.bpmn',
