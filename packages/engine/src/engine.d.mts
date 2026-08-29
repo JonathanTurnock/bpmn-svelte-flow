@@ -20,6 +20,8 @@ export interface EngineResult {
 export interface EngineState {
   visited: Set<string>;
   traversedEdges: Set<string>;
+  /** Every edge traversal in order, repeats included. */
+  edgeTrail: string[];
   log: EngineLogEntry[];
   results: EngineResult[];
   errors: string[];
@@ -65,6 +67,8 @@ export class BsfEngine {
   reset(): void;
   start(payload?: Record<string, unknown>): EngineState;
   step(): boolean;
+  /** Advances every queued token one hop — parallel branches move in lockstep. */
+  stepRound(): boolean;
   runToEnd(payload?: Record<string, unknown>): EngineState;
   liveTokens(): EngineToken[];
   publicState(): Pick<EngineState, 'visited' | 'traversedEdges' | 'log' | 'results' | 'finished'>;

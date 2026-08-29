@@ -150,6 +150,8 @@ export class BsfEngine {
     this.state = {
       visited: new Set(),
       traversedEdges: new Set(),
+      /** Every traversal in order (repeats included) — a playback can diff it. */
+      edgeTrail: [],
       log: [],
       results: [],
       errors: [],
@@ -197,6 +199,30 @@ export class BsfEngine {
     this.state.steps += 1;
     this.execute(token);
     return true;
+  }
+
+  /**
+   * Advance every token that was queued at the start of the round one hop, so
+   * parallel branches move in lockstep (one round = one "beat" of the run).
+   * Tokens spawned mid-round (e.g. by a fork) wait for the next round.
+   * Returns false when nothing is left to do.
+   */
+  stepRound() {
+    if (!this.started || this.state.finished) return false;
+    const round = this.tokens.filter((t) => t.status === 'queued');
+    if (!round.length) return this.step(); // join release / finish handling
+    for (const token of round) {
+      if (this.state.finished) return false;
+      if (token.status !== 'queued') continue; // consumed earlier this round
+      if (this.state.steps >= this.maxSteps) {
+        this.state.errors.push(`step budget exhausted (${this.maxSteps})`);
+        this.finish();
+        return false;
+      }
+      this.state.steps += 1;
+      this.execute(token);
+    }
+    return !this.state.finished;
   }
 
   runToEnd(payload) {
@@ -412,14 +438,54 @@ export class BsfEngine {
     const mode = loop.isSequential ? 'sequential' : 'parallel';
     this.log(el, 'multi-instance', `${mode} ×${items.length}`);
 
-    const runIteration = (index) => {
-      if (index >= items.length) {
-        delete token.payload[elementVariable];
-        this.log(el, 'completed');
-        return this.moveAlong(token, outgoing(el));
+    const finishAll = () => {
+      delete token.payload[elementVariable];
+      this.log(el, 'completed');
+      this.moveAlong(token, outgoing(el));
+    };
+
+    // Parallel sub-process instances all start at once — their tokens advance
+    // concurrently (in lockstep under stepRound). Instances share the outer
+    // payload object (identical semantics to the sequential mode), with only
+    // the element variable overridden per instance via a proxy.
+    const isScoped = is(el, 'bpmn:SubProcess') || is(el, 'bpmn:Transaction');
+    if (!loop.isSequential && isScoped && items.length) {
+      const starts = flowElements(el).filter(
+        (inner) => is(inner, 'bpmn:StartEvent') && !el.triggeredByEvent
+      );
+      if (!starts.length) {
+        this.log(el, 'completed', 'empty sub-process');
+        return finishAll();
       }
+      let remaining = items.length;
+      token.status = 'waiting';
+      this.log(el, 'entered');
+      for (const item of items) {
+        const local = { [elementVariable]: item };
+        const instancePayload = new Proxy(token.payload, {
+          get: (t, k, r) => (k in local ? local[k] : Reflect.get(t, k, r)),
+          set: (t, k, v) => Reflect.set(k in local ? local : t, k, v),
+          has: (t, k) => k in local || k in t,
+          deleteProperty: (t, k) => Reflect.deleteProperty(k in local ? local : t, k),
+          ownKeys: (t) => [...new Set([...Reflect.ownKeys(t), ...Reflect.ownKeys(local)])],
+          getOwnPropertyDescriptor: (t, k) =>
+            k in local
+              ? { value: local[k], writable: true, enumerable: true, configurable: true }
+              : Reflect.getOwnPropertyDescriptor(t, k)
+        });
+        const scope = this.newScope(token.scope, el, token, () => {
+          remaining -= 1;
+          if (!remaining) finishAll();
+        });
+        for (const startEl of starts) this.spawn(startEl, instancePayload, scope);
+      }
+      return;
+    }
+
+    const runIteration = (index) => {
+      if (index >= items.length) return finishAll();
       token.payload[elementVariable] = items[index];
-      if (is(el, 'bpmn:SubProcess') || is(el, 'bpmn:Transaction')) {
+      if (isScoped) {
         this.runSubProcess(token, () => runIteration(index + 1));
       } else {
         this.runActivityBody(token, items[index]);
@@ -649,6 +715,7 @@ export class BsfEngine {
     }
     flows.forEach((flow, i) => {
       this.state.traversedEdges.add(flow.id);
+      this.state.edgeTrail.push(flow.id);
       if (i === 0) {
         token.at = flow.targetRef;
         token.arrivedVia = flow;

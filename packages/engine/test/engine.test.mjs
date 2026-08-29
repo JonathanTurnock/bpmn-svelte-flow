@@ -179,6 +179,27 @@ check('parallel fork/join merges branch payloads', () => {
   assert(payload.charged, 'charge ran after the join');
 });
 
+check('stepRound advances parallel branches in lockstep to the same result', () => {
+  const engine = new BsfEngine(synthDefs);
+  engine.start({ items: [{ id: 1 }, { id: 2 }] });
+  let lockstepSeen = false;
+  let guard = 0;
+  while (!engine.state.finished && guard++ < 500) {
+    const queued = engine.liveTokens().filter((t) => t.status === 'queued');
+    const before = new Set(queued.map((t) => t.at.id));
+    engine.stepRound();
+    // The round where A and B are both queued must execute both of them.
+    if (before.has('A') && before.has('B')) {
+      assert(engine.state.visited.has('A') && engine.state.visited.has('B'));
+      lockstepSeen = true;
+    }
+  }
+  assert(lockstepSeen, 'a round with both branches queued was observed');
+  assert.equal(engine.state.errors.length, 0, engine.state.errors.join('; '));
+  const payload = engine.state.results[0].payload;
+  assert(payload.a && payload.b && payload.charged, 'same outcome as runToEnd');
+});
+
 check('thrown mock error routes to the error boundary', () => {
   const engine = new BsfEngine(synthDefs);
   const state = engine.runToEnd({ declined: true, items: [] });

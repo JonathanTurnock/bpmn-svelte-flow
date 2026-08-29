@@ -22,10 +22,13 @@
       edges = [];
       return;
     }
+    // During timeline playback the current frame is the source of truth;
+    // otherwise (instant runs, agent-driven runs) the live engine state is.
+    const frame = studio.frames.length ? studio.frames[studio.frameIndex] : null;
     const engine = studio.engine;
-    const visited = engine?.state.visited ?? new Set<string>();
-    const traversed = engine?.state.traversedEdges ?? new Set<string>();
-    const active = new Set((engine?.liveTokens() ?? []).map((t) => t.at.id));
+    const visited = frame?.visited ?? engine?.state.visited ?? new Set<string>();
+    const traversed = frame?.traversed ?? engine?.state.traversedEdges ?? new Set<string>();
+    const active = new Set(frame?.active ?? (engine?.liveTokens() ?? []).map((t) => t.at.id));
     nodes = graph.nodes.map((n) => ({
       ...n,
       draggable: !FIXED.has(n.data.element),
@@ -38,10 +41,12 @@
         .join(' ')
     }));
     const tokens = studio.tokenEdges;
+    // Token travel time tracks the playback pace (900ms per beat at 1x).
+    const tokenDur = Math.min(1.2, Math.max(0.2, 0.5 / studio.speed));
     edges = graph.edges.map((e) => ({
       ...e,
       class: traversed.has(e.id) ? 'bsf-traversed' : '',
-      data: { ...e.data!, token: tokens[e.id] }
+      data: { ...e.data!, token: tokens[e.id], tokenDur }
     }));
   });
 

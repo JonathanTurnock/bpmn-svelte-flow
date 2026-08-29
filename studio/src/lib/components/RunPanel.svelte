@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Play, FastForward, StepForward, RotateCcw } from '@lucide/svelte';
+  import { Play, Pause, StepBack, StepForward, RotateCcw } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
@@ -11,6 +11,9 @@
   let scenarioName = $state('');
   let inspected = $state<number | null>(null);
 
+  const SPEEDS = ['0.5', '1', '1.5', '2'];
+  let speedStr = $state('1');
+
   const scenarios = $derived.by(() => {
     void studio.modelVersion;
     return studio.graph ? studio.scenarios() : [];
@@ -20,6 +23,11 @@
     void studio.runVersion;
     return studio.runState();
   });
+
+  const lastFrame = $derived(studio.frames.length - 1);
+  const atEnd = $derived(studio.frames.length > 0 && studio.frameIndex >= lastFrame);
+  /** Mid-timeline: the outcome is not revealed yet. */
+  const presenting = $derived(studio.frames.length > 0 && !atEnd);
 
   // A new run invalidates whichever data point was open.
   $effect(() => {
@@ -49,8 +57,15 @@
     });
   });
 
+  /** During playback the trace only reveals up to the current frame. */
+  const visibleTrace = $derived(
+    studio.frames.length
+      ? trace.slice(0, studio.frames[studio.frameIndex]?.logIndex ?? trace.length)
+      : trace
+  );
+
   const inspectedEntry = $derived(
-    inspected !== null ? trace.find((e) => e.index === inspected && e.payload) : undefined
+    inspected !== null ? visibleTrace.find((e) => e.index === inspected && e.payload) : undefined
   );
 
   $effect(() => {
@@ -60,7 +75,39 @@
   });
 
   const opts = () => (scenarioName ? { scenario: scenarioName } : {});
+
+  function onPlayPause() {
+    if (studio.playing) studio.pause();
+    else if (!studio.frames.length || scenarioName !== studio.runScenarioName)
+      studio.playRun(opts());
+    else studio.resume();
+  }
+
+  /** Move one beat; builds the timeline (paused at the start) on first use. */
+  function stepBy(delta: number) {
+    if (!studio.frames.length) {
+      studio.buildTimeline(opts());
+      studio.gotoFrame(0, false);
+      return;
+    }
+    studio.pause();
+    studio.gotoFrame(studio.frameIndex + delta, delta === 1);
+  }
+
+  function onKey(e: KeyboardEvent) {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select, [contenteditable], .cm-editor')) return;
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      stepBy(1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      stepBy(-1);
+    }
+  }
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <div class="flex h-full flex-col gap-4 overflow-y-auto p-4" data-testid="run-panel">
   <div class="grid gap-2">
@@ -82,34 +129,82 @@
     {/if}
   </div>
 
-  <div class="flex gap-2">
-    <Button
-      size="sm"
-      onclick={() => (studio.playing ? studio.finishRun() : studio.playRun(opts()))}
-      data-testid="run-button"
-    >
+  <div class="flex flex-wrap items-center gap-1.5">
+    <Button size="sm" onclick={onPlayPause} data-testid="run-button">
       {#if studio.playing}
-        <FastForward /> Skip
+        <Pause /> Pause
       {:else}
-        <Play /> Run
+        <Play /> {studio.frames.length ? 'Play' : 'Run'}
       {/if}
     </Button>
     <Button
       size="sm"
       variant="secondary"
-      onclick={() => (studio.engine ? studio.stepRun() : (studio.startRun(opts()), undefined))}
+      onclick={() => stepBy(-1)}
+      disabled={!studio.frames.length || studio.frameIndex === 0}
+      aria-label="Back one step"
+      data-testid="step-back"
     >
-      <StepForward /> Step
+      <StepBack />
+    </Button>
+    <Button
+      size="sm"
+      variant="secondary"
+      onclick={() => stepBy(1)}
+      disabled={atEnd}
+      aria-label="Forward one step"
+      data-testid="step-forward"
+    >
+      <StepForward />
     </Button>
     <Button size="sm" variant="ghost" onclick={() => studio.resetRun()}>
       <RotateCcw /> Reset
     </Button>
   </div>
 
+  {#if studio.frames.length}
+    <div class="flex items-center gap-2">
+      <input
+        type="range"
+        class="h-1.5 flex-1 cursor-pointer accent-primary"
+        min="0"
+        max={lastFrame}
+        step="1"
+        value={studio.frameIndex}
+        oninput={(e) => {
+          studio.pause();
+          studio.gotoFrame(Number(e.currentTarget.value));
+        }}
+        aria-label="Playback position"
+        data-testid="run-slider"
+      />
+      <span class="text-xs tabular-nums text-muted-foreground"
+        >{studio.frameIndex}/{lastFrame}</span
+      >
+      <Select.Root
+        type="single"
+        bind:value={speedStr}
+        onValueChange={(v) => studio.setSpeed(parseFloat(v))}
+      >
+        <Select.Trigger class="h-8 w-[74px] shrink-0" data-testid="speed-select">
+          {speedStr}×
+        </Select.Trigger>
+        <Select.Content>
+          {#each SPEEDS as s (s)}
+            <Select.Item value={s} label={`${s}×`} />
+          {/each}
+        </Select.Content>
+      </Select.Root>
+    </div>
+    <p class="-mt-2 text-xs text-muted-foreground">←/→ step through the run while presenting.</p>
+  {/if}
+
   {#if run}
     <Separator />
     <div class="flex items-center gap-2">
-      {#if run.finished}
+      {#if presenting}
+        <Badge variant="secondary">{studio.playing ? 'playing' : 'paused'}</Badge>
+      {:else if run.finished}
         <Badge variant={run.errors.length ? 'destructive' : 'success'}>
           {run.errors.length ? 'failed' : 'completed'}
         </Badge>
@@ -119,11 +214,13 @@
       <span class="text-xs text-muted-foreground">{run.steps} steps · {run.scenario}</span>
     </div>
 
-    {#each run.errors as err (err)}
-      <p class="text-xs text-destructive">{err}</p>
-    {/each}
+    {#if !presenting}
+      {#each run.errors as err (err)}
+        <p class="text-xs text-destructive">{err}</p>
+      {/each}
+    {/if}
 
-    {#if run.results.length}
+    {#if run.results.length && !presenting}
       <div class="grid gap-3">
         {#each run.results as r, i (i)}
           <Card.Root size="sm">
@@ -167,7 +264,7 @@
     <div class="grid min-h-0 flex-1 gap-2">
       <Label>Trace</Label>
       <div class="min-h-0 flex-1 overflow-auto rounded-lg bg-muted/50 p-3 font-mono text-xs leading-relaxed">
-        {#each trace as entry (entry.index)}
+        {#each visibleTrace as entry (entry.index)}
           <div class="flex flex-wrap items-baseline gap-x-1.5">
             <span class="text-muted-foreground">{entry.action}</span>
             <button

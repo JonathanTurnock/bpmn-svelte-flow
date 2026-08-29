@@ -172,7 +172,7 @@
       <bpmn:documentation>Runs once per participant. Delivery method routes to a keyed Kafka record or a signed webhook call.</bpmn:documentation>
       <bpmn:incoming>F8</bpmn:incoming>
       <bpmn:outgoing>F9</bpmn:outgoing>
-      <bpmn:multiInstanceLoopCharacteristics id="MI_Deliver" isSequential="true">
+      <bpmn:multiInstanceLoopCharacteristics id="MI_Deliver" isSequential="false">
         <bpmn:extensionElements>
           <bsf:collection expression="participants" elementVariable="participant"/>
         </bpmn:extensionElements>
