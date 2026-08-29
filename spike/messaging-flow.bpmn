@@ -5,7 +5,7 @@
     xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
     xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:lunatic="https://lunatic.dev/schema/1.0"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
     id="Defs_Messaging"
     expressionLanguage="text/javascript"
     targetNamespace="http://acme.dev/messaging-poc">
@@ -17,27 +17,27 @@
   <bpmn:message id="Msg_ApiRequest" name="api-request"/>
   <bpmn:message id="Msg_KinesisRecord" name="kinesis-record">
     <bpmn:extensionElements>
-      <lunatic:sample correlationKey="chatId">{"kinesis":{"stream":"chat-messages-v1","partitionKey":"chat_8231","sequenceNumber":"49590338271490256608559692538361571095921575989136588898"}}</lunatic:sample>
+      <bsf:sample correlationKey="chatId">{"kinesis":{"stream":"chat-messages-v1","partitionKey":"chat_8231","sequenceNumber":"49590338271490256608559692538361571095921575989136588898"}}</bsf:sample>
     </bpmn:extensionElements>
   </bpmn:message>
   <bpmn:error id="Err_PolicyDenied" name="PolicyDenied" errorCode="POLICY_DENIED"/>
 
   <bpmn:process id="P_Messaging" isExecutable="true">
     <bpmn:extensionElements>
-      <lunatic:scenario name="Happy path" payload='{"senderId":"usr_1042","text":"Paying with card 4111 1111 1111 1111, CVV: 737 — ok?","chatId":"chat_8231"}'/>
-      <lunatic:scenario name="Policy denied" payload='{"senderId":"usr_6660","text":"hey — card 4111 1111 1111 1111","chatId":"chat_8231","muted":true}'/>
-      <lunatic:test name="pan is redacted before anything else" payload='{"senderId":"usr_1042","text":"card 4111 1111 1111 1111","chatId":"chat_8231"}'>
+      <bsf:scenario name="Happy path" payload='{"senderId":"usr_1042","text":"Paying with card 4111 1111 1111 1111, CVV: 737 — ok?","chatId":"chat_8231"}'/>
+      <bsf:scenario name="Policy denied" payload='{"senderId":"usr_6660","text":"hey — card 4111 1111 1111 1111","chatId":"chat_8231","muted":true}'/>
+      <bsf:test name="pan is redacted before anything else" payload='{"senderId":"usr_1042","text":"card 4111 1111 1111 1111","chatId":"chat_8231"}'>
         assert(payload.text.indexOf('4111 1111') === -1, 'raw PAN must not survive');
-      </lunatic:test>
-      <lunatic:test name="muted senders are rejected" payload='{"senderId":"usr_6660","text":"x","chatId":"chat_8231","muted":true}'>
+      </bsf:test>
+      <bsf:test name="muted senders are rejected" payload='{"senderId":"usr_6660","text":"x","chatId":"chat_8231","muted":true}'>
         assert(state.visited.has('End_Rejected'));
         assert(!state.visited.has('Task_Save'), 'nothing persists on deny');
-      </lunatic:test>
-      <lunatic:test name="deliveries fan out per participant" payload='{"senderId":"usr_1042","text":"hi","chatId":"chat_8231"}'>
+      </bsf:test>
+      <bsf:test name="deliveries fan out per participant" payload='{"senderId":"usr_1042","text":"hi","chatId":"chat_8231"}'>
         assert.equal(payload.deliveries.length, 2);
         assert.equal(payload.deliveries[0].channel, 'kafka');
         assert.equal(payload.deliveries[1].channel, 'webhook');
-      </lunatic:test>
+      </bsf:test>
     </bpmn:extensionElements>
 
     <bpmn:laneSet id="Lanes_1">
@@ -91,14 +91,14 @@
     <bpmn:businessRuleTask id="Task_Policy" name="Evaluate Cedar policy">
       <bpmn:documentation>Cedar: permit SendMessage when principal in chat.members and not principal.muted; forbid when principal.muted. Forbid overrides permit. Decision + determining policy recorded for audit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <lunatic:binding type="decision">
-          <lunatic:property name="policyStore" value="messaging-policies"/>
-        </lunatic:binding>
-        <lunatic:mock>
+        <bsf:binding type="decision">
+          <bsf:property name="policyStore" value="messaging-policies"/>
+        </bsf:binding>
+        <bsf:mock>
           payload.policy = payload.muted
             ? { decision: 'DENY', determiningPolicy: 'forbid-muted-senders' }
             : { decision: 'ALLOW', determiningPolicy: 'permit-chat-members' };
-        </lunatic:mock>
+        </bsf:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>F2</bpmn:incoming>
       <bpmn:outgoing>F3</bpmn:outgoing>
@@ -119,11 +119,11 @@
     <bpmn:serviceTask id="Task_Save" name="Save message (Messages API)">
       <bpmn:documentation>POST internal.messages-api /v1/messages with the sanitised, authorised message. 201 → { messageId, persistedAt }. The Messages API owns durability and emits to Kinesis after commit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <lunatic:binding type="http">
-          <lunatic:property name="method" value="POST"/>
-          <lunatic:property name="url" value="https://internal.messages-api/v1/messages"/>
-        </lunatic:binding>
-        <lunatic:mock>payload.messagesApi = { status: 201, messageId: 'msg_5f2e9c' };</lunatic:mock>
+        <bsf:binding type="http">
+          <bsf:property name="method" value="POST"/>
+          <bsf:property name="url" value="https://internal.messages-api/v1/messages"/>
+        </bsf:binding>
+        <bsf:mock>payload.messagesApi = { status: 201, messageId: 'msg_5f2e9c' };</bsf:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>F_Allow</bpmn:incoming>
       <bpmn:outgoing>F5</bpmn:outgoing>
@@ -153,16 +153,16 @@
     <bpmn:serviceTask id="Task_Participants" name="Fetch chat participants">
       <bpmn:documentation>GET internal.chats-api /v1/chats/{chatId}/participants. Sender excluded. Each participant carries a resolved deliveryMethod: kafka (internal consumers) or webhook (per-tenant registered endpoint).</bpmn:documentation>
       <bpmn:extensionElements>
-        <lunatic:binding type="http">
-          <lunatic:property name="method" value="GET"/>
-          <lunatic:property name="url" value="https://internal.chats-api/v1/chats/{chatId}/participants"/>
-        </lunatic:binding>
-        <lunatic:mock>
+        <bsf:binding type="http">
+          <bsf:property name="method" value="GET"/>
+          <bsf:property name="url" value="https://internal.chats-api/v1/chats/{chatId}/participants"/>
+        </bsf:binding>
+        <bsf:mock>
           payload.participants = [
             { id: 'usr_2001', deliveryMethod: 'kafka' },
             { id: 'usr_2002', deliveryMethod: 'webhook' }
           ];
-        </lunatic:mock>
+        </bsf:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>F7</bpmn:incoming>
       <bpmn:outgoing>F8</bpmn:outgoing>
@@ -174,7 +174,7 @@
       <bpmn:outgoing>F9</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics id="MI_Deliver" isSequential="true">
         <bpmn:extensionElements>
-          <lunatic:collection expression="participants" elementVariable="participant"/>
+          <bsf:collection expression="participants" elementVariable="participant"/>
         </bpmn:extensionElements>
         <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">payload.participants.length</bpmn:loopCardinality>
       </bpmn:multiInstanceLoopCharacteristics>
@@ -189,14 +189,14 @@
       <bpmn:sendTask id="Task_Kafka" name="Publish Kafka message">
         <bpmn:documentation>topic chat-message-deliveries, key = participant.id (per-recipient ordering), acks=all, idempotent producer.</bpmn:documentation>
         <bpmn:extensionElements>
-          <lunatic:binding type="kafka-producer">
-            <lunatic:property name="topic" value="chat-message-deliveries"/>
-          </lunatic:binding>
-          <lunatic:mock>
+          <bsf:binding type="kafka-producer">
+            <bsf:property name="topic" value="chat-message-deliveries"/>
+          </bsf:binding>
+          <bsf:mock>
             payload.deliveries = (payload.deliveries || []).concat({
               channel: 'kafka', recipient: payload.participant.id, topic: 'chat-message-deliveries'
             });
-          </lunatic:mock>
+          </bsf:mock>
         </bpmn:extensionElements>
         <bpmn:incoming>F_K</bpmn:incoming>
         <bpmn:outgoing>F_K2</bpmn:outgoing>
@@ -204,15 +204,15 @@
       <bpmn:serviceTask id="Task_Webhook" name="Call webhook endpoint">
         <bpmn:documentation>Per-tenant endpoint, HMAC-SHA256 signed body, exponential backoff ×5 then dead-letter.</bpmn:documentation>
         <bpmn:extensionElements>
-          <lunatic:binding type="http">
-            <lunatic:property name="method" value="POST"/>
-            <lunatic:property name="url" value="{participant.webhookUrl}"/>
-          </lunatic:binding>
-          <lunatic:mock>
+          <bsf:binding type="http">
+            <bsf:property name="method" value="POST"/>
+            <bsf:property name="url" value="{participant.webhookUrl}"/>
+          </bsf:binding>
+          <bsf:mock>
             payload.deliveries = (payload.deliveries || []).concat({
               channel: 'webhook', recipient: payload.participant.id, status: 202
             });
-          </lunatic:mock>
+          </bsf:mock>
         </bpmn:extensionElements>
         <bpmn:incoming>F_W</bpmn:incoming>
         <bpmn:outgoing>F_W2</bpmn:outgoing>

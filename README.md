@@ -21,9 +21,9 @@ shapes at their modeled positions, edges following their modeled waypoints.
 - **Storybook for every notation element** — run `npm run storybook` to browse
   the whole catalog.
 
-The repo also ships **Lunatic Studio** (`studio/`) — an in-browser BPMN
+The repo also ships **BSF Studio** (`studio/`) — an in-browser BPMN
 engine and PoC workbench built on this renderer. See
-[Lunatic Studio](#lunatic-studio) below and `PRODUCT_BRIEF.md`.
+[BSF Studio](#bsf-studio) below and `PRODUCT_BRIEF.md`.
 
 ## Installation
 
@@ -171,7 +171,7 @@ override what you like:
 }
 ```
 
-## Lunatic Studio
+## BSF Studio
 
 `studio/` is a static Svelte site — deployable to any static host — that
 turns the renderer into a full **local, in-browser BPMN workbench**:
@@ -182,14 +182,14 @@ turns the renderer into a full **local, in-browser BPMN workbench**:
 - **An in-browser BPMN engine, JavaScript execution** (`studio/src/lib/engine/`):
   runs the file's standard semantics — `conditionExpression` + default flows,
   `bpmn:scriptTask` bodies, multi-instance loops, error boundaries, message
-  events — with `lunatic:mock` blocks standing in for service/user tasks and
-  `lunatic:test` blocks asserting on the outcome. All scripts, mocks and
+  events — with `bsf:mock` blocks standing in for service/user tasks and
+  `bsf:test` blocks asserting on the outcome. All scripts, mocks and
   conditions are JavaScript (`text/javascript`) over a mutable `payload`.
 - **Everything else is standards-compliant BPMN 2.0**: the artifact imports
   into other engines — `spike/` proves it end-to-end in bpmn-engine, with a
   generic adapter mapping the declared JavaScript onto the engine.
 - **WebMCP tools for the whole workspace**: 31 tools registered on
-  `navigator.modelContext` (and always on `window.lunatic` for the console) —
+  `navigator.modelContext` (and always on `window.bsf` for the console) —
   read (`get_model`, `get_element`, `get_issues`), build (`add_element`,
   `connect`, `add_lane`, `auto_layout`, …), logic (`set_condition`,
   `set_script`, `set_mock`, `set_binding`, `set_documentation`), execute &

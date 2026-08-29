@@ -56,7 +56,7 @@ export interface Issue {
   message: string;
 }
 
-export class LunaticEngine {
+export class BsfEngine {
   constructor(definitions: any, processBo?: any, options?: { maxSteps?: number });
   state: EngineState;
   started: boolean;

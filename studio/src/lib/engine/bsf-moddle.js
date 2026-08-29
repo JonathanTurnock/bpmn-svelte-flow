@@ -1,13 +1,13 @@
 /**
- * bpmn-moddle descriptor for the `lunatic:` extension vocabulary
- * (see docs/LUNATIC_EXTENSION.md). Registered with the bpmn-js Modeler in
- * the studio and with bpmn-moddle in the node tests, so `lunatic:*`
+ * bpmn-moddle descriptor for the `bsf:` extension vocabulary
+ * (see docs/BSF_EXTENSION.md). Registered with bpmn-moddle in
+ * the studio and with bpmn-moddle in the node tests, so `bsf:*`
  * elements round-trip as first-class typed moddle objects.
  */
 export default {
-  name: 'Lunatic',
-  prefix: 'lunatic',
-  uri: 'https://lunatic.dev/schema/1.0',
+  name: 'Bsf',
+  prefix: 'bsf',
+  uri: 'http://bpmn-svelte-flow/schema/1.0',
   xml: { tagAlias: 'lowerCase' },
   types: [
     {

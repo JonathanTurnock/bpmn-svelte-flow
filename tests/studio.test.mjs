@@ -3,9 +3,9 @@
 // hands the engine in the browser.
 import { readFileSync } from 'node:fs';
 import { BpmnModdle } from 'bpmn-moddle';
-import lunaticSchema from '../studio/src/lib/engine/lunatic-moddle.js';
+import bsfSchema from '../studio/src/lib/engine/bsf-moddle.js';
 import {
-  LunaticEngine,
+  BsfEngine,
   collectScenarios,
   collectTests,
   runTests,
@@ -33,7 +33,7 @@ assert.equal = (a, e, msg) => {
   if (a !== e) throw new Error(msg || `expected ${JSON.stringify(e)}, got ${JSON.stringify(a)}`);
 };
 
-const moddle = new BpmnModdle({ lunatic: lunaticSchema });
+const moddle = new BpmnModdle({ bsf: bsfSchema });
 const xml = readFileSync(
   new URL('../studio/public/samples/messaging-flow.bpmn', import.meta.url),
   'utf8'
@@ -51,7 +51,7 @@ check('scenario and test collectors find the embedded blocks', () => {
 });
 
 check('happy path runs end-to-end', () => {
-  const engine = new LunaticEngine(definitions);
+  const engine = new BsfEngine(definitions);
   const state = engine.runToEnd({
     senderId: 'usr_1042',
     chatId: 'chat_8231',
@@ -70,11 +70,11 @@ check('happy path runs end-to-end', () => {
   assert.equal(result.payload.deliveries.length, 2, 'two deliveries');
   assert.equal(result.payload.deliveries[0].channel, 'kafka');
   assert.equal(result.payload.deliveries[1].channel, 'webhook');
-  assert(result.payload.kinesis, 'lunatic:sample merged at the catch event');
+  assert(result.payload.kinesis, 'bsf:sample merged at the catch event');
 });
 
 check('denied path takes the default flow to the error end', () => {
-  const engine = new LunaticEngine(definitions);
+  const engine = new BsfEngine(definitions);
   const state = engine.runToEnd({
     senderId: 'usr_6660',
     chatId: 'chat_8231',
@@ -88,7 +88,7 @@ check('denied path takes the default flow to the error end', () => {
   assert(!state.visited.has('Sub_Deliver'), 'delivery never ran');
 });
 
-check('the file’s own lunatic:test suite is green', () => {
+check('the file’s own bsf:test suite is green', () => {
   const results = runTests(definitions);
   for (const r of results) assert(r.ok, `${r.name}: ${r.error}`);
   assert.equal(results.length, 3);
@@ -100,7 +100,7 @@ check('validate() reports no findings on the sample', () => {
 });
 
 check('step() is incremental and step-bounded', () => {
-  const engine = new LunaticEngine(definitions, undefined, { maxSteps: 3 });
+  const engine = new BsfEngine(definitions, undefined, { maxSteps: 3 });
   engine.start({ senderId: 'u', chatId: 'c', text: 't' });
   while (engine.step()) {
     /* run down the budget */
@@ -113,8 +113,8 @@ check('step() is incremental and step-bounded', () => {
 const synthetic = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:lunatic="https://lunatic.dev/schema/1.0"
-    id="Defs_Synth" targetNamespace="http://lunatic.dev/tests">
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_Synth" targetNamespace="http://bpmn-svelte-flow/tests">
   <bpmn:error id="Err_Card" name="CardDeclined" errorCode="CARD_DECLINED"/>
   <bpmn:process id="P_Synth" isExecutable="true">
     <bpmn:startEvent id="S"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
@@ -136,7 +136,7 @@ const synthetic = `<?xml version="1.0" encoding="UTF-8"?>
     </bpmn:parallelGateway>
     <bpmn:serviceTask id="Charge">
       <bpmn:extensionElements>
-        <lunatic:mock>if (payload.declined) { throw new Error('CARD_DECLINED'); } payload.charged = true;</lunatic:mock>
+        <bsf:mock>if (payload.declined) { throw new Error('CARD_DECLINED'); } payload.charged = true;</bsf:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -146,11 +146,11 @@ const synthetic = `<?xml version="1.0" encoding="UTF-8"?>
     </bpmn:boundaryEvent>
     <bpmn:serviceTask id="Notify">
       <bpmn:extensionElements>
-        <lunatic:mock>payload.notified = payload.items.map((i) => i.id);</lunatic:mock>
+        <bsf:mock>payload.notified = payload.items.map((i) => i.id);</bsf:mock>
       </bpmn:extensionElements>
       <bpmn:multiInstanceLoopCharacteristics isSequential="false">
         <bpmn:extensionElements>
-          <lunatic:collection expression="items" elementVariable="item"/>
+          <bsf:collection expression="items" elementVariable="item"/>
         </bpmn:extensionElements>
       </bpmn:multiInstanceLoopCharacteristics>
       <bpmn:incoming>f3</bpmn:incoming><bpmn:outgoing>f4</bpmn:outgoing>
@@ -172,7 +172,7 @@ const synthetic = `<?xml version="1.0" encoding="UTF-8"?>
 const { rootElement: synthDefs } = await moddle.fromXML(synthetic);
 
 check('parallel fork/join merges branch payloads', () => {
-  const engine = new LunaticEngine(synthDefs);
+  const engine = new BsfEngine(synthDefs);
   const state = engine.runToEnd({ items: [{ id: 1 }, { id: 2 }] });
   assert.equal(state.errors.length, 0, state.errors.join('; '));
   const payload = state.results[0].payload;
@@ -181,15 +181,15 @@ check('parallel fork/join merges branch payloads', () => {
 });
 
 check('thrown mock error routes to the error boundary', () => {
-  const engine = new LunaticEngine(synthDefs);
+  const engine = new BsfEngine(synthDefs);
   const state = engine.runToEnd({ declined: true, items: [] });
   assert.equal(state.errors.length, 0, state.errors.join('; '));
   assert(state.visited.has('EndFail'), 'boundary path taken');
   assert(!state.visited.has('Notify'), 'happy path aborted');
 });
 
-check('multi-instance task iterates the lunatic:collection', () => {
-  const engine = new LunaticEngine(synthDefs);
+check('multi-instance task iterates the bsf:collection', () => {
+  const engine = new BsfEngine(synthDefs);
   const state = engine.runToEnd({ items: [{ id: 'x' }, { id: 'y' }, { id: 'z' }] });
   assert.equal(state.errors.length, 0, state.errors.join('; '));
   const payload = state.results[0].payload;

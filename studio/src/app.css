@@ -74,22 +74,22 @@ body {
 }
 
 /* ---- run highlighting on the Svelte Flow canvas ---- */
-.svelte-flow__node.lunatic-visited {
+.svelte-flow__node.bsf-visited {
   filter: drop-shadow(0 0 3px oklch(0.627 0.17 149.214 / 0.85));
 }
-.svelte-flow__node.lunatic-active {
+.svelte-flow__node.bsf-active {
   filter: drop-shadow(0 0 6px oklch(0.705 0.213 47.604));
-  animation: lunatic-pulse 1.2s ease-in-out infinite;
+  animation: bsf-pulse 1.2s ease-in-out infinite;
 }
-.svelte-flow__edge.lunatic-traversed path {
+.svelte-flow__edge.bsf-traversed path {
   stroke: oklch(0.627 0.17 149.214) !important;
 }
-.svelte-flow__node.lunatic-selected {
+.svelte-flow__node.bsf-selected {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
-@keyframes lunatic-pulse {
+@keyframes bsf-pulse {
   0%,
   100% {
     opacity: 1;

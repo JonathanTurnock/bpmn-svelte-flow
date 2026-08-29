@@ -1,13 +1,13 @@
-// Run the UNMODIFIED Lunatic artifact in bpmn-engine through a generic
+// Run the UNMODIFIED BSF artifact in bpmn-engine through a generic
 // adapter that
 //   1. accepts the file's declared MIME scriptFormat (text/javascript) for
 //      script tasks and sequence-flow conditions, exposing the studio's
 //      `payload` contract over engine variables,
 //   2. evaluates FEEL via feelin where a file declares it instead,
 //   3. binds service/send/businessRule tasks by executing the file's own
-//      lunatic:mock extension blocks (the "bind implementations where the mocks
+//      bsf:mock extension blocks (the "bind implementations where the mocks
 //      were" story, automated),
-//   4. honours lunatic:collection for per-iteration multi-instance data.
+//   4. honours bsf:collection for per-iteration multi-instance data.
 // The adapter is process-agnostic: nothing in it mentions the messaging flow.
 // Usage: node spike/run-engine-adapted.mjs <file.bpmn> <happy|denied>
 import { Engine } from 'bpmn-engine';
@@ -35,7 +35,7 @@ const payloads = {
 
 const JS_LANGUAGE = /javascript|ecmascript|(^|\/)js$/i;
 
-// Sequential-MI iteration tracker: exposes the lunatic:collection element
+// Sequential-MI iteration tracker: exposes the bsf:collection element
 // variable (e.g. `participant`) to conditions and mocks inside the loop.
 const iteration = { index: -1, collection: null, elementVariable: null };
 
@@ -172,21 +172,21 @@ function resolveExpression(expression, message) {
   }
 }
 
-// ---- 3: bind tasks by executing the file's lunatic:mock blocks ------------
-function lunaticExtension(owner, name) {
+// ---- 3: bind tasks by executing the file's bsf:mock blocks ------------
+function bsfExtension(owner, name) {
   const values = owner?.extensionElements?.values ?? [];
   return values.find((v) => localName(v.$type ?? '') === name);
 }
 
-function LunaticMockService(activity) {
-  const mock = lunaticExtension(activity.behaviour, 'mock');
+function BsfMockService(activity) {
+  const mock = bsfExtension(activity.behaviour, 'mock');
   const source = (mock?.$body ?? mock?.body ?? '').trim();
   this.execute = function execute(executionMessage, callback) {
     if (!source) return callback(); // unmocked task: pass through
     const environment = activity.environment;
     const sandbox = createContext({ payload: makePayloadProxy(environment) });
     try {
-      new Script(source, { filename: `lunatic:mock/${activity.id}` }).runInContext(sandbox);
+      new Script(source, { filename: `bsf:mock/${activity.id}` }).runInContext(sandbox);
       callback();
     } catch (err) {
       callback(err);
@@ -195,13 +195,13 @@ function LunaticMockService(activity) {
 }
 
 const BOUND_TYPES = new Set(['bpmn:ServiceTask', 'bpmn:SendTask', 'bpmn:BusinessRuleTask']);
-function lunaticBindingExtension(activity, context) {
+function bsfBindingExtension(activity, context) {
   if (BOUND_TYPES.has(activity.type)) {
-    activity.behaviour.Service = LunaticMockService;
+    activity.behaviour.Service = BsfMockService;
   }
-  // Multi-instance: pick up lunatic:collection for per-iteration data.
+  // Multi-instance: pick up bsf:collection for per-iteration data.
   const loop = activity.behaviour?.loopCharacteristics?.behaviour;
-  const collection = lunaticExtension(loop, 'collection');
+  const collection = bsfExtension(loop, 'collection');
   if (collection) {
     iteration.collection = collection.expression;
     iteration.elementVariable = collection.elementVariable;
@@ -224,7 +224,7 @@ const engine = new Engine({
   variables: payloads[scenario],
   scripts: new AdaptedScripts(),
   expressions: { resolveExpression },
-  extensions: { lunaticBinding: lunaticBindingExtension }
+  extensions: { bsfBinding: bsfBindingExtension }
 });
 
 const trail = [];

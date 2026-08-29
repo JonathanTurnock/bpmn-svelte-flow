@@ -1,4 +1,4 @@
-// Run the Lunatic artifact in bpmn-engine (a third-party Node.js BPMN 2.0
+// Run the BSF artifact in bpmn-engine (a third-party Node.js BPMN 2.0
 // workflow engine) with task implementations bound natively through the
 // engine's services API — the "build" exit: engineers implement the ports
 // the model declares.

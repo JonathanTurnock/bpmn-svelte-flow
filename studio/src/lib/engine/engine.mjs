@@ -1,11 +1,11 @@
 /**
- * The Lunatic browser BPMN engine.
+ * The bpmn-svelte-flow (BSF) browser BPMN engine.
  *
  * Executes a bpmn-moddle process tree using the file's own standard
  * semantics — `bpmn:conditionExpression` + default flows route gateways,
  * `bpmn:scriptTask` bodies run, multi-instance loop characteristics iterate —
- * with `lunatic:mock` blocks standing in for service/user/etc. task
- * implementations and `lunatic:sample` supplying message payloads.
+ * with `bsf:mock` blocks standing in for service/user/etc. task
+ * implementations and `bsf:sample` supplying message payloads.
  * All script/expression bodies are JavaScript (`text/javascript`), run
  * against a mutable `payload`.
  *
@@ -17,8 +17,8 @@
 const JS_FORMAT = /javascript|ecmascript|(^|\/)js$/i;
 
 // ---------------------------------------------------------------------------
-// moddle helpers — tolerant of both registered (`lunatic:Mock`) and
-// unregistered (`lunatic:mock` generic) extension parses, and of any prefix.
+// moddle helpers — tolerant of both registered (`bsf:Mock`) and
+// unregistered (`bsf:mock` generic) extension parses, and of any prefix.
 // ---------------------------------------------------------------------------
 
 function localName(type) {
@@ -122,7 +122,7 @@ export function collectTests(definitions, processBo) {
 // The engine
 // ---------------------------------------------------------------------------
 
-export class LunaticEngine {
+export class BsfEngine {
   /**
    * @param definitions bpmn-moddle bpmn:Definitions
    * @param processBo   the bpmn:Process to run (default: first executable, else first)
@@ -303,7 +303,7 @@ export class LunaticEngine {
     this.moveAlong(token, outgoing(token.at));
   }
 
-  /** Merge the element's message `lunatic:sample` JSON into the payload. */
+  /** Merge the element's message `bsf:sample` JSON into the payload. */
   mergeSample(token) {
     const defs = token.at.eventDefinitions || [];
     const msgDef = defs.find((d) => is(d, 'bpmn:MessageEventDefinition'));
@@ -662,7 +662,7 @@ export class LunaticEngine {
 }
 
 // ---------------------------------------------------------------------------
-// Test runner — fresh engine per lunatic:test
+// Test runner — fresh engine per bsf:test
 // ---------------------------------------------------------------------------
 
 export function runTests(definitions, processBo, tests) {
@@ -673,7 +673,7 @@ export function runTests(definitions, processBo, tests) {
   const suite = tests || collectTests(definitions, processBo);
   return suite.map((test) => {
     try {
-      const engine = new LunaticEngine(definitions, processBo);
+      const engine = new BsfEngine(definitions, processBo);
       const state = engine.runToEnd(clone(test.payload));
       if (state.errors.length) throw new Error(state.errors.join('; '));
       const payloads = state.results.map((r) => r.payload);
@@ -734,14 +734,14 @@ export function validate(definitions) {
         const loop = el.loopCharacteristics;
         if (loop && is(loop, 'bpmn:MultiInstanceLoopCharacteristics')) {
           if (!exprBody(loop.loopCardinality) && !extensions(loop, 'collection').length) {
-            add('warning', el.id, 'multi-instance has neither loopCardinality nor lunatic:collection');
+            add('warning', el.id, 'multi-instance has neither loopCardinality nor bsf:collection');
           }
         }
         if (
           (is(el, 'bpmn:ServiceTask') || is(el, 'bpmn:SendTask') || is(el, 'bpmn:BusinessRuleTask')) &&
           !extensionBody(el, 'mock')
         ) {
-          add('info', el.id, 'task has no lunatic:mock — it will pass the payload through unchanged');
+          add('info', el.id, 'task has no bsf:mock — it will pass the payload through unchanged');
         }
         if (is(el, 'bpmn:SubProcess')) walk(el);
         void inEventSub;

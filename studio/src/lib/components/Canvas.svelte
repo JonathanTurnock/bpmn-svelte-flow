@@ -30,16 +30,16 @@
       ...n,
       draggable: !FIXED.has(n.data.element),
       class: [
-        visited.has(n.id) ? 'lunatic-visited' : '',
-        active.has(n.id) ? 'lunatic-active' : '',
-        selected === n.id ? 'lunatic-selected' : ''
+        visited.has(n.id) ? 'bsf-visited' : '',
+        active.has(n.id) ? 'bsf-active' : '',
+        selected === n.id ? 'bsf-selected' : ''
       ]
         .filter(Boolean)
         .join(' ')
     }));
     edges = graph.edges.map((e) => ({
       ...e,
-      class: traversed.has(e.id) ? 'lunatic-traversed' : ''
+      class: traversed.has(e.id) ? 'bsf-traversed' : ''
     }));
   });
 

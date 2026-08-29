@@ -64,7 +64,7 @@
       <Label>Assertions — state, payloads, payload, assert</Label>
       <CodeEditor bind:value={newScript} minHeight="80px" />
       <div class="flex gap-2">
-        <Button size="sm" onclick={addTest}>Add lunatic:test</Button>
+        <Button size="sm" onclick={addTest}>Add bsf:test</Button>
         <Button size="sm" variant="ghost" onclick={() => (adding = false)}>Cancel</Button>
       </div>
     </div>
@@ -90,7 +90,7 @@
       </div>
     {:else}
       <p class="text-sm text-muted-foreground">
-        No lunatic:test blocks in this file yet — add one here or via the add_test tool.
+        No bsf:test blocks in this file yet — add one here or via the add_test tool.
       </p>
     {/each}
   </div>

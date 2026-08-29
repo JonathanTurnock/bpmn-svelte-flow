@@ -30,7 +30,7 @@
 
 <div class="flex h-full flex-col gap-3 overflow-y-auto p-3" data-testid="run-panel">
   <div class="grid gap-1">
-    <Label>Scenario (lunatic:scenario)</Label>
+    <Label>Scenario (bsf:scenario)</Label>
     <Select.Root type="single" bind:value={scenarioName}>
       <Select.Trigger class="w-full" data-testid="scenario-select">
         {scenarioName || 'no scenarios in this file'}

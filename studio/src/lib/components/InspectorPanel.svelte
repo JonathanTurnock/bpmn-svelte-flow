@@ -131,11 +131,11 @@
       </div>
     {:else if hasMock}
       <div class="grid min-h-[140px] flex-1 gap-1">
-        <Label>Mock (lunatic:mock — browser stand-in)</Label>
+        <Label>Mock (bsf:mock — browser stand-in)</Label>
         <CodeEditor bind:value={code} onchange={() => (dirty = true)} minHeight="120px" />
       </div>
       <div class="grid gap-1">
-        <Label>Binding type (lunatic:binding)</Label>
+        <Label>Binding type (bsf:binding)</Label>
         <Input
           bind:value={bindingType}
           oninput={() => (dirty = true)}

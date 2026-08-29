@@ -65,7 +65,7 @@
 
 <header class="flex items-center gap-2 border-b bg-card px-3 py-2">
   <Moon class="size-5" />
-  <span class="text-sm font-semibold tracking-tight">Lunatic Studio</span>
+  <span class="text-sm font-semibold tracking-tight">BSF Studio</span>
   <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-5" />
 
   <Input class="w-44" bind:value={studio.docName} aria-label="document name" />

@@ -158,7 +158,7 @@ export const tools: StudioTool[] = [
   {
     name: 'set_mock',
     description:
-      'Set (or clear, with empty code) the lunatic:mock browser stand-in on a service/send/user/rule task. The mock mutates `payload`; throw to exercise error boundaries.',
+      'Set (or clear, with empty code) the bsf:mock browser stand-in on a service/send/user/rule task. The mock mutates `payload`; throw to exercise error boundaries.',
     input: { taskId: str('task id'), code: str('JavaScript body') },
     required: ['taskId'],
     run: (args) => studio.mutate(() => studio.setMock(args)).then(() => writeResult())
@@ -166,7 +166,7 @@ export const tools: StudioTool[] = [
   {
     name: 'set_binding',
     description:
-      'Declare the real-world implementation intent (lunatic:binding) for a task: a type (http, kafka-producer, queue, decision, stream-consumer, manual, custom) plus name/value properties. Descriptive — feeds the binding inventory and per-engine export.',
+      'Declare the real-world implementation intent (bsf:binding) for a task: a type (http, kafka-producer, queue, decision, stream-consumer, manual, custom) plus name/value properties. Descriptive — feeds the binding inventory and per-engine export.',
     input: {
       taskId: str('task id'),
       type: str('binding type; omit to clear'),
@@ -196,7 +196,7 @@ export const tools: StudioTool[] = [
   {
     name: 'define_scenario',
     description:
-      'Add or replace a named lunatic:scenario (a JSON payload the process can be run with).',
+      'Add or replace a named bsf:scenario (a JSON payload the process can be run with).',
     input: {
       name: str('scenario name'),
       payload: str('JSON payload'),
@@ -238,7 +238,7 @@ export const tools: StudioTool[] = [
   {
     name: 'add_test',
     description:
-      'Add or replace a lunatic:test: a JSON payload plus a JavaScript assertion body run after a fresh simulation, with `state` (visited/traversedEdges Sets, log, finished), `payloads` (end-event payloads), `payload` (= payloads[0]) and `assert`/`assert.equal`.',
+      'Add or replace a bsf:test: a JSON payload plus a JavaScript assertion body run after a fresh simulation, with `state` (visited/traversedEdges Sets, log, finished), `payloads` (end-event payloads), `payload` (= payloads[0]) and `assert`/`assert.equal`.',
     input: {
       name: str('test name'),
       payload: str('JSON payload'),
@@ -249,7 +249,7 @@ export const tools: StudioTool[] = [
   },
   {
     name: 'run_tests',
-    description: 'Run every embedded lunatic:test (fresh engine per test). Returns per-test pass/fail.',
+    description: 'Run every embedded bsf:test (fresh engine per test). Returns per-test pass/fail.',
     input: {},
     run: () => {
       const results = studio.runAllTests();

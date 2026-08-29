@@ -1,6 +1,5 @@
-# Product Brief — Lunatic
+# Product Brief — BSF Studio
 
-*Lunatic — **lua** (the moon) and the token **tic**king through the flow.*
 
 *Status: shipped — the studio lives in `studio/` (`npm run studio`).*
 *Builds on: this repo's own Svelte Flow BPMN renderer, bpmn-moddle, the
@@ -46,7 +45,7 @@ other conformant engine tomorrow.
   canvas is a full modeler in its own right.
 - An **in-browser execution engine**, plain JavaScript: it runs the file's
   standard semantics (condition expressions, default flows, script tasks) and
-  its `lunatic:mock` blocks, drives the visible token, and runs the embedded
+  its `bsf:mock` blocks, drives the visible token, and runs the embedded
   tests.
 
 ## Standards conformance (the governing design rule)
@@ -62,10 +61,10 @@ What that means concretely:
 |---|---|
 | Gateway routing | **`bpmn:conditionExpression`** (`tFormalExpression`, declared `language`) on outgoing flows + **`default`** attribute on the gateway |
 | Script logic | **`bpmn:scriptTask`** with **`scriptFormat`** + **`bpmn:script`** where the logic *is* script; other task types keep their standard meaning |
-| Browser behaviour of service/user tasks | the task stays a plain standard `serviceTask`/`userTask`; the browser mock lives in **`lunatic:mock`** inside `extensionElements` |
+| Browser behaviour of service/user tasks | the task stays a plain standard `serviceTask`/`userTask`; the browser mock lives in **`bsf:mock`** inside `extensionElements` |
 | Human-readable business logic | **`bpmn:documentation`** — standard on every element, preserved and displayed by engines and modelers |
 | Data hand-offs worth modeling | standard **data objects / data associations / `ioSpecification`** where they add clarity |
-| Scenarios & tests | **`lunatic:scenario`** / **`lunatic:test`** in `extensionElements` (the spec-sanctioned slot for tool data) |
+| Scenarios & tests | **`bsf:scenario`** / **`bsf:test`** in `extensionElements` (the spec-sanctioned slot for tool data) |
 | Process flag | `isExecutable="true"`; definitions declare `expressionLanguage` and default `scriptFormat` explicitly |
 
 Conformance is enforced:
@@ -82,7 +81,7 @@ Conformance is enforced:
   Camunda Modeler and Flowable's modeler.
 
 **The language: JavaScript, everywhere.** Script task bodies,
-`lunatic:mock` blocks, and `conditionExpression` bodies are all JavaScript,
+`bsf:mock` blocks, and `conditionExpression` bodies are all JavaScript,
 declared honestly in the file (`scriptFormat` /
 `conditionExpression language` = `text/javascript`). It is the browser
 engine's native language and the richest language for mocks; the binding
@@ -93,20 +92,20 @@ pass re-expresses conditions in each target engine's dialect on export.
 One self-contained, schema-valid BPMN 2.0 document. Sketch:
 
 ```xml
-<bpmn:definitions xmlns:lunatic="https://lunatic.dev/schema/1.0" …>
+<bpmn:definitions xmlns:bsf="http://bpmn-svelte-flow/schema/1.0" …>
   <bpmn:process id="P" isExecutable="true">
     <bpmn:extensionElements>
-      <lunatic:scenario name="Happy path" payload='{"amount":5200}'/>
-      <lunatic:test name="large claims go to review" payload='{"amount":5200}'>
+      <bsf:scenario name="Happy path" payload='{"amount":5200}'/>
+      <bsf:test name="large claims go to review" payload='{"amount":5200}'>
         assert(state.visited.has('Task_Review'));
-      </lunatic:test>
+      </bsf:test>
     </bpmn:extensionElements>
 
     <bpmn:serviceTask id="Task_Save" name="Save message (Messages API)">
       <bpmn:documentation>POST /v1/messages → 201 { messageId }.
         Owns durability; emits to Kinesis after commit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <lunatic:mock>payload.messagesApi = { status: 201, messageId: id() };</lunatic:mock>
+        <bsf:mock>payload.messagesApi = { status: 201, messageId: id() };</bsf:mock>
       </bpmn:extensionElements>
     </bpmn:serviceTask>
 
@@ -119,7 +118,7 @@ One self-contained, schema-valid BPMN 2.0 document. Sketch:
     …
 ```
 
-Strip every `lunatic:` extension and `bpmn:documentation` stays, routing stays,
+Strip every `bsf:` extension and `bpmn:documentation` stays, routing stays,
 script tasks stay: **the process is still complete and executable** — that
 is the conformance test in one sentence.
 
@@ -134,7 +133,7 @@ The mapping is direct:
 |---|---|---|
 | Process | Use case / application service (orchestration) | model |
 | Script task | Domain logic — pure, deterministic | model |
-| Service task + `lunatic:binding` | **Port** — adapter implemented in code | engineer |
+| Service task + `bsf:binding` | **Port** — adapter implemented in code | engineer |
 | Message events | Domain events crossing the boundary | engineer (transport) |
 | Timer events | Clock port | engineer (scheduler) |
 | Error / compensation boundaries | Failure policy | model |
@@ -229,19 +228,19 @@ are undoable; results are compact JSON.
 ```
 ┌──────────────────── the studio (static Svelte site) ─────────────────┐
 │  WebMCP adapter ── registers the 31 tools on navigator.modelContext  │
-│      │              (and window.lunatic); one module isolates the API│
+│      │              (and window.bsf); one module isolates the API│
 │      ▼                                                               │
 │  Studio store ──── every tool = a store mutation; UI panels call the │
 │      │             same mutations; one shared undo stack; after every│
 │      │             mutation: re-derive graph, validate, autosave     │
 │      ▼                                                               │
-│  Document core ── bpmn-moddle + lunatic extension schema; semantic + │
+│  Document core ── bpmn-moddle + bsf extension schema; semantic + │
 │      │            DI maintained together on every edit               │
 │      ├── Canvas: this repo's own Svelte Flow BPMN renderer (drag,    │
 │      │     select, run highlighting — the same nodes Storybook shows)│
 │      ├── Execution engine (studio/src/lib/engine — standard          │
 │      │     semantics: conditions, default flows, script tasks, MI,   │
-│      │     error boundaries, message samples; lunatic:mock for the   │
+│      │     error boundaries, message samples; bsf:mock for the   │
 │      │     rest; step-bounded; JavaScript everywhere)                │
 │      └── IDE shell: shadcn-svelte components, CodeMirror editors     │
 │            (scripts, mocks, conditions, tests, live XML), Run /      │
@@ -258,7 +257,7 @@ browser suite driving the built studio through its WebMCP tools):
 
 - **Document core + engine** — the messaging-platform flow authored as a
   conformant file runs in the studio (both scenarios), its embedded
-  `lunatic:test` suite is green, and the very same file runs end-to-end in
+  `bsf:test` suite is green, and the very same file runs end-to-end in
   bpmn-engine through the generic adapter in `spike/` (both scenarios),
   with bpmnlint clean and the Camunda-compat profile listing exactly the
   per-element binding points.

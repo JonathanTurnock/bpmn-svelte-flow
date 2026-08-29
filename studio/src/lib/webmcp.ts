@@ -3,7 +3,7 @@
  * `navigator.modelContext` so a WebMCP-compliant chat client can drive the
  * studio; the API surface is still settling, so both the `registerTool` and
  * `provideContext` shapes are supported. The same tools are always exposed
- * on `window.lunatic` for console use and automated testing.
+ * on `window.bsf` for console use and automated testing.
  */
 import { tools, type StudioTool } from './tools.js';
 
@@ -44,7 +44,7 @@ export async function runTool(name: string, args: Record<string, unknown> = {}) 
 export function registerWebMcp(): { api: string; tools: number } {
   const registrations = tools.map(toRegistration);
 
-  (window as any).lunatic = {
+  (window as any).bsf = {
     tools: Object.fromEntries(tools.map((t) => [t.name, t])),
     list: () => tools.map((t) => ({ name: t.name, description: t.description })),
     call: runTool
@@ -59,5 +59,5 @@ export function registerWebMcp(): { api: string; tools: number } {
     mc.provideContext({ tools: registrations });
     return { api: 'provideContext', tools: registrations.length };
   }
-  return { api: 'window.lunatic', tools: registrations.length };
+  return { api: 'window.bsf', tools: registrations.length };
 }

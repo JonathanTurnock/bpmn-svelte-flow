@@ -1,4 +1,4 @@
-# Spike: the Lunatic artifact in a third-party engine
+# Spike: the BSF artifact in a third-party engine
 
 `messaging-flow.bpmn` is the studio's sample artifact, byte-for-byte
 (`studio/public/samples/messaging-flow.bpmn`): the messaging-platform flow in
@@ -7,9 +7,9 @@ business-rule task → allow/deny gateway with condition + default flow → save
 service task → Kinesis message catch → join script task → participants
 service task → sequential multi-instance delivery sub-process routing
 Kafka/webhook branches — with lanes, DI, `bpmn:documentation`, JavaScript
-(`text/javascript`) for every script and condition, and `lunatic:scenario` /
-`lunatic:test` / `lunatic:mock` / `lunatic:binding` / `lunatic:collection` /
-`lunatic:sample` extensions.
+(`text/javascript`) for every script and condition, and `bsf:scenario` /
+`bsf:test` / `bsf:mock` / `bsf:binding` / `bsf:collection` /
+`bsf:sample` extensions.
 
 This spike runs that file end-to-end in **bpmn-engine 25** (a third-party
 Node.js BPMN 2.0 engine) and lints it for portability — the product's
@@ -20,8 +20,8 @@ hand-off story working against real software:
   onto the engine — MIME `text/javascript` script tasks and conditions run
   against the studio's `payload` contract via a proxy over engine variables
   (FEEL via feelin where a file declares that instead) — executes the file's
-  own `lunatic:mock` blocks as the task implementations, and honours
-  `lunatic:collection` for per-iteration multi-instance data. The file is
+  own `bsf:mock` blocks as the task implementations, and honours
+  `bsf:collection` for per-iteration multi-instance data. The file is
   never edited. Both scenarios complete: the happy path (both message waits,
   the allow branch, MI ×2 routing participant 1 → Kafka and participant 2 →
   webhook) and the denied path (DENY → default flow → `403 rejected`).
@@ -41,7 +41,7 @@ hand-off story working against real software:
 
 ```sh
 npm i
-node spike/run-engine-adapted.mjs spike/messaging-flow.bpmn happy    # adapter executes lunatic:mock
+node spike/run-engine-adapted.mjs spike/messaging-flow.bpmn happy    # adapter executes bsf:mock
 node spike/run-engine-adapted.mjs spike/messaging-flow.bpmn denied   # policy-deny path
 node spike/run-engine.mjs spike/messaging-flow.bpmn happy            # raw engine: shows the dialect gap
 npx bpmnlint --config spike/.bpmnlintrc spike/messaging-flow.bpmn    # portability lint

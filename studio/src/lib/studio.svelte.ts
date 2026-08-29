@@ -10,9 +10,9 @@
 import { BpmnModdle } from 'bpmn-moddle';
 import { bpmnToFlow } from '$bsf/parser/transform.js';
 import type { BpmnFlowGraph } from '$bsf/types.js';
-import lunaticSchema from './engine/lunatic-moddle.js';
+import bsfSchema from './engine/bsf-moddle.js';
 import {
-  LunaticEngine,
+  BsfEngine,
   collectScenarios,
   collectTests,
   runTests,
@@ -27,8 +27,8 @@ import {
 } from './engine/engine.mjs';
 import { makeId } from './utils.js';
 
-const WORKSPACE_KEY = 'lunatic.workspace.v1';
-const AUTOSAVE_KEY = 'lunatic.autosave.v1';
+const WORKSPACE_KEY = 'bsf.workspace.v1';
+const AUTOSAVE_KEY = 'bsf.autosave.v1';
 
 const EVENT_DEFINITIONS: Record<string, string> = {
   message: 'bpmn:MessageEventDefinition',
@@ -109,9 +109,9 @@ class StudioStore {
 
   // non-reactive internals
   definitions: any = null;
-  engine: LunaticEngine | null = null;
+  engine: BsfEngine | null = null;
   runScenarioName = '';
-  private moddle = new BpmnModdle({ lunatic: lunaticSchema });
+  private moddle = new BpmnModdle({ bsf: bsfSchema });
   private undoStack: string[] = [];
   private redoStack: string[] = [];
 
@@ -158,8 +158,8 @@ class StudioStore {
     xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
     xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
     xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-    xmlns:lunatic="https://lunatic.dev/schema/1.0"
-    id="Defs_${id}" targetNamespace="https://lunatic.dev/poc"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_${id}" targetNamespace="http://bpmn-svelte-flow/poc"
     expressionLanguage="text/javascript">
   <bpmn:process id="${id}" isExecutable="true">
     <bpmn:startEvent id="Start_1" name="Start"/>
@@ -887,7 +887,7 @@ class StudioStore {
 
   setMock(args: { taskId: string; code?: string }) {
     const bo = this.findBo(args.taskId);
-    this.setExtension(bo, 'mock', args.code ? (m) => m.create('lunatic:Mock', { body: args.code }) : null);
+    this.setExtension(bo, 'mock', args.code ? (m) => m.create('bsf:Mock', { body: args.code }) : null);
   }
 
   setBinding(args: { taskId: string; type?: string; properties?: Array<{ name: string; value: string }> }) {
@@ -897,8 +897,8 @@ class StudioStore {
       'binding',
       args.type
         ? (m) => {
-            const props = (args.properties || []).map((p) => m.create('lunatic:Property', p));
-            const binding = m.create('lunatic:Binding', { type: args.type, properties: props });
+            const props = (args.properties || []).map((p) => m.create('bsf:Property', p));
+            const binding = m.create('bsf:Binding', { type: args.type, properties: props });
             for (const p of props) p.$parent = binding;
             return binding;
           }
@@ -913,7 +913,7 @@ class StudioStore {
     const values = (proc.extensionElements?.values || []).filter(
       (v: any) => !(localName(v.$type).toLowerCase() === kind && v.name === props.name)
     );
-    const created = this.moddle.create(kind === 'test' ? 'lunatic:Test' : 'lunatic:Scenario', props);
+    const created = this.moddle.create(kind === 'test' ? 'bsf:Test' : 'bsf:Scenario', props);
     values.push(created);
     const ext = this.moddle.create('bpmn:ExtensionElements', { values });
     ext.$parent = proc;
@@ -1044,7 +1044,7 @@ class StudioStore {
 
   startRun(opts: { scenario?: string; payload?: Record<string, unknown> } = {}) {
     const initial = opts.payload !== undefined ? opts.payload : this.scenarioPayload(opts.scenario);
-    this.engine = new LunaticEngine(this.definitions, this.process);
+    this.engine = new BsfEngine(this.definitions, this.process);
     this.engine.start(JSON.parse(JSON.stringify(initial)));
     this.runScenarioName = opts.scenario || this.scenarios()[0]?.name || 'ad-hoc';
     this.runVersion += 1;
