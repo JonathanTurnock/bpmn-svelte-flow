@@ -64,7 +64,7 @@ const interruptingEventSubProcess = bpmnDefinitions(
     </bpmn:subProcess>
   </bpmn:process>`,
   [
-    shape('EventSub_1', 50, 45, 920, 190, { expanded: true }),
+    shape('EventSub_1', 50, 50, 920, 160, { expanded: true }),
     ...ids.map((id, i) => evShape(id, i))
   ].join('\n')
 );

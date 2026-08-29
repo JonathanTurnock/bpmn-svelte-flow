@@ -117,21 +117,21 @@
         stroke-linejoin="round"
       />
     {:else if kind === 'error'}
-      <!-- lightning bolt: down-left tail, up-right head -->
+      <!-- lightning bolt: a four-pointed zigzag band, symmetric about (18,18) -->
       <path
-        d="M 9.8,25.8 L 15.3,10.6 L 20.2,19.4 L 26.2,10.2 L 20.7,25.4 L 15.8,16.6 Z"
+        d="M 10,26.2 L 15.6,11.6 L 19.8,17.4 L 26,9.8 L 20.4,24.4 L 16.2,18.6 Z"
         fill={body}
         stroke={stroke}
-        stroke-width="1.4"
+        stroke-width="1.3"
         stroke-linejoin="round"
       />
     {:else if kind === 'escalation'}
-      <!-- upward arrowhead with a notched base -->
+      <!-- upward arrowhead with a deep notched base -->
       <path
-        d="M 18,8 L 25.6,26 L 18,19.6 L 10.4,26 Z"
+        d="M 18,8.4 L 24.8,26.4 L 18,17.2 L 11.2,26.4 Z"
         fill={body}
         stroke={stroke}
-        stroke-width="1.5"
+        stroke-width="1.4"
         stroke-linejoin="round"
       />
     {:else if kind === 'compensate'}
@@ -147,7 +147,7 @@
       <!-- ruled page (conditional only ever occurs as a catch event) -->
       <rect x="10.8" y="9" width="14.4" height="18" fill="none" stroke={stroke} stroke-width="1.5" />
       {#each [12.9, 16.3, 19.7, 23.1] as y}
-        <line x1="12.9" y1={y} x2="23.1" y2={y} stroke={stroke} stroke-width="1.4" />
+        <line x1="13.2" y1={y} x2="22.8" y2={y} stroke={stroke} stroke-width="1.25" />
       {/each}
     {:else if kind === 'link'}
       <!-- rightward block arrow -->
@@ -183,8 +183,8 @@
     {:else if kind === 'parallel-multiple'}
       <!-- plus sign; per spec this glyph is never filled -->
       <path
-        d="M 20.7,20.7 L 20.7,27 L 15.3,27 L 15.3,20.7 L 9,20.7 L 9,15.3 L 15.3,15.3 L 15.3,9
-           L 20.7,9 L 20.7,15.3 L 27,15.3 L 27,20.7 Z"
+        d="M 20.5,20.5 L 20.5,26.6 L 15.5,26.6 L 15.5,20.5 L 9.4,20.5 L 9.4,15.5 L 15.5,15.5
+           L 15.5,9.4 L 20.5,9.4 L 20.5,15.5 L 26.6,15.5 L 26.6,20.5 Z"
         fill="none"
         stroke={stroke}
         stroke-width="1.5"

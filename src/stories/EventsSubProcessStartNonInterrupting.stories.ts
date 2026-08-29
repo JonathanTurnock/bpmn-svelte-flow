@@ -56,7 +56,7 @@ const nonInterruptingEventSubProcess = bpmnDefinitions(
     </bpmn:subProcess>
   </bpmn:process>`,
   [
-    shape('EventSub_2', 50, 45, 720, 190, { expanded: true }),
+    shape('EventSub_2', 50, 50, 720, 160, { expanded: true }),
     ...ids.map((id, i) => evShape(id, i))
   ].join('\n')
 );

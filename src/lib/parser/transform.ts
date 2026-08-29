@@ -145,7 +145,12 @@ function shapeToNode(di: any, warnings: string[]): BpmnFlowNode | undefined {
   if (EVENT_TYPES.has(type)) {
     nodeType = 'bpmn-event';
     data.eventKind = eventKindOf(element);
-    data.eventDefinitions = (element.eventDefinitions ?? []).map((d: any) => d.$type as string);
+    // Event definitions may be contained (eventDefinitions) or referenced
+    // (eventDefinitionRef pointing at definitions hoisted to bpmn:Definitions).
+    data.eventDefinitions = [
+      ...(element.eventDefinitions ?? []),
+      ...(element.eventDefinitionRef ?? [])
+    ].map((d: any) => d.$type as string);
     data.parallelMultiple = !!element.parallelMultiple;
     if (type === 'bpmn:StartEvent') {
       data.interrupting = element.isInterrupting !== false;
