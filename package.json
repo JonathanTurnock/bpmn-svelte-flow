@@ -35,7 +35,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "bun run package && bun tests/engine.test.mjs && bun run test:sample-sync && bun run --cwd packages/engine test",
+    "test": "bun run package && bun tests/engine.test.mjs && bun tests/reference.test.mjs && bun run test:sample-sync && bun run --cwd packages/engine test",
     "test:sample-sync": "cmp -s studio/public/samples/messaging-flow.bpmn packages/engine/test/fixtures/messaging-flow.bpmn || (echo 'studio sample and engine fixture messaging-flow.bpmn have drifted apart' && exit 1)",
     "poc": "vite poc --open",
     "studio": "vite studio --open",

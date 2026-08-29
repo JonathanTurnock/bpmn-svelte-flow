@@ -53,6 +53,7 @@
 </script>
 
 <div class="h-full w-full" data-testid="canvas">
+  {#key studio.docVersion}
   <SvelteFlow
     bind:nodes
     bind:edges
@@ -72,4 +73,5 @@
     <Background variant={BackgroundVariant.Dots} gap={18} size={1} />
     <Controls showLock={false} />
   </SvelteFlow>
+  {/key}
 </div>

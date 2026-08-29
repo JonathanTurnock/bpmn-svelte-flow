@@ -103,6 +103,8 @@ class StudioStore {
   selectedId = $state<string | null>(null);
   runVersion = $state(0);
   modelVersion = $state(0);
+  /** Bumped when a different document is loaded — the canvas re-fits on it. */
+  docVersion = $state(0);
   canUndo = $state(false);
   canRedo = $state(false);
   workspaceVersion = $state(0);
@@ -136,6 +138,7 @@ class StudioStore {
     this.resetRun();
     if (name) this.docName = name;
     await this.refresh();
+    this.docVersion += 1;
     return warnings.map((w: any) => w?.message ?? String(w));
   }
 
