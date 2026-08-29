@@ -161,4 +161,6 @@ export interface BpmnFlowGraph {
   warnings: string[];
   /** Workflow tests embedded in the file via bsf:test extension elements. */
   tests: BpmnWorkflowTest[];
+  /** Default initial simulation payload declared by the document (JSON format). */
+  initialPayload?: Record<string, unknown>;
 }

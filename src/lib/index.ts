@@ -17,6 +17,8 @@ export { runWorkflowTests, type BpmnTestResult } from './simulation/testing.js';
 
 export { parseBpmn, type ParseResult } from './parser/parse.js';
 export { bpmnToFlow } from './parser/transform.js';
+export { jsonToFlow, type BpmnJsonDocument, type BpmnJsonEdge, type BpmnJsonNode } from './parser/json.js';
+export { loadDefinition } from './parser/load.js';
 
 export { default as BpmnEdge } from './components/edges/BpmnEdge.svelte';
 export { default as EventNode } from './components/nodes/EventNode.svelte';

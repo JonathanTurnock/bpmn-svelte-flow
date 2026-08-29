@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Background, BackgroundVariant, Controls, SvelteFlow, ViewportPortal } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
-  import { parseBpmn } from '../parser/parse.js';
-  import { bpmnToFlow } from '../parser/transform.js';
+  import type { BpmnJsonDocument } from '../parser/json.js';
+  import { loadDefinition } from '../parser/load.js';
   import { BpmnSimulation, type SimulationLogEntry } from '../simulation/engine.js';
   import { runWorkflowTests, type BpmnTestResult } from '../simulation/testing.js';
   import type { BpmnFlowEdge, BpmnFlowNode, BpmnWorkflowTest, Point } from '../types.js';
@@ -10,17 +10,23 @@
 
   let {
     xml,
+    definition,
     scripts = {},
-    payload = {},
+    payload,
     height = '100%',
     width = '100%',
     stepDelay = 900
   }: {
-    /** BPMN 2.0 XML document to simulate. */
-    xml: string;
-    /** Initial JavaScript attachments, keyed by element id. */
+    /**
+     * Document to simulate: BPMN 2.0 XML, or a JSON diagram document
+     * (string or object) — the format is auto-detected.
+     */
+    xml?: string;
+    /** Alias for `xml` that also accepts a JSON document object. */
+    definition?: string | BpmnJsonDocument;
+    /** Initial JavaScript attachments, keyed by element id (override file scripts). */
     scripts?: Record<string, string>;
-    /** Initial payload injected at start events. */
+    /** Initial payload injected at start events (overrides the document's own). */
     payload?: Record<string, unknown>;
     height?: string;
     width?: string;
@@ -52,19 +58,20 @@
   const selectedNode = $derived(baseNodes.find((n) => n.id === selectedId));
 
   $effect(() => {
-    const currentXml = xml;
+    const input = definition ?? xml;
     let cancelled = false;
     (async () => {
       try {
-        const { definitions } = await parseBpmn(currentXml);
+        if (input === undefined) throw new Error('BpmnSimulator needs an `xml` or `definition` prop');
+        const graph = await loadDefinition(input);
         if (cancelled) return;
-        const graph = bpmnToFlow(definitions);
         baseNodes = graph.nodes;
         baseEdges = graph.edges;
         workflowTests = graph.tests;
         testResults = undefined;
-        sim = new BpmnSimulation(graph, { scripts, payload });
-        payloadText = JSON.stringify(payload, null, 2);
+        const initialPayload = payload ?? graph.initialPayload ?? {};
+        sim = new BpmnSimulation(graph, { scripts, payload: initialPayload });
+        payloadText = JSON.stringify(initialPayload, null, 2);
         parseError = undefined;
         refresh();
       } catch (err) {

@@ -1,13 +1,14 @@
 <script lang="ts">
   import { Background, BackgroundVariant, Controls, MiniMap, SvelteFlow } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
-  import { parseBpmn } from '../parser/parse.js';
-  import { bpmnToFlow } from '../parser/transform.js';
+  import type { BpmnJsonDocument } from '../parser/json.js';
+  import { loadDefinition } from '../parser/load.js';
   import type { BpmnFlowEdge, BpmnFlowNode } from '../types.js';
   import { bpmnEdgeTypes, bpmnNodeTypes } from './registry.js';
 
   let {
     xml,
+    definition,
     diagramId,
     height = '100%',
     width = '100%',
@@ -19,9 +20,14 @@
     onload,
     onerror
   }: {
-    /** BPMN 2.0 XML document to render. */
-    xml: string;
-    /** Optional id of the BPMNDiagram to render (defaults to the first). */
+    /**
+     * Document to render: BPMN 2.0 XML, or a JSON diagram document
+     * (string or object) — the format is auto-detected.
+     */
+    xml?: string;
+    /** Alias for `xml` that also accepts a JSON document object. */
+    definition?: string | BpmnJsonDocument;
+    /** XML only: id of the BPMNDiagram to render (defaults to the first). */
     diagramId?: string;
     /** CSS height of the canvas container. */
     height?: string;
@@ -48,22 +54,22 @@
   let parseError = $state<string | undefined>(undefined);
 
   $effect(() => {
-    const currentXml = xml;
+    const input = definition ?? xml;
     const currentDiagramId = diagramId;
     let cancelled = false;
 
     (async () => {
       try {
-        const { definitions, warnings: parseWarnings } = await parseBpmn(currentXml);
+        if (input === undefined) throw new Error('BpmnDiagram needs an `xml` or `definition` prop');
+        const graph = await loadDefinition(input, { diagramId: currentDiagramId });
         if (cancelled) return;
-        const graph = bpmnToFlow(definitions, { diagramId: currentDiagramId });
         nodes = graph.nodes;
         edges = graph.edges;
         parseError = undefined;
         onload?.({
           nodes: graph.nodes,
           edges: graph.edges,
-          warnings: [...parseWarnings, ...graph.warnings]
+          warnings: graph.warnings
         });
       } catch (err) {
         if (cancelled) return;
