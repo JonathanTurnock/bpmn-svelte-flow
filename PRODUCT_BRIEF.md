@@ -139,6 +139,46 @@ the same contract when ready — and simultaneously becomes a first-class
 target in the build-or-buy pack: "build" = this host, and its binding
 inventory is the list of host functions to implement.
 
+## Positioning: a flow library, not a platform
+
+An explicit non-goal, stated because the comparison invites the confusion:
+Lunatic's engine is **not** a turnkey workflow platform for organisations
+without engineers. It is a **code-organisation discipline made executable**
+— the separation of business logic from infrastructure, DDD-style, with the
+BPMN model as the application/use-case layer and engineers still owning
+every integration.
+
+The mapping is direct:
+
+| BPMN construct | DDD / hexagonal role | Owned by |
+|---|---|---|
+| Process | Use case / application service (orchestration) | model |
+| Script task (Lua) | Domain logic — pure, deterministic | model |
+| Service task + `lunatic:binding` | **Port** — adapter implemented in code | engineer |
+| Message events | Domain events crossing the boundary | engineer (transport) |
+| Timer events | Clock port | engineer (scheduler) |
+| Error boundary | Failure policy | model |
+| Payload | The aggregate/DTO moving through the use case | model |
+
+**The one requirement this stance imposes on the engine: externalized
+state.** Execution is deterministic between wait states; at every wait
+state (message catch, timer, user task) the engine suspends and hands the
+host a serializable snapshot (token positions + variables). The host — the
+engineer's code — decides where that snapshot lives and when to resume.
+The engine owns semantics; it never owns storage, clocks, transport, or
+retry policy. This is a snapshot API, not a consensus cluster, and it is
+what makes "integrate your own durability provider" an honest contract.
+
+Consequence for the platform-engine comparison: Camunda-class capabilities
+(durable state, timers, correlation, retries/incidents, migration, ops
+UIs) are not *gaps* here — they are **ports, deliberately unowned**,
+exactly as DDD wants infrastructure held outside the domain. What is
+genuinely given up by choosing library-over-platform: the operator
+products (Operate/Cockpit-class UIs); the engineer-native substitutes are
+traces, logs, and the snapshot store they already run. The remaining
+honest buy-signal for a vendor engine: a team that wants managed
+durability and an ops product rather than owning adapters.
+
 ## The file (single source of truth)
 
 One self-contained, schema-valid BPMN 2.0 document. Sketch:
