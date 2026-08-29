@@ -19,6 +19,7 @@
     StepForward
   } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
+  import StateDiff from './StateDiff.svelte';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
@@ -81,12 +82,6 @@
     return 'text-muted-foreground';
   }
 
-  interface DiffRow {
-    key: string;
-    kind: 'added' | 'changed' | 'removed' | 'same';
-    before?: string;
-    after?: string;
-  }
   interface TraceStep {
     index: number;
     id?: string;
@@ -94,7 +89,10 @@
     action: string;
     caption: string;
     hasData: boolean;
-    rows: DiffRow[];
+    /** State before the step, when the step transformed data. */
+    before: Record<string, unknown> | null;
+    /** Full state at this point in the run. */
+    after: Record<string, unknown>;
     added: number;
     changed: number;
     removed: number;
@@ -104,9 +102,9 @@
 
   /**
    * The run as readable steps: bare "completed" echoes of the previous entry
-   * fold away, and every step carries the full payload state at that point,
-   * with each key marked added / changed / removed / same versus the state
-   * before the step — the transformation, not just the outcome.
+   * fold away, and every step carries the full payload state at that point —
+   * plus, for data-changing steps, the state before it, so the expanded view
+   * can show the transformation as a proper diff.
    */
   const steps = $derived.by(() => {
     if (!run) return [] as TraceStep[];
@@ -123,41 +121,23 @@
       ) {
         continue;
       }
-      let rows: DiffRow[];
       let added = 0;
       let changed = 0;
       let removed = 0;
+      let before: Record<string, unknown> | null = null;
+      let after = previous;
       if (entry.payload) {
         const current = entry.payload;
-        rows = [];
         for (const key of Object.keys(current)) {
-          const after = str(current[key]);
-          if (!(key in previous)) {
-            rows.push({ key, kind: 'added', after });
-            added += 1;
-          } else {
-            const before = str(previous[key]);
-            if (before !== after) {
-              rows.push({ key, kind: 'changed', before, after });
-              changed += 1;
-            } else {
-              rows.push({ key, kind: 'same', after });
-            }
-          }
+          if (!(key in previous)) added += 1;
+          else if (str(previous[key]) !== str(current[key])) changed += 1;
         }
         for (const key of Object.keys(previous)) {
-          if (!(key in current)) {
-            rows.push({ key, kind: 'removed', before: str(previous[key]) });
-            removed += 1;
-          }
+          if (!(key in current)) removed += 1;
         }
+        before = added + changed + removed > 0 ? previous : null;
+        after = current;
         previous = current;
-      } else {
-        rows = Object.keys(previous).map((key) => ({
-          key,
-          kind: 'same' as const,
-          after: str(previous[key])
-        }));
       }
       out.push({
         index,
@@ -166,7 +146,8 @@
         action: entry.action,
         caption: entry.detail ? `${entry.action} — ${entry.detail}` : entry.action,
         hasData: !!entry.payload,
-        rows,
+        before,
+        after,
         added,
         changed,
         removed
@@ -432,45 +413,8 @@
                 />
               </button>
               {#if expanded === s.index}
-                <div
-                  class="mx-2.5 mb-2 rounded-md border bg-background px-2.5 py-1.5 font-mono text-[11px] leading-relaxed"
-                  data-testid="step-state"
-                >
-                  {#if !s.rows.length}
-                    <span class="text-muted-foreground">empty payload</span>
-                  {/if}
-                  {#each s.rows as r (r.key)}
-                    <div class="flex gap-1.5">
-                      <span
-                        class="shrink-0 {r.kind === 'added'
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : r.kind === 'changed'
-                            ? 'text-amber-700 dark:text-amber-400'
-                            : r.kind === 'removed'
-                              ? 'text-rose-700 dark:text-rose-400'
-                              : 'text-foreground/70'}">{r.key}</span
-                      >
-                      {#if r.kind === 'changed'}
-                        <span class="truncate text-muted-foreground line-through" title={r.before}
-                          >{r.before}</span
-                        >
-                        <span class="shrink-0 text-muted-foreground">→</span>
-                        <span class="truncate text-amber-700 dark:text-amber-400" title={r.after}
-                          >{r.after}</span
-                        >
-                      {:else if r.kind === 'added'}
-                        <span class="truncate text-emerald-700 dark:text-emerald-400" title={r.after}
-                          >{r.after}</span
-                        >
-                      {:else if r.kind === 'removed'}
-                        <span class="truncate text-rose-700 dark:text-rose-400 line-through" title={r.before}
-                          >{r.before}</span
-                        >
-                      {:else}
-                        <span class="truncate text-muted-foreground" title={r.after}>{r.after}</span>
-                      {/if}
-                    </div>
-                  {/each}
+                <div class="mx-2.5 mb-2">
+                  <StateDiff before={s.before} after={s.after} />
                 </div>
               {/if}
             </div>

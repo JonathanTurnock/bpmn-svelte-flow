@@ -42,6 +42,17 @@
 	--sidebar-border: oklch(0.92 0.004 286.32);
 	--sidebar-ring: oklch(0.705 0.015 286.067);
 	--success: oklch(0.627 0.17 149.214);
+	/* CodeMirror syntax palette (see src/lib/codemirror.ts) */
+	--cm-keyword: #7c3aed;
+	--cm-string: #047857;
+	--cm-number: #b45309;
+	--cm-comment: #94a3b8;
+	--cm-property: #0369a1;
+	--cm-function: #1d4ed8;
+	--cm-variable: #334155;
+	--cm-tag: #be123c;
+	--cm-punctuation: #64748b;
+	--cm-regexp: #c026d3;
 }
 
 .dark {
@@ -77,6 +88,16 @@
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.552 0.016 285.938);
 	--success: oklch(0.696 0.17 162.48);
+	--cm-keyword: #a78bfa;
+	--cm-string: #34d399;
+	--cm-number: #fbbf24;
+	--cm-comment: #64748b;
+	--cm-property: #38bdf8;
+	--cm-function: #93c5fd;
+	--cm-variable: #cbd5e1;
+	--cm-tag: #fb7185;
+	--cm-punctuation: #94a3b8;
+	--cm-regexp: #e879f9;
 }
 
 @theme inline {
@@ -265,4 +286,28 @@ body,
 }
 .cm-scroller {
 	font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+}
+.cm-gutters {
+	background: transparent;
+	border-right: 1px solid var(--border);
+	color: var(--muted-foreground);
+}
+
+/* Unified merge view (step before/after diffs): theme-token chunk colors. */
+.cm-changedLine {
+	background: color-mix(in oklab, var(--success) 12%, transparent) !important;
+}
+.cm-changedText {
+	background: color-mix(in oklab, var(--success) 26%, transparent) !important;
+}
+.cm-deletedChunk {
+	background: color-mix(in oklab, var(--destructive) 9%, transparent) !important;
+}
+.cm-deletedChunk .cm-deletedText {
+	background: color-mix(in oklab, var(--destructive) 22%, transparent) !important;
+	text-decoration: line-through;
+}
+.cm-collapsedLines {
+	background: var(--muted) !important;
+	color: var(--muted-foreground) !important;
 }

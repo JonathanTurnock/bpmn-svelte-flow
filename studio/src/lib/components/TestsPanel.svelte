@@ -68,11 +68,11 @@
         </div>
         <div class="grid gap-2">
           <Label>Payload (JSON)</Label>
-          <CodeEditor bind:value={newPayload} language="json" minHeight="50px" />
+          <CodeEditor bind:value={newPayload} language="json" minHeight="50px" label="Test payload" />
         </div>
         <div class="grid gap-2">
           <Label>Assertions</Label>
-          <CodeEditor bind:value={newScript} minHeight="80px" />
+          <CodeEditor bind:value={newScript} minHeight="80px" label="Test assertions" />
           <p class="text-xs text-muted-foreground">
             Runs after a fresh simulation with state, payloads, payload, and assert.
           </p>

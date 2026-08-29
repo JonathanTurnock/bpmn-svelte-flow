@@ -125,7 +125,7 @@
     {#if isFlow}
       <div class="grid min-h-[90px] gap-2">
         <Label>Condition</Label>
-        <CodeEditor bind:value={condition} onchange={() => (dirty = true)} />
+        <CodeEditor bind:value={condition} label="Condition" onchange={() => (dirty = true)} />
         <p class="text-xs text-muted-foreground">JavaScript over <code>payload</code>, e.g. payload.amount &gt; 1000.</p>
       </div>
       <Button variant="outline" size="sm" onclick={makeDefault}>Mark as default flow</Button>
@@ -134,13 +134,13 @@
     {#if hasScript}
       <div class="grid min-h-[150px] flex-1 gap-2">
         <Label>Script</Label>
-        <CodeEditor bind:value={code} onchange={() => (dirty = true)} minHeight="120px" />
+        <CodeEditor bind:value={code} label="Script" onchange={() => (dirty = true)} minHeight="120px" />
         <p class="text-xs text-muted-foreground">bpmn:script, text/javascript — mutates <code>payload</code>.</p>
       </div>
     {:else if hasMock}
       <div class="grid min-h-[150px] flex-1 gap-2">
         <Label>Mock</Label>
-        <CodeEditor bind:value={code} onchange={() => (dirty = true)} minHeight="120px" />
+        <CodeEditor bind:value={code} label="Mock" onchange={() => (dirty = true)} minHeight="120px" />
         <p class="text-xs text-muted-foreground">bsf:mock — the browser stand-in for this task.</p>
       </div>
       <div class="grid gap-2">
@@ -156,7 +156,7 @@
       {#if bindingType}
         <div class="grid min-h-[70px] gap-2">
           <Label>Binding properties</Label>
-          <CodeEditor bind:value={bindingProps} language="json" onchange={() => (dirty = true)} minHeight="60px" />
+          <CodeEditor bind:value={bindingProps} language="json" label="Binding properties" onchange={() => (dirty = true)} minHeight="60px" />
         </div>
       {/if}
     {/if}

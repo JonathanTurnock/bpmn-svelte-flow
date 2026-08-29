@@ -42,6 +42,6 @@
     <p class="text-xs text-destructive">{error}</p>
   {/if}
   <div class="min-h-0 flex-1 overflow-auto">
-    <CodeEditor bind:value={draft} language="xml" minHeight="200px" onchange={() => (dirty = true)} />
+    <CodeEditor bind:value={draft} language="xml" minHeight="200px" label="BPMN XML" onchange={() => (dirty = true)} />
   </div>
 </div>
