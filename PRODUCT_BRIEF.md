@@ -1,4 +1,4 @@
-# Product Brief — PoC Studio (working title)
+# Product Brief — Dryrun
 
 *Status: design draft v2 for discussion — nothing here is implemented.*
 *v2 change: strict standards conformance — the document must import into any
@@ -58,11 +58,11 @@ What that means concretely:
 | Concern | v1 draft (custom) | v2 (standard) |
 |---|---|---|
 | Gateway routing | script on the gateway returning a flow id | **`bpmn:conditionExpression`** (`tFormalExpression`, declared `language`) on outgoing flows + **`default`** attribute on the gateway |
-| Script logic | `poc:script` on any node | **`bpmn:scriptTask`** with **`scriptFormat`** + **`bpmn:script`** where the logic *is* script; other task types keep their standard meaning |
-| Service/user task behaviour in the sim | `poc:script` | the task stays a plain standard `serviceTask`/`userTask` (binding is engine-territory by design); the browser-only mock lives in **`poc:mock`** inside `extensionElements`, ignored by real engines |
-| Human-readable business logic | `poc:doc` | **`bpmn:documentation`** — standard on every element, preserved and displayed by engines and modelers |
+| Script logic | `dryrun:script` on any node | **`bpmn:scriptTask`** with **`scriptFormat`** + **`bpmn:script`** where the logic *is* script; other task types keep their standard meaning |
+| Service/user task behaviour in the sim | `dryrun:script` | the task stays a plain standard `serviceTask`/`userTask` (binding is engine-territory by design); the browser-only mock lives in **`dryrun:mock`** inside `extensionElements`, ignored by real engines |
+| Human-readable business logic | `dryrun:doc` | **`bpmn:documentation`** — standard on every element, preserved and displayed by engines and modelers |
 | Data hand-offs worth modeling | ad-hoc | standard **data objects / data associations / `ioSpecification`** where they add clarity |
-| Scenarios & tests | `poc:scenario` / `poc:test` | unchanged — **no standard exists**, so they stay as extensions (spec-sanctioned slot, zero portable semantics: an engine that ignores them loses nothing but our sim/test tooling) |
+| Scenarios & tests | `dryrun:scenario` / `dryrun:test` | unchanged — **no standard exists**, so they stay as extensions (spec-sanctioned slot, zero portable semantics: an engine that ignores them loses nothing but our sim/test tooling) |
 | Process flag | — | `isExecutable="true"`; definitions declare `expressionLanguage` and default `scriptFormat` explicitly |
 
 Conformance is enforced, not aspirational:
@@ -96,7 +96,7 @@ declared language, and we choose ONE primary:
   native to Camunda 8, and the natural bridge to DMN later — but weaker for
   imperative mocks.
 - **Current lean: FEEL for `conditionExpression`, JavaScript for
-  `bpmn:script` bodies and `poc:mock`** — conditions (the part engines
+  `bpmn:script` bodies and `dryrun:mock`** — conditions (the part engines
   actually re-execute) get the standards-blessed language; mocks (browser-
   only by definition) get the practical one. Open question #2.
 
@@ -105,21 +105,21 @@ declared language, and we choose ONE primary:
 One self-contained, schema-valid BPMN 2.0 document. Sketch:
 
 ```xml
-<bpmn:definitions xmlns:poc="http://…/poc/1.0"
+<bpmn:definitions xmlns:dryrun="http://…/poc/1.0"
     expressionLanguage="https://www.omg.org/spec/DMN/FEEL/" …>
   <bpmn:process id="P" isExecutable="true">
     <bpmn:extensionElements>
-      <poc:scenario name="Happy path" payload='{"amount":5200}'/>
-      <poc:test name="large claims go to review" payload='{"amount":5200}'>
+      <dryrun:scenario name="Happy path" payload='{"amount":5200}'/>
+      <dryrun:test name="large claims go to review" payload='{"amount":5200}'>
         assert(state.visited.has('Task_Review'));
-      </poc:test>
+      </dryrun:test>
     </bpmn:extensionElements>
 
     <bpmn:serviceTask id="Task_Save" name="Save message (Messages API)">
       <bpmn:documentation>POST /v1/messages → 201 { messageId }.
         Owns durability; emits to Kinesis after commit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <poc:mock>payload.messagesApi = { status: 201, messageId: id() };</poc:mock>
+        <dryrun:mock>payload.messagesApi = { status: 201, messageId: id() };</dryrun:mock>
       </bpmn:extensionElements>
     </bpmn:serviceTask>
 
@@ -132,7 +132,7 @@ One self-contained, schema-valid BPMN 2.0 document. Sketch:
     …
 ```
 
-Strip every `poc:` extension and `bpmn:documentation` stays, routing stays,
+Strip every `dryrun:` extension and `bpmn:documentation` stays, routing stays,
 script tasks stay: **the process is still complete and executable** — that
 is the conformance test in one sentence.
 
@@ -230,12 +230,12 @@ are undoable; results are compact JSON, never pixels.
 │      │            commands; undo/redo; after every mutation:         │
 │      │            schema validation + portability lint               │
 │      ▼                                                               │
-│  Document core ── bpmn-moddle (strict) + poc extension schema        │
+│  Document core ── bpmn-moddle (strict) + dryrun extension schema        │
 │      │                                                               │
 │      ├── bpmn-js Modeler (canvas: edit, overlays, token, markers)    │
 │      ├── Execution engine (port of this repo's BpmnSimulation over   │
 │      │     the moddle registry; standard semantics: conditions,      │
-│      │     default flows, script tasks; poc:mock for the rest;       │
+│      │     default flows, script tasks; dryrun:mock for the rest;       │
 │      │     step-bounded) + expression evaluator (feelin and/or JS)   │
 │      └── Inspector panel (bpmn:documentation, payload diffs, tests,  │
 │            scenarios — evolved from the poc/ shell)                  │
@@ -248,7 +248,7 @@ are undoable; results are compact JSON, never pixels.
 - **M0 — WebMCP spike (de-risk first).** Register 3 tools on today's static
   `poc/` site (`get_model`, `step_scenario`, `run_scenario`); drive it from
   the real chat client. Answers the client-contract questions empirically.
-- **M1 — Standard document core.** poc extension schema, load/export,
+- **M1 — Standard document core.** dryrun extension schema, load/export,
   XSD/lint pipeline, engine executing conditions + default flows + script
   tasks + mocks from the moddle model; scenario runs replace the
   hand-scripted walkthrough. *Exit test: the messaging-platform flow rebuilt
@@ -302,7 +302,7 @@ are undoable; results are compact JSON, never pixels.
 6. **DMN** — business-rule tasks opening dmn-js decision tables (FEEL,
    evaluated by feelin in-sim) is the natural post-M4 act, and doubly so if
    FEEL wins question 2. Confirm as roadmap, not v1.
-7. **Naming** — "PoC Studio" is a placeholder.
+7. **Naming** — settled: **Dryrun** (namespace prefix `dryrun:`; the schema URI `https://dryrun.dev/schema/1.0` is a placeholder until a domain is confirmed). Runner-ups considered: Prova, Enact, Maquette — each collides with an existing dev tool.
 
 ## Success criteria
 

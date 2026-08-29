@@ -1,10 +1,10 @@
-// Empirical spike, part 2: run the UNMODIFIED PoC Studio artifact in
+// Empirical spike, part 2: run the UNMODIFIED Dryrun artifact in
 // bpmn-engine through a generic adapter that
 //   1. accepts the standard MIME scriptFormat (text/javascript),
 //   2. evaluates FEEL (the file's declared expressionLanguage) via feelin
 //      for sequence-flow conditions and loopCardinality,
 //   3. binds service/send/businessRule tasks by executing the file's own
-//      poc:mock extension blocks (the "bind implementations where the mocks
+//      dryrun:mock extension blocks (the "bind implementations where the mocks
 //      were" story, automated).
 // The adapter is process-agnostic: nothing in it mentions the messaging flow.
 // Usage: node spike/run-engine-adapted.mjs <file.bpmn> <happy|denied>
@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { Script, createContext } from 'node:vm';
 import { evaluate as feel } from 'feelin';
 
-const file = process.argv[2] ?? 'spike/messaging-poc.bpmn';
+const file = process.argv[2] ?? 'spike/messaging-flow.bpmn';
 const scenario = process.argv[3] ?? 'happy';
 
 const payloads = {
@@ -121,26 +121,26 @@ function resolveExpression(expression, message) {
   }
 }
 
-// ---- 3: bind tasks by executing the file's poc:mock blocks ----------------
+// ---- 3: bind tasks by executing the file's dryrun:mock blocks ----------------
 function localName(type) {
   const i = type.indexOf(':');
   return i >= 0 ? type.slice(i + 1) : type;
 }
 
-function pocMockExtension(activity) {
+function dryrunMockExtension(activity) {
   const values = activity.behaviour?.extensionElements?.values ?? [];
   const mock = values.find((v) => localName(v.$type ?? '') === 'mock');
   return mock?.$body?.trim();
 }
 
-function PocMockService(activity) {
-  const source = pocMockExtension(activity);
+function DryrunMockService(activity) {
+  const source = dryrunMockExtension(activity);
   this.execute = function execute(executionMessage, callback) {
     if (!source) return callback(); // unmocked task: pass through
     const environment = activity.environment;
     const sandbox = createContext({ payload: makePayloadProxy(environment) });
     try {
-      new Script(source, { filename: `poc:mock/${activity.id}` }).runInContext(sandbox);
+      new Script(source, { filename: `dryrun:mock/${activity.id}` }).runInContext(sandbox);
       callback();
     } catch (err) {
       callback(err);
@@ -163,9 +163,9 @@ function makePayloadProxy(environment) {
 }
 
 const BOUND_TYPES = new Set(['bpmn:ServiceTask', 'bpmn:SendTask', 'bpmn:BusinessRuleTask']);
-function pocBindingExtension(activity, context) {
+function dryrunBindingExtension(activity, context) {
   if (BOUND_TYPES.has(activity.type)) {
-    activity.behaviour.Service = PocMockService;
+    activity.behaviour.Service = DryrunMockService;
   }
   // Sequential-MI iteration tracking: a start event whose parent is a
   // multi-instance sub-process fires once per iteration.
@@ -180,12 +180,12 @@ function pocBindingExtension(activity, context) {
 
 // ---- run ------------------------------------------------------------------
 const engine = new Engine({
-  name: 'messaging-poc-adapted',
+  name: 'messaging-flow-adapted',
   source: readFileSync(file, 'utf8'),
   variables: payloads[scenario],
   scripts: new AdaptedScripts(),
   expressions: { resolveExpression },
-  extensions: { pocBinding: pocBindingExtension }
+  extensions: { dryrunBinding: dryrunBindingExtension }
 });
 
 const trail = [];

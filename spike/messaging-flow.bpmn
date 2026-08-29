@@ -5,7 +5,7 @@
     xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
     xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:poc="http://bpmn-svelte-flow/poc/1.0"
+    xmlns:dryrun="https://dryrun.dev/schema/1.0"
     id="Defs_Messaging"
     expressionLanguage="https://www.omg.org/spec/DMN/FEEL/"
     targetNamespace="http://acme.dev/messaging-poc">
@@ -20,17 +20,17 @@
 
   <bpmn:process id="P_Messaging" isExecutable="true">
     <bpmn:extensionElements>
-      <poc:scenario name="Happy path" payload='{"senderId":"usr_1042","text":"Paying with card 4111 1111 1111 1111, CVV: 737 — ok?","chatId":"chat_8231"}'/>
-      <poc:scenario name="Policy denied" payload='{"senderId":"usr_6660","text":"hey — card 4111 1111 1111 1111","chatId":"chat_8231","muted":true}'/>
-      <poc:test name="pan is redacted before anything else" payload='{"senderId":"usr_1042","text":"card 4111 1111 1111 1111","chatId":"chat_8231"}'>
+      <dryrun:scenario name="Happy path" payload='{"senderId":"usr_1042","text":"Paying with card 4111 1111 1111 1111, CVV: 737 — ok?","chatId":"chat_8231"}'/>
+      <dryrun:scenario name="Policy denied" payload='{"senderId":"usr_6660","text":"hey — card 4111 1111 1111 1111","chatId":"chat_8231","muted":true}'/>
+      <dryrun:test name="pan is redacted before anything else" payload='{"senderId":"usr_1042","text":"card 4111 1111 1111 1111","chatId":"chat_8231"}'>
         assert(payload.text.indexOf('4111 1111') === -1, 'raw PAN must not survive');
-      </poc:test>
-      <poc:test name="muted senders are rejected" payload='{"senderId":"usr_6660","text":"x","chatId":"chat_8231","muted":true}'>
+      </dryrun:test>
+      <dryrun:test name="muted senders are rejected" payload='{"senderId":"usr_6660","text":"x","chatId":"chat_8231","muted":true}'>
         assert(state.visited.has('End_Rejected'));
-      </poc:test>
-      <poc:test name="deliveries fan out per participant" payload='{"senderId":"usr_1042","text":"hi","chatId":"chat_8231"}'>
+      </dryrun:test>
+      <dryrun:test name="deliveries fan out per participant" payload='{"senderId":"usr_1042","text":"hi","chatId":"chat_8231"}'>
         assert.equal(payload.deliveries.length, 2);
-      </poc:test>
+      </dryrun:test>
     </bpmn:extensionElements>
 
     <bpmn:laneSet id="Lanes_1">
@@ -85,11 +85,11 @@
     <bpmn:businessRuleTask id="Task_Policy" name="Evaluate Cedar policy">
       <bpmn:documentation>Cedar: permit SendMessage when principal in chat.members and not principal.muted; forbid when principal.muted. Forbid overrides permit. Decision + determining policy recorded for audit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <poc:mock>
+        <dryrun:mock>
           payload.policy = payload.muted
             ? { decision: 'DENY', determiningPolicy: 'forbid-muted-senders' }
             : { decision: 'ALLOW', determiningPolicy: 'permit-chat-members' };
-        </poc:mock>
+        </dryrun:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>F2</bpmn:incoming>
       <bpmn:outgoing>F3</bpmn:outgoing>
@@ -110,7 +110,7 @@
     <bpmn:serviceTask id="Task_Save" name="Save message (Messages API)">
       <bpmn:documentation>POST internal.messages-api /v1/messages with the sanitised, authorised message. 201 → { messageId, persistedAt }. The Messages API owns durability and emits to Kinesis after commit.</bpmn:documentation>
       <bpmn:extensionElements>
-        <poc:mock>payload.messagesApi = { status: 201, messageId: 'msg_5f2e9c' };</poc:mock>
+        <dryrun:mock>payload.messagesApi = { status: 201, messageId: 'msg_5f2e9c' };</dryrun:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>F_Allow</bpmn:incoming>
       <bpmn:outgoing>F5</bpmn:outgoing>
@@ -141,12 +141,12 @@
     <bpmn:serviceTask id="Task_Participants" name="Fetch chat participants">
       <bpmn:documentation>GET internal.chats-api /v1/chats/{chatId}/participants. Sender excluded. Each participant carries a resolved deliveryMethod: kafka (internal consumers) or webhook (per-tenant registered endpoint).</bpmn:documentation>
       <bpmn:extensionElements>
-        <poc:mock>
+        <dryrun:mock>
           payload.participants = [
             { id: 'usr_2001', deliveryMethod: 'kafka' },
             { id: 'usr_2002', deliveryMethod: 'webhook' }
           ];
-        </poc:mock>
+        </dryrun:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>F7</bpmn:incoming>
       <bpmn:outgoing>F8</bpmn:outgoing>
@@ -170,11 +170,11 @@
       <bpmn:sendTask id="Task_Kafka" name="Publish Kafka message">
         <bpmn:documentation>topic chat-message-deliveries, key = participant.id (per-recipient ordering), acks=all, idempotent producer.</bpmn:documentation>
         <bpmn:extensionElements>
-          <poc:mock>
+          <dryrun:mock>
             payload.deliveries = (payload.deliveries || []).concat({
               channel: 'kafka', recipient: payload.participant.id, topic: 'chat-message-deliveries'
             });
-          </poc:mock>
+          </dryrun:mock>
         </bpmn:extensionElements>
         <bpmn:incoming>F_K</bpmn:incoming>
         <bpmn:outgoing>F_K2</bpmn:outgoing>
@@ -182,11 +182,11 @@
       <bpmn:serviceTask id="Task_Webhook" name="Call webhook endpoint">
         <bpmn:documentation>Per-tenant endpoint, HMAC-SHA256 signed body, exponential backoff ×5 then dead-letter.</bpmn:documentation>
         <bpmn:extensionElements>
-          <poc:mock>
+          <dryrun:mock>
             payload.deliveries = (payload.deliveries || []).concat({
               channel: 'webhook', recipient: payload.participant.id, status: 202
             });
-          </poc:mock>
+          </dryrun:mock>
         </bpmn:extensionElements>
         <bpmn:incoming>F_W</bpmn:incoming>
         <bpmn:outgoing>F_W2</bpmn:outgoing>

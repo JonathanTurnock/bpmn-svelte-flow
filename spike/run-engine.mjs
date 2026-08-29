@@ -1,10 +1,10 @@
-// Empirical spike: run the PoC Studio artifact in bpmn-engine (a third-party
+// Empirical spike: run the Dryrun artifact in bpmn-engine (a third-party
 // Node.js BPMN 2.0 workflow engine) and report what happens.
 // Usage: node spike/run-engine.mjs <file.bpmn> <happy|denied>
 import { Engine } from 'bpmn-engine';
 import { readFileSync } from 'node:fs';
 
-const file = process.argv[2] ?? 'spike/messaging-poc.bpmn';
+const file = process.argv[2] ?? 'spike/messaging-flow.bpmn';
 const scenario = process.argv[3] ?? 'happy';
 
 const payloads = {
