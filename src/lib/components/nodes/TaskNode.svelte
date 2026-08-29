@@ -31,6 +31,7 @@
   class:transaction={d.isTransaction}
   class:event-sub={isEventSub}
   class:has-icon={hasIcon}
+  class:has-markers={!!d.markers?.length}
   style={`width: ${d.width}px; height: ${d.height}px;`}
 >
   {#if d.isTransaction}
@@ -65,11 +66,20 @@
   .bpmn-task.selected {
     border-color: var(--bpmn-selected, #1a70ef);
   }
-  /* The type icon sits absolutely in the top-left corner; reserve its band
-     so long labels never run underneath it. */
+  /* The type icon (top-left) and the marker row (bottom-centre) sit
+     absolutely; reserve their bands so the label never runs into either. */
   .bpmn-task.has-icon {
     padding-top: 22px;
     padding-bottom: 6px;
+  }
+  .bpmn-task.has-markers {
+    padding-bottom: 20px;
+  }
+  /* Both bands reserved: keep the icon band intact, trim the marker band
+     just enough that three text lines still fit on a standard 80px task. */
+  .bpmn-task.has-icon.has-markers {
+    padding-top: 22px;
+    padding-bottom: 16px;
   }
   .bpmn-task-label {
     font-family: var(--bpmn-font-family, Arial, sans-serif);
