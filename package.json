@@ -31,8 +31,10 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "npm run package && node tests/engine.test.mjs",
-    "poc": "vite poc --open"
+    "test": "npm run package && node tests/engine.test.mjs && node tests/studio.test.mjs",
+    "poc": "vite poc --open",
+    "studio": "vite studio --open",
+    "build-studio": "vite build studio"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
@@ -56,17 +58,28 @@
     "bpmn-moddle": "^10.2.0"
   },
   "devDependencies": {
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-xml": "^6.1.0",
+    "@lucide/svelte": "^1.37.0",
     "@storybook/svelte-vite": "^10.5.10",
     "@sveltejs/package": "^2.5.8",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "bpmn-engine": "^25.0.1",
     "bpmn-js": "^18.26.0",
     "bpmnlint": "^11.13.0",
     "bpmnlint-plugin-camunda-compat": "^2.59.2",
+    "clsx": "^2.1.1",
+    "codemirror": "^6.0.2",
     "feelin": "^7.0.1",
+    "playwright": "^1.62.1",
     "storybook": "^10.5.10",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
+    "tailwind-merge": "^3.6.0",
+    "tailwind-variants": "^3.3.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.2.2"
   }

@@ -1,11 +1,13 @@
 // Run the UNMODIFIED Lunatic artifact in bpmn-engine through a generic
 // adapter that
-//   1. accepts the standard MIME scriptFormat (text/javascript),
-//   2. evaluates FEEL (the file's declared expressionLanguage) via feelin
-//      for sequence-flow conditions and loopCardinality,
+//   1. accepts the file's declared MIME scriptFormat (text/javascript) for
+//      script tasks and sequence-flow conditions, exposing the studio's
+//      `payload` contract over engine variables,
+//   2. evaluates FEEL via feelin where a file declares it instead,
 //   3. binds service/send/businessRule tasks by executing the file's own
 //      lunatic:mock extension blocks (the "bind implementations where the mocks
-//      were" story, automated).
+//      were" story, automated),
+//   4. honours lunatic:collection for per-iteration multi-instance data.
 // The adapter is process-agnostic: nothing in it mentions the messaging flow.
 // Usage: node spike/run-engine-adapted.mjs <file.bpmn> <happy|denied>
 import { Engine } from 'bpmn-engine';
@@ -31,15 +33,43 @@ const payloads = {
   }
 };
 
-// Sequential-MI iteration tracker: exposes `participant` (and the current
-// index) to FEEL conditions and mocks inside the delivery sub-process.
-const iteration = { index: -1 };
+const JS_LANGUAGE = /javascript|ecmascript|(^|\/)js$/i;
+
+// Sequential-MI iteration tracker: exposes the lunatic:collection element
+// variable (e.g. `participant`) to conditions and mocks inside the loop.
+const iteration = { index: -1, collection: null, elementVariable: null };
+
+function localName(type) {
+  const i = type.indexOf(':');
+  return i >= 0 ? type.slice(i + 1) : type;
+}
+
+// The studio's `payload` contract mapped onto engine variables, with the
+// current multi-instance item resolved on access.
+function makePayloadProxy(environment) {
+  const vars = environment.variables;
+  return new Proxy(vars, {
+    get(target, prop) {
+      if (
+        prop === iteration.elementVariable &&
+        iteration.index >= 0 &&
+        Array.isArray(target[iteration.collection])
+      ) {
+        return target[iteration.collection][iteration.index];
+      }
+      return target[prop];
+    }
+  });
+}
 
 function feelContext(environment) {
-  const vars = environment.variables;
-  const ctx = { ...vars };
-  if (iteration.index >= 0 && Array.isArray(vars.participants)) {
-    ctx.participant = vars.participants[iteration.index];
+  const ctx = { ...environment.variables };
+  if (
+    iteration.index >= 0 &&
+    iteration.elementVariable &&
+    Array.isArray(ctx[iteration.collection])
+  ) {
+    ctx[iteration.elementVariable] = ctx[iteration.collection][iteration.index];
   }
   return ctx;
 }
@@ -59,35 +89,49 @@ function feelEval(expression, context) {
   return value;
 }
 
-// ---- 1+2: Scripts provider: MIME javascript + FEEL conditions -------------
+function jsEval(expression, environment) {
+  const fn = new Script(`(payload) => (${expression})`).runInNewContext();
+  return fn(makePayloadProxy(environment));
+}
+
+// ---- 1+2: Scripts provider: MIME javascript + declared-language conditions
 function AdaptedScripts() {
   this.scripts = new Map();
 }
-AdaptedScripts.prototype.register = function register({ id, type, behaviour, environment }) {
+AdaptedScripts.prototype.register = function register({ id, type, behaviour }) {
   if (type === 'bpmn:SequenceFlow') {
     const cond = behaviour.conditionExpression;
     if (!cond?.body) return;
-    const language = cond.language ?? 'feel'; // inherit declared expressionLanguage
-    if (/feel/i.test(language) || !cond.language) {
-      const script = {
-        execute(scope, callback) {
-          try {
-            callback(null, !!feelEval(cond.body.trim(), feelContext(scope.environment)));
-          } catch (err) {
-            callback(err);
-          }
+    const language = cond.language ?? 'feel';
+    const script = {
+      execute(scope, callback) {
+        try {
+          const result = JS_LANGUAGE.test(language)
+            ? jsEval(cond.body.trim(), scope.environment)
+            : feelEval(cond.body.trim(), feelContext(scope.environment));
+          callback(null, !!result);
+        } catch (err) {
+          callback(err);
         }
-      };
-      this.scripts.set(id, script);
-      return script;
-    }
+      }
+    };
+    this.scripts.set(id, script);
+    return script;
   }
   const language = behaviour.scriptFormat;
-  if (!language || !/javascript|(^|\/)js$/i.test(language)) return;
-  const compiled = new Script(behaviour.script, { filename: `${type}/${id}` });
+  if (!language || !JS_LANGUAGE.test(language)) return;
+  // Studio contract: the body is a plain JS block over a mutable `payload`.
+  const compiled = new Script(`(payload) => {\n${behaviour.script}\n}`, {
+    filename: `${type}/${id}`
+  });
   const script = {
     execute(scope, callback) {
-      compiled.runInNewContext({ ...scope, next: callback });
+      try {
+        compiled.runInNewContext()(makePayloadProxy(scope.environment));
+        callback();
+      } catch (err) {
+        callback(err);
+      }
     }
   };
   this.scripts.set(id, script);
@@ -97,7 +141,7 @@ AdaptedScripts.prototype.getScript = function getScript(_language, { id }) {
   return this.scripts.get(id);
 };
 
-// ---- 2b: FEEL-aware expression resolution (loopCardinality etc.) ----------
+// ---- 2b: expression resolution (loopCardinality etc.) ---------------------
 function resolveExpression(expression, message) {
   const environment = message?.environment;
   // Formal-expression moddle objects can arrive unflattened.
@@ -111,9 +155,16 @@ function resolveExpression(expression, message) {
     const path = trimmed.slice(2, -1).replace(/^environment\.variables\./, '');
     return path.split('.').reduce((o, k) => o?.[k], environment.variables);
   }
+  if (/^payload\b/.test(trimmed)) {
+    try {
+      return jsEval(trimmed, environment);
+    } catch {
+      return expression;
+    }
+  }
   try {
     const value = feelEval(trimmed, feelContext(environment));
-    // Undefined ⇒ not resolvable as FEEL over current variables (e.g. a plain
+    // Undefined ⇒ not resolvable over current variables (e.g. a plain
     // message name) — hand the raw string back untouched.
     return value === undefined ? expression : value;
   } catch {
@@ -121,20 +172,15 @@ function resolveExpression(expression, message) {
   }
 }
 
-// ---- 3: bind tasks by executing the file's lunatic:mock blocks ----------------
-function localName(type) {
-  const i = type.indexOf(':');
-  return i >= 0 ? type.slice(i + 1) : type;
-}
-
-function lunaticMockExtension(activity) {
-  const values = activity.behaviour?.extensionElements?.values ?? [];
-  const mock = values.find((v) => localName(v.$type ?? '') === 'mock');
-  return mock?.$body?.trim();
+// ---- 3: bind tasks by executing the file's lunatic:mock blocks ------------
+function lunaticExtension(owner, name) {
+  const values = owner?.extensionElements?.values ?? [];
+  return values.find((v) => localName(v.$type ?? '') === name);
 }
 
 function LunaticMockService(activity) {
-  const source = lunaticMockExtension(activity);
+  const mock = lunaticExtension(activity.behaviour, 'mock');
+  const source = (mock?.$body ?? mock?.body ?? '').trim();
   this.execute = function execute(executionMessage, callback) {
     if (!source) return callback(); // unmocked task: pass through
     const environment = activity.environment;
@@ -148,24 +194,17 @@ function LunaticMockService(activity) {
   };
 }
 
-// Mocks are written against `payload`; map that onto engine variables and
-// expose the per-iteration participant.
-function makePayloadProxy(environment) {
-  const vars = environment.variables;
-  return new Proxy(vars, {
-    get(target, prop) {
-      if (prop === 'participant' && iteration.index >= 0 && Array.isArray(target.participants)) {
-        return target.participants[iteration.index];
-      }
-      return target[prop];
-    }
-  });
-}
-
 const BOUND_TYPES = new Set(['bpmn:ServiceTask', 'bpmn:SendTask', 'bpmn:BusinessRuleTask']);
 function lunaticBindingExtension(activity, context) {
   if (BOUND_TYPES.has(activity.type)) {
     activity.behaviour.Service = LunaticMockService;
+  }
+  // Multi-instance: pick up lunatic:collection for per-iteration data.
+  const loop = activity.behaviour?.loopCharacteristics?.behaviour;
+  const collection = lunaticExtension(loop, 'collection');
+  if (collection) {
+    iteration.collection = collection.expression;
+    iteration.elementVariable = collection.elementVariable;
   }
   // Sequential-MI iteration tracking: a start event whose parent is a
   // multi-instance sub-process fires once per iteration.
@@ -211,7 +250,10 @@ const listener = {
 
 try {
   const execution = await engine.execute({ listener });
-  await engine.waitFor('end');
+  // A flow with no waits can complete before waitFor is armed.
+  if (execution.state !== 'completed' && execution.state !== 'idle') {
+    await engine.waitFor('end');
+  }
   console.log('=== ENGINE COMPLETED ===');
   console.log('trail:');
   for (const t of trail) console.log('  ' + t);

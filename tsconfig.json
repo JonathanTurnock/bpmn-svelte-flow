@@ -13,7 +13,17 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "allowJs": true,
-    "checkJs": true
+    "checkJs": true,
+    "paths": {
+      "$bsf/*": ["./src/lib/*"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", ".storybook/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.svelte",
+    ".storybook/**/*.ts",
+    "studio/src/**/*.ts",
+    "studio/src/**/*.svelte"
+  ]
 }

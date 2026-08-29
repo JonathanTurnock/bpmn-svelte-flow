@@ -6,3 +6,4 @@ storybook-static/
 .vite/
 .svelte-kit/
 poc/dist/
+studio/dist/

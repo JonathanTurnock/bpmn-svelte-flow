@@ -2,9 +2,9 @@
 
 *Lunatic — **lua** (the moon) and the token **tic**king through the flow.*
 
-*Status: design brief.*
-*Builds on: the bpmn.io ecosystem, the execution semantics and test-runner
-contract proven in this repo, the buildless `poc/` walkthrough site, and a
+*Status: shipped — the studio lives in `studio/` (`npm run studio`).*
+*Builds on: this repo's own Svelte Flow BPMN renderer, bpmn-moddle, the
+execution semantics and test-runner contract proven here, and a
 WebMCP-compliant chat client in Chrome (already built, external to this
 product).*
 
@@ -224,50 +224,55 @@ are undoable; results are compact JSON.
 **Document**
 - `load_document {xml}` / `export_document`
 
-## Architecture (all in-browser, static hosting)
+## Architecture (all in-browser, static hosting — built, in `studio/`)
 
 ```
-┌────────────────────────── the site (Pages) ──────────────────────────┐
-│  WebMCP adapter ── registers tools; isolates the                     │
-│      │              navigator.modelContext API behind one module     │
+┌──────────────────── the studio (static Svelte site) ─────────────────┐
+│  WebMCP adapter ── registers the 31 tools on navigator.modelContext  │
+│      │              (and window.lunatic); one module isolates the API│
 │      ▼                                                               │
-│  Command layer ── every tool = a command; UI buttons call the same   │
-│      │            commands; undo/redo; after every mutation:         │
-│      │            schema validation + portability lint               │
+│  Studio store ──── every tool = a store mutation; UI panels call the │
+│      │             same mutations; one shared undo stack; after every│
+│      │             mutation: re-derive graph, validate, autosave     │
 │      ▼                                                               │
-│  Document core ── bpmn-moddle (strict) + lunatic extension schema    │
-│      │                                                               │
-│      ├── bpmn-js Modeler (canvas: edit, overlays, token, markers)    │
-│      ├── Execution engine (port of this repo's BpmnSimulation over   │
-│      │     the moddle registry; standard semantics: conditions,      │
-│      │     default flows, script tasks; lunatic:mock for the rest;   │
-│      │     step-bounded) + JavaScript expression evaluation          │
-│      └── Inspector panel (bpmn:documentation, payload diffs, tests,  │
-│            scenarios — evolved from the poc/ shell)                  │
-│  Persistence: file import/export + localStorage autosave. No backend.│
+│  Document core ── bpmn-moddle + lunatic extension schema; semantic + │
+│      │            DI maintained together on every edit               │
+│      ├── Canvas: this repo's own Svelte Flow BPMN renderer (drag,    │
+│      │     select, run highlighting — the same nodes Storybook shows)│
+│      ├── Execution engine (studio/src/lib/engine — standard          │
+│      │     semantics: conditions, default flows, script tasks, MI,   │
+│      │     error boundaries, message samples; lunatic:mock for the   │
+│      │     rest; step-bounded; JavaScript everywhere)                │
+│      └── IDE shell: shadcn-svelte components, CodeMirror editors     │
+│            (scripts, mocks, conditions, tests, live XML), Run /      │
+│            Tests / Issues panels                                     │
+│  Persistence: import/export + localStorage workspace with autosave.  │
+│  No backend.                                                         │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-## Milestones (each independently demoable)
+## Status
 
-- **M0 — WebMCP spike.** Register 3 tools on today's static `poc/` site
-  (`get_model`, `step_scenario`, `run_scenario`); drive it from the real
-  chat client. Answers the client-contract questions empirically.
-- **M1 — Standard document core.** lunatic extension schema, load/export,
-  XSD/lint pipeline, engine executing conditions + default flows + script
-  tasks + mocks from the moddle model; scenario runs replace the
-  hand-scripted walkthrough. *Exit test: the messaging-platform flow rebuilt
-  as a conformant file, importing warning-free into Camunda Modeler.*
-- **M2 — Modeler + build tools.** bpmn-js Modeler canvas, command layer,
-  build/connect/lane tools, auto-layout, live lint.
-- **M3 — Logic, tests, verify loop.** Condition/script/mock/doc tools, tests
-  panel, the acceptance demo: agent builds the messaging PoC from a blank
-  canvas by conversation, runs it, fixes it until tests + lint are green.
-- **M4 — Hand-off & decision pack.** Walkthrough export for Pages;
-  engine-compat lint profiles; the binding inventory; a first binding pass
-  for one named engine (the generic adapter in `spike/` is the seed). Exit
-  test: the messaging artifact produces a build-or-buy pack a team could
-  take to a decision meeting.
+Shipped, verified end-to-end in this repo (`npm test`, plus a headless
+browser suite driving the built studio through its WebMCP tools):
+
+- **Document core + engine** — the messaging-platform flow authored as a
+  conformant file runs in the studio (both scenarios), its embedded
+  `lunatic:test` suite is green, and the very same file runs end-to-end in
+  bpmn-engine through the generic adapter in `spike/` (both scenarios),
+  with bpmnlint clean and the Camunda-compat profile listing exactly the
+  per-element binding points.
+- **Canvas + build tools** — our own Svelte Flow diagrammer with add /
+  connect / move / lanes / auto-layout, DI kept correct on every edit.
+- **Logic, tests, verify loop** — condition/script/mock/binding/doc tools,
+  scenario runner with visible token coverage, tests panel; an agent can
+  build a flow from a blank canvas by tools alone, run it, and see it green.
+- **Workspace** — named documents in the browser, autosave, import/export,
+  shared human/agent undo.
+
+Next: drive the studio from the real WebMCP chat client; grow the binding
+pass (`spike/run-engine-adapted.mjs` is the seed) into per-engine export;
+emit the decision pack from the binding inventory.
 
 ## Success criteria
 

@@ -21,6 +21,10 @@ shapes at their modeled positions, edges following their modeled waypoints.
 - **Storybook for every notation element** — run `npm run storybook` to browse
   the whole catalog.
 
+The repo also ships **Lunatic Studio** (`studio/`) — an in-browser BPMN
+engine and PoC workbench built on this renderer. See
+[Lunatic Studio](#lunatic-studio) below and `PRODUCT_BRIEF.md`.
+
 ## Installation
 
 Install straight from GitHub (no npm registry needed):
@@ -167,6 +171,42 @@ override what you like:
 }
 ```
 
+## Lunatic Studio
+
+`studio/` is a static Svelte site — deployable to any static host — that
+turns the renderer into a full **local, in-browser BPMN workbench**:
+
+- **The canvas is this library**: the studio renders and edits diagrams with
+  the repo's own Svelte Flow nodes and edges (drag shapes, click to inspect;
+  DI is maintained on every mutation).
+- **An in-browser BPMN engine, JavaScript execution** (`studio/src/lib/engine/`):
+  runs the file's standard semantics — `conditionExpression` + default flows,
+  `bpmn:scriptTask` bodies, multi-instance loops, error boundaries, message
+  events — with `lunatic:mock` blocks standing in for service/user tasks and
+  `lunatic:test` blocks asserting on the outcome. All scripts, mocks and
+  conditions are JavaScript (`text/javascript`) over a mutable `payload`.
+- **Everything else is standards-compliant BPMN 2.0**: the artifact imports
+  into other engines — `spike/` proves it end-to-end in bpmn-engine, with a
+  generic adapter mapping the declared JavaScript onto the engine.
+- **WebMCP tools for the whole workspace**: 31 tools registered on
+  `navigator.modelContext` (and always on `window.lunatic` for the console) —
+  read (`get_model`, `get_element`, `get_issues`), build (`add_element`,
+  `connect`, `add_lane`, `auto_layout`, …), logic (`set_condition`,
+  `set_script`, `set_mock`, `set_binding`, `set_documentation`), execute &
+  verify (`define_scenario`, `run_scenario`, `step_scenario`, `add_test`,
+  `run_tests`) and workspace management (`new_document`, `load_document`,
+  `export_document`, `save_document`, `open_document`, `list_documents`,
+  `delete_document`, `undo`). Agent and human mutations share one undo stack.
+- **IDE-like UI**: [shadcn-svelte](https://shadcn-svelte.com)-style components
+  (Tailwind), CodeMirror editors for scripts, mocks, conditions, test bodies
+  and the live XML view, plus Run / Tests / Issues panels and a
+  localStorage-backed document workspace with autosave.
+
+```sh
+npm run studio        # dev server (opens the studio)
+npm run build-studio  # static build into studio/dist/
+```
+
 ## Development
 
 ```sh
@@ -175,6 +215,7 @@ npm run storybook        # browse the notation catalog at :6006
 npm run check            # svelte-check
 npm run package          # build the library into dist/
 npm run build-storybook  # static storybook
+npm test                 # library engine tests + studio engine tests
 ```
 
 ## License
