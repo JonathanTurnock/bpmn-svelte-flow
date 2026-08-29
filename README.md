@@ -174,7 +174,8 @@ override what you like:
 ## BSF Studio
 
 `studio/` is a static Svelte site — deployable to any static host — that
-turns the renderer into a full **local, in-browser BPMN workbench**:
+turns the renderer into a full **local, in-browser BPMN workbench**.
+**Live on GitHub Pages: <https://jonathanturnock.github.io/bpmn-svelte-flow/>**
 
 - **The canvas is this library**: the studio renders and edits diagrams with
   the repo's own Svelte Flow nodes and edges (drag shapes, click to inspect;
@@ -210,8 +211,14 @@ turns the renderer into a full **local, in-browser BPMN workbench**:
 
 ```sh
 bun run studio        # dev server (opens the studio)
-bun run build-studio  # static build into studio/dist/
+bun run build-studio  # static build into studio/dist/ (dev output, ignored)
+bun run build-site    # static build into site/ (committed; served by Pages)
 ```
+
+The committed `site/` build is what GitHub Pages serves:
+`.github/workflows/deploy-pages.yml` publishes it on every push to the
+default branch that touches `site/`. After changing the studio, refresh the
+deployment with `bun run build-site` and commit the result.
 
 ## Development
 
