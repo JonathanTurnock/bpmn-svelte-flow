@@ -11,6 +11,17 @@
 
   // collapsed event sub-process: thin dotted outline
   const isEventSub = $derived(!!d.triggeredByEvent);
+
+  const ICONED_TASKS = new Set([
+    'bpmn:UserTask',
+    'bpmn:ServiceTask',
+    'bpmn:ScriptTask',
+    'bpmn:ManualTask',
+    'bpmn:SendTask',
+    'bpmn:ReceiveTask',
+    'bpmn:BusinessRuleTask'
+  ]);
+  const hasIcon = $derived(!!d.taskType && ICONED_TASKS.has(d.taskType));
 </script>
 
 <div
@@ -19,6 +30,7 @@
   class:call={d.isCall}
   class:transaction={d.isTransaction}
   class:event-sub={isEventSub}
+  class:has-icon={hasIcon}
   style={`width: ${d.width}px; height: ${d.height}px;`}
 >
   {#if d.isTransaction}
@@ -52,6 +64,12 @@
   }
   .bpmn-task.selected {
     border-color: var(--bpmn-selected, #1a70ef);
+  }
+  /* The type icon sits absolutely in the top-left corner; reserve its band
+     so long labels never run underneath it. */
+  .bpmn-task.has-icon {
+    padding-top: 22px;
+    padding-bottom: 6px;
   }
   .bpmn-task-label {
     font-family: var(--bpmn-font-family, Arial, sans-serif);

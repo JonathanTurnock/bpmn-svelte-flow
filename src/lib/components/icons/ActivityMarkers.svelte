@@ -40,7 +40,7 @@
 <style>
   .bpmn-activity-markers {
     position: absolute;
-    bottom: 3px;
+    bottom: 5px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
