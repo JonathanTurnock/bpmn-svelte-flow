@@ -15,7 +15,8 @@
     "allowJs": true,
     "checkJs": true,
     "paths": {
-      "$bsf/*": ["./src/lib/*"]
+      "$bsf/*": ["./src/lib/*"],
+      "$lib/*": ["./studio/src/lib/*"]
     }
   },
   "include": [

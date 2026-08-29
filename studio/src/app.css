@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 /* shadcn-svelte theme tokens (new-york / zinc). Components in
    src/lib/components/ui follow shadcn-svelte conventions over these. */

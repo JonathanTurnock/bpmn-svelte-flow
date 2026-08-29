@@ -2,11 +2,11 @@
   import { FlaskConical, Plus } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import type { TestResult } from '../engine/engine.mjs';
-  import Button from './ui/button.svelte';
-  import Badge from './ui/badge.svelte';
-  import Input from './ui/input.svelte';
-  import Label from './ui/label.svelte';
-  import Separator from './ui/separator.svelte';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import { Badge } from '$lib/components/ui/badge/index.js';
+  import { Input } from '$lib/components/ui/input/index.js';
+  import { Label } from '$lib/components/ui/label/index.js';
+  import { Separator } from '$lib/components/ui/separator/index.js';
   import CodeEditor from './CodeEditor.svelte';
 
   let results = $state.raw<TestResult[] | null>(null);

@@ -11,7 +11,8 @@ export default defineConfig({
   base: './',
   resolve: {
     alias: {
-      $bsf: fileURLToPath(new URL('../src/lib', import.meta.url))
+      $bsf: fileURLToPath(new URL('../src/lib', import.meta.url)),
+      $lib: fileURLToPath(new URL('./src/lib', import.meta.url))
     }
   },
   build: { outDir: 'dist', emptyOutDir: true }

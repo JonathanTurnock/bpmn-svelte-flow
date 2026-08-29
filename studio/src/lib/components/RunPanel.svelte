@@ -1,11 +1,11 @@
 <script lang="ts">
   import { Play, StepForward, RotateCcw } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
-  import Button from './ui/button.svelte';
-  import Badge from './ui/badge.svelte';
-  import Label from './ui/label.svelte';
-  import Select from './ui/select.svelte';
-  import Separator from './ui/separator.svelte';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import { Badge } from '$lib/components/ui/badge/index.js';
+  import { Label } from '$lib/components/ui/label/index.js';
+  import * as Select from '$lib/components/ui/select/index.js';
+  import { Separator } from '$lib/components/ui/separator/index.js';
 
   let scenarioName = $state('');
 
@@ -31,14 +31,16 @@
 <div class="flex h-full flex-col gap-3 overflow-y-auto p-3" data-testid="run-panel">
   <div class="grid gap-1">
     <Label>Scenario (lunatic:scenario)</Label>
-    <Select bind:value={scenarioName} data-testid="scenario-select">
-      {#each scenarios as s (s.name)}
-        <option value={s.name}>{s.name}</option>
-      {/each}
-      {#if !scenarios.length}
-        <option value="">— no scenarios in this file —</option>
-      {/if}
-    </Select>
+    <Select.Root type="single" bind:value={scenarioName}>
+      <Select.Trigger class="w-full" data-testid="scenario-select">
+        {scenarioName || 'no scenarios in this file'}
+      </Select.Trigger>
+      <Select.Content>
+        {#each scenarios as s (s.name)}
+          <Select.Item value={s.name} label={s.name} />
+        {/each}
+      </Select.Content>
+    </Select.Root>
     {#if scenarios.find((s) => s.name === scenarioName)?.description}
       <p class="text-xs text-muted-foreground">
         {scenarios.find((s) => s.name === scenarioName)?.description}

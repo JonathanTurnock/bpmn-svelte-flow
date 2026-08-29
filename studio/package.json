@@ -1,0 +1,13 @@
+{
+  "name": "lunatic-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lunatic Studio — in-browser BPMN engine + WebMCP workbench. Dependencies live in the repo root package.json; run via `npm run studio` / `npm run build-studio` from the root.",
+  "devDependencies": {
+    "@internationalized/date": "^3.12.0",
+    "@lucide/svelte": "^1.37.0",
+    "bits-ui": "^2.16.3",
+    "tailwind-variants": "^3.3.0"
+  }
+}

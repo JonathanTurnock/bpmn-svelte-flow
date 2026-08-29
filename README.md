@@ -197,9 +197,11 @@ turns the renderer into a full **local, in-browser BPMN workbench**:
   `run_tests`) and workspace management (`new_document`, `load_document`,
   `export_document`, `save_document`, `open_document`, `list_documents`,
   `delete_document`, `undo`). Agent and human mutations share one undo stack.
-- **IDE-like UI**: [shadcn-svelte](https://shadcn-svelte.com)-style components
-  (Tailwind), CodeMirror editors for scripts, mocks, conditions, test bodies
-  and the live XML view, plus Run / Tests / Issues panels and a
+- **IDE-like UI**: [shadcn-svelte](https://shadcn-svelte.com) components
+  (installed via the shadcn-svelte CLI into `studio/src/lib/components/ui/`,
+  on bits-ui + Tailwind 4; `studio/components.json` configures the CLI for
+  adding more), CodeMirror editors for scripts, mocks, conditions, test
+  bodies and the live XML view, plus Run / Tests / Issues panels and a
   localStorage-backed document workspace with autosave.
 
 ```sh

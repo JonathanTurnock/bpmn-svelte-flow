@@ -12,10 +12,10 @@
   } from '@lucide/svelte';
   import { studio } from '../studio.svelte.js';
   import { download } from '../utils.js';
-  import Button from './ui/button.svelte';
-  import Input from './ui/input.svelte';
-  import Select from './ui/select.svelte';
-  import Separator from './ui/separator.svelte';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import { Input } from '$lib/components/ui/input/index.js';
+  import * as Select from '$lib/components/ui/select/index.js';
+  import { Separator } from '$lib/components/ui/separator/index.js';
 
   let addType = $state('task');
   let openSelect = $state('');
@@ -66,26 +66,29 @@
 <header class="flex items-center gap-2 border-b bg-card px-3 py-2">
   <Moon class="size-5" />
   <span class="text-sm font-semibold tracking-tight">Lunatic Studio</span>
-  <Separator class="mx-1 h-5 w-px" />
+  <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-5" />
 
   <Input class="w-44" bind:value={studio.docName} aria-label="document name" />
   <Button size="sm" variant="outline" onclick={() => studio.saveDocument()} title="Save to browser workspace">
     <Save /> Save
   </Button>
-  <Select
-    class="w-40"
+  <Select.Root
+    type="single"
     bind:value={openSelect}
-    aria-label="open document"
-    onchange={async () => {
-      if (openSelect) await studio.openDocument(openSelect);
+    onValueChange={async (name) => {
+      if (name) await studio.openDocument(name);
       openSelect = '';
     }}
   >
-    <option value="">Open…</option>
-    {#each documents as d (d.name)}
-      <option value={d.name}>{d.name}</option>
-    {/each}
-  </Select>
+    <Select.Trigger size="sm" class="w-32" aria-label="open document">Open…</Select.Trigger>
+    <Select.Content>
+      {#each documents as d (d.name)}
+        <Select.Item value={d.name} label={d.name} />
+      {:else}
+        <Select.Item value="" label="no saved documents" disabled />
+      {/each}
+    </Select.Content>
+  </Select.Root>
   <Button size="sm" variant="ghost" onclick={() => studio.newDocument()} title="New document">
     <FilePlus /> New
   </Button>
@@ -114,15 +117,20 @@
   </Button>
 
   <div class="ml-auto flex items-center gap-2">
-    <Select class="w-40" bind:value={addType} aria-label="element type">
-      {#each ADD_TYPES as [value, label] (value)}
-        <option {value}>{label}</option>
-      {/each}
-    </Select>
+    <Select.Root type="single" bind:value={addType}>
+      <Select.Trigger size="sm" class="w-44" aria-label="element type">
+        {ADD_TYPES.find(([value]) => value === addType)?.[1] ?? 'Element type'}
+      </Select.Trigger>
+      <Select.Content>
+        {#each ADD_TYPES as [value, label] (value)}
+          <Select.Item {value} {label} />
+        {/each}
+      </Select.Content>
+    </Select.Root>
     <Button size="sm" variant="secondary" onclick={addElement} title="Add after the selected element" data-testid="add-element">
       <Plus /> Add
     </Button>
-    <Separator class="mx-1 h-5 w-px" />
+    <Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-5" />
     <Button size="icon" variant="ghost" onclick={() => studio.undo()} disabled={!studio.canUndo} title="Undo">
       <Undo2 />
     </Button>

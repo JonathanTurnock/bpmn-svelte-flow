@@ -1,6 +1,6 @@
 <script lang="ts">
   import { studio } from '../studio.svelte.js';
-  import Badge from './ui/badge.svelte';
+  import { Badge } from '$lib/components/ui/badge/index.js';
 </script>
 
 <div class="flex h-full flex-col gap-2 overflow-y-auto p-3" data-testid="issues-panel">

@@ -8,12 +8,12 @@
   import TestsPanel from './lib/components/TestsPanel.svelte';
   import IssuesPanel from './lib/components/IssuesPanel.svelte';
   import XmlPanel from './lib/components/XmlPanel.svelte';
-  import Badge from './lib/components/ui/badge.svelte';
-  import { cn } from './lib/utils.js';
+  import { Badge } from '$lib/components/ui/badge/index.js';
+  import * as Tabs from '$lib/components/ui/tabs/index.js';
 
   let ready = $state(false);
   let mcp = $state<{ api: string; tools: number } | null>(null);
-  let tab = $state<'inspector' | 'run' | 'tests' | 'issues' | 'xml'>('inspector');
+  let tab = $state('inspector');
 
   $effect(() => {
     studio.boot().then(() => {
@@ -51,39 +51,23 @@
       {/if}
     </main>
     <aside class="flex w-[400px] shrink-0 flex-col">
-      <nav class="flex gap-1 border-b bg-card px-2 py-1.5">
-        {#each TABS as [id, label] (id)}
-          <button
-            type="button"
-            class={cn(
-              'rounded-md px-2.5 py-1 text-sm transition-colors',
-              tab === id
-                ? 'bg-secondary font-medium text-secondary-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-            )}
-            data-testid={`tab-${id}`}
-            onclick={() => (tab = id)}
-          >
-            {label}
-            {#if id === 'issues' && issueCount}
-              <Badge variant="destructive" class="ml-1 px-1.5 py-0">{issueCount}</Badge>
-            {/if}
-          </button>
-        {/each}
-      </nav>
-      <div class="min-h-0 flex-1">
-        {#if tab === 'inspector'}
-          <InspectorPanel />
-        {:else if tab === 'run'}
-          <RunPanel />
-        {:else if tab === 'tests'}
-          <TestsPanel />
-        {:else if tab === 'issues'}
-          <IssuesPanel />
-        {:else}
-          <XmlPanel />
-        {/if}
-      </div>
+      <Tabs.Root bind:value={tab} class="flex min-h-0 flex-1 flex-col gap-0">
+        <Tabs.List class="w-full justify-start rounded-none border-b bg-card px-2 py-1.5">
+          {#each TABS as [id, label] (id)}
+            <Tabs.Trigger value={id} data-testid={`tab-${id}`}>
+              {label}
+              {#if id === 'issues' && issueCount}
+                <Badge variant="destructive" class="ml-1 px-1.5 py-0">{issueCount}</Badge>
+              {/if}
+            </Tabs.Trigger>
+          {/each}
+        </Tabs.List>
+        <Tabs.Content value="inspector" class="min-h-0 flex-1"><InspectorPanel /></Tabs.Content>
+        <Tabs.Content value="run" class="min-h-0 flex-1"><RunPanel /></Tabs.Content>
+        <Tabs.Content value="tests" class="min-h-0 flex-1"><TestsPanel /></Tabs.Content>
+        <Tabs.Content value="issues" class="min-h-0 flex-1"><IssuesPanel /></Tabs.Content>
+        <Tabs.Content value="xml" class="min-h-0 flex-1"><XmlPanel /></Tabs.Content>
+      </Tabs.Root>
       <footer class="border-t bg-card px-3 py-1.5 text-[11px] text-muted-foreground">
         {#if mcp}
           WebMCP: {mcp.tools} tools via {mcp.api}
