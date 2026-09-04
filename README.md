@@ -21,9 +21,21 @@ shapes at their modeled positions, edges following their modeled waypoints.
 - **Storybook for every notation element** — run `bun run storybook` to browse
   the whole catalog.
 
-The repo also ships **BSF Studio** (`studio/`) — an in-browser BPMN
-engine and PoC workbench built on this renderer. See
-[BSF Studio](#bsf-studio) below and `PRODUCT_BRIEF.md`.
+The same artifact runs on three surfaces:
+
+- **BSF Studio** — the website IDE, live at
+  <https://jonathanturnock.github.io/bpmn-svelte-flow/> (see
+  [BSF Studio](#bsf-studio) and `PRODUCT_BRIEF.md`).
+- **BPMN Runner (BSF)** — a VS Code extension that opens `.bpmn` files as
+  a live diagram with token playback and per-step state diffs
+  (`packages/vscode-ext`; install the `.vsix` from the GitHub Releases
+  page via *Extensions → … → Install from VSIX*).
+- **`bsf-agent`** — a JSON-RPC CLI that lets an LLM agent drive the
+  workflow with durable on-disk state (`packages/agent-cli`; standalone
+  binaries on the Releases page, no runtime required). See
+  [Agent-driven workflows](#agent-driven-workflows).
+
+Architecture and conventions are recorded in `docs/decisions/` (ADRs).
 
 ## Installation
 
