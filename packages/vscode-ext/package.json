@@ -1,0 +1,71 @@
+{
+  "name": "bsf-vscode",
+  "displayName": "BPMN Runner (BSF)",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "jonathanturnock",
+  "license": "MIT",
+  "type": "module",
+  "description": "Open .bpmn files as a live diagram with token-flow playback, scenario runs, per-step state diffs and embedded tests — powered by bpmn-svelte-flow and @bsf/engine.",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Visualization", "Other"],
+  "main": "./dist/extension.cjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonathanTurnock/bpmn-svelte-flow.git"
+  },
+  "activationEvents": [],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "bsf.bpmnRunner",
+        "displayName": "BPMN Runner (BSF)",
+        "selector": [{ "filenamePattern": "*.bpmn" }],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      { "command": "bsf.openAsXml", "title": "BPMN: Open as XML" },
+      { "command": "bsf.openRunner", "title": "BPMN: Open with BPMN Runner" }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "bsf.openAsXml",
+          "when": "activeCustomEditorId == bsf.bpmnRunner",
+          "group": "navigation"
+        },
+        {
+          "command": "bsf.openRunner",
+          "when": "resourceExtname == .bpmn && activeCustomEditorId != bsf.bpmnRunner",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "bun run build:webview && bun run build:extension",
+    "build:webview": "vite build",
+    "build:extension": "bun build src/extension.ts --outfile dist/extension.cjs --format=cjs --target=node --external vscode",
+    "package:vsix": "bunx @vscode/vsce package --no-dependencies -o dist/",
+    "test": "bun test/smoke.test.mjs"
+  },
+  "dependencies": {
+    "@bsf/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/merge": "^6.12.2",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.6",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3",
+    "@xyflow/svelte": "^1.6.5",
+    "bpmn-moddle": "^10.2.0",
+    "svelte": "^5.57.0",
+    "vite": "^8.2.2"
+  }
+}

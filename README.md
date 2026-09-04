@@ -247,7 +247,9 @@ with `BSF_RUNS_DIR`): each run is an event-sourced record — the initial
 payload plus every completed task result — and every CLI invocation replays
 it through the engine, so runs survive process exits and can be resumed by
 a different agent session. The workflow file is hashed into the record;
-editing it mid-run is detected and refused. `bsf-agent` with no arguments
+editing it mid-run is detected and refused. Replay assumes the file's own
+JS is deterministic — keep `Date.now()`/`Math.random()` out of scripts
+and mocks that feed routing. `bsf-agent` with no arguments
 prints the method reference. Try it on the shipped sample:
 `studio/public/samples/agent-triage.bpmn`.
 

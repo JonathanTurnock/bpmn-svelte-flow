@@ -270,10 +270,17 @@ export async function handleRequest(request) {
 const USAGE = `bsf-agent — drive a BPMN workflow's agent tasks over JSON-RPC.
 
 Tasks carrying <bsf:instructions> are yours to perform: fetch the next one,
-do what its instructions say, and complete it with the payload fields you
+do what its instructions say (a task may include bsf:code — a snippet you
+execute in your own runtime), and complete it with the payload fields you
 produced. Everything else in the workflow (scripts, mocks, gateways, joins)
 executes automatically. State persists in .bsf-runs/ (override with
 BSF_RUNS_DIR or params.stateDir), so runs survive process exits.
+
+Durability is replay-based: every request re-executes the workflow's own
+JS over the recorded initial payload and your completed results. Keep
+scripts and mocks deterministic (no Date.now()/Math.random()) or replayed
+state may drift between invocations; the workflow file itself is hashed
+and must not change mid-run.
 
   bsf-agent <method> ['<params-json>']   one request; JSON-RPC response on stdout
   bsf-agent rpc '<request-json>'         full JSON-RPC request object
