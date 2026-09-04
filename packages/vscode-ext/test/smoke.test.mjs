@@ -4,7 +4,7 @@
  * play the run — the two things the extension exists to do.
  */
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '/home/user/bpmn-svelte-flow/node_modules/playwright/index.mjs';
 
@@ -57,7 +57,11 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.listen(0, r));
 const base = `http://127.0.0.1:${server.address().port}/`;
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+// Browser resolution: BSF_CHROMIUM env > the sandbox's pinned build > the
+// playwright-managed default (CI installs it with `playwright install`).
+const pinned = '/opt/pw-browsers/chromium';
+const executablePath = process.env.BSF_CHROMIUM ?? (existsSync(pinned) ? pinned : undefined);
+const browser = await chromium.launch(executablePath ? { executablePath } : {});
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

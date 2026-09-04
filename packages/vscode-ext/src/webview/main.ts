@@ -24,7 +24,7 @@ window.addEventListener('message', (event: MessageEvent) => {
   const msg = event.data as { type?: string; text?: string; uri?: string } | null;
   if (msg?.type !== 'document' || typeof msg.text !== 'string') return;
   const name = msg.uri ? decodeURIComponent(msg.uri.split('/').pop() || '') : undefined;
-  void runner.load(msg.text, name);
+  void runner.load(msg.text, name, msg.uri ?? '');
 });
 
 mount(App, {

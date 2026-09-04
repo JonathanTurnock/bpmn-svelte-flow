@@ -43,3 +43,12 @@ lead. Work is tracked as session task items mirrored here.
 3. `bsf-agent` binaries on the release; JSON-RPC loop proven by the
    agent-cli test suite (fresh process per request = durable resume).
 4. Decision record and sprint docs in-repo and current.
+
+## Deferred beyond 0.1.0 (ratified in the Sprint 4 audit)
+- Extract the duplicated playback timeline controller (studio ↔ VS Code
+  webview) into a shared `@bsf/playback` module before a third consumer
+  appears; until then the webview smoke suite guards behavior drift.
+- Code-split the webview bundle (CodeMirror merge view dominates the
+  641 KB chunk); acceptable resident cost for now.
+- npm + VS Code Marketplace publishing (need tokens; the GitHub Release
+  artifacts are the supported install paths).

@@ -6,11 +6,14 @@
   "publisher": "jonathanturnock",
   "license": "MIT",
   "type": "module",
-  "description": "Open .bpmn files as a live diagram with token-flow playback, scenario runs, per-step state diffs and embedded tests — powered by bpmn-svelte-flow and @bsf/engine.",
+  "description": "Open .bpmn files as a live diagram with token-flow playback, scenario runs, per-step state diffs and embedded tests \u2014 powered by bpmn-svelte-flow and @bsf/engine.",
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Visualization", "Other"],
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
   "main": "./dist/extension.cjs",
   "repository": {
     "type": "git",
@@ -22,13 +25,23 @@
       {
         "viewType": "bsf.bpmnRunner",
         "displayName": "BPMN Runner (BSF)",
-        "selector": [{ "filenamePattern": "*.bpmn" }],
+        "selector": [
+          {
+            "filenamePattern": "*.bpmn"
+          }
+        ],
         "priority": "default"
       }
     ],
     "commands": [
-      { "command": "bsf.openAsXml", "title": "BPMN: Open as XML" },
-      { "command": "bsf.openRunner", "title": "BPMN: Open with BPMN Runner" }
+      {
+        "command": "bsf.openAsXml",
+        "title": "BPMN: Open as XML"
+      },
+      {
+        "command": "bsf.openRunner",
+        "title": "BPMN: Open with BPMN Runner"
+      }
     ],
     "menus": {
       "editor/title": [
@@ -67,5 +80,6 @@
     "bpmn-moddle": "^10.2.0",
     "svelte": "^5.57.0",
     "vite": "^8.2.2"
-  }
+  },
+  "icon": "icon.png"
 }

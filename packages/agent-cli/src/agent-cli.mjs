@@ -30,6 +30,7 @@ import { createInterface } from 'node:readline';
 import { BpmnModdle } from 'bpmn-moddle';
 import bsfSchema from '@bsf/engine/moddle';
 import { BsfEngine, collectScenarios } from '@bsf/engine';
+import pkg from '../package.json' with { type: 'json' };
 
 const STATE_VERSION = 1;
 
@@ -267,7 +268,7 @@ export async function handleRequest(request) {
   }
 }
 
-const USAGE = `bsf-agent — drive a BPMN workflow's agent tasks over JSON-RPC.
+const USAGE = `bsf-agent ${pkg.version} — drive a BPMN workflow's agent tasks over JSON-RPC.
 
 Tasks carrying <bsf:instructions> are yours to perform: fetch the next one,
 do what its instructions say (a task may include bsf:code — a snippet you
@@ -300,6 +301,10 @@ export async function main(argv, { stdout = process.stdout, stdin = process.stdi
   const [command, ...rest] = argv;
   if (!command || command === 'help' || command === '--help' || command === '-h') {
     stdout.write(USAGE + '\n');
+    return 0;
+  }
+  if (command === 'version' || command === '--version' || command === '-v') {
+    stdout.write(pkg.version + '\n');
     return 0;
   }
 

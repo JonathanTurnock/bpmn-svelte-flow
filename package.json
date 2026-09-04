@@ -35,7 +35,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "bun run package && bun tests/engine.test.mjs && bun tests/reference.test.mjs && bun run test:sample-sync && bun run --cwd packages/engine test && bun run --cwd packages/agent-cli test",
+    "test": "bun run package && bun tests/engine.test.mjs && bun tests/reference.test.mjs && bun run test:sample-sync && bun run --cwd packages/engine test && bun run --cwd packages/agent-cli test && bun run build-vscode && bun run --cwd packages/vscode-ext test",
     "test:sample-sync": "for f in messaging-flow agent-triage; do cmp -s studio/public/samples/$f.bpmn packages/engine/test/fixtures/$f.bpmn || (echo \"studio sample and engine fixture $f.bpmn have drifted apart\" && exit 1); done",
     "build-site": "vite build studio --outDir ../site --emptyOutDir",
     "poc": "vite poc --open",
