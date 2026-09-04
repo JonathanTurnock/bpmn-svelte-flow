@@ -914,6 +914,16 @@ class StudioStore {
     this.setExtension(bo, 'mock', args.code ? (m) => m.create('bsf:Mock', { body: args.code }) : null);
   }
 
+  /** bsf:instructions — what an LLM agent should do at this task (bsf-agent CLI). */
+  setInstructions(args: { taskId: string; text?: string }) {
+    const bo = this.findBo(args.taskId);
+    this.setExtension(
+      bo,
+      'instructions',
+      args.text ? (m) => m.create('bsf:Instructions', { body: args.text }) : null
+    );
+  }
+
   setBinding(args: { taskId: string; type?: string; properties?: Array<{ name: string; value: string }> }) {
     const bo = this.findBo(args.taskId);
     this.setExtension(
@@ -972,6 +982,7 @@ class StudioStore {
     if (bo.documentation?.length) summary.hasDocumentation = true;
     if (bo.script) summary.hasScript = true;
     if (extensionBody(bo, 'mock') !== undefined) summary.hasMock = true;
+    if (extensionBody(bo, 'instructions') !== undefined) summary.hasInstructions = true;
     const binding = extensions(bo, 'binding')[0];
     if (binding) summary.binding = binding.type;
     if (bo.default) summary.defaultFlow = bo.default.id;
@@ -1036,6 +1047,8 @@ class StudioStore {
     }
     const mock = extensionBody(bo, 'mock');
     if (mock !== undefined) detail.mock = mock;
+    const instructions = extensionBody(bo, 'instructions');
+    if (instructions !== undefined) detail.instructions = instructions;
     const binding = extensions(bo, 'binding')[0];
     if (binding) {
       detail.binding = {

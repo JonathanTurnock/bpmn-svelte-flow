@@ -60,8 +60,35 @@ export interface Issue {
   message: string;
 }
 
+/** An activity handed to an LLM agent (bsf:instructions). */
+export interface AgentTask {
+  /** Stable id for this occurrence of the task: `<elementId>#<n>`. */
+  taskId: string;
+  elementId: string;
+  name: string;
+  type?: string;
+  instructions: string;
+  documentation?: string;
+  payload: Record<string, unknown>;
+}
+
 export class BsfEngine {
-  constructor(definitions: any, processBo?: any, options?: { maxSteps?: number });
+  constructor(
+    definitions: any,
+    processBo?: any,
+    options?: {
+      maxSteps?: number;
+      /**
+       * Called when a token reaches an activity carrying bsf:instructions.
+       * Return an object to complete the task (merged into the payload) or
+       * undefined to park the token as "awaiting agent".
+       */
+      onAgentTask?: (task: Omit<AgentTask, 'documentation' | 'type'>) =>
+        | Record<string, unknown>
+        | null
+        | undefined;
+    }
+  );
   state: EngineState;
   started: boolean;
   reset(): void;
@@ -71,6 +98,10 @@ export class BsfEngine {
   stepRound(): boolean;
   runToEnd(payload?: Record<string, unknown>): EngineState;
   liveTokens(): EngineToken[];
+  /** The agent work the run is currently parked on, with payload snapshots. */
+  pendingAgentTasks(): AgentTask[];
+  /** Completes a parked agent task; follow with runToEnd()/step() to continue. */
+  completeAgentTask(taskId: string, result?: Record<string, unknown> | null): void;
   publicState(): Pick<EngineState, 'visited' | 'traversedEdges' | 'log' | 'results' | 'finished'>;
 }
 

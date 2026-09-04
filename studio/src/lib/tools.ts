@@ -164,6 +164,17 @@ export const tools: StudioTool[] = [
     run: (args) => studio.mutate(() => studio.setMock(args)).then(() => writeResult())
   },
   {
+    name: 'set_instructions',
+    description:
+      'Set (or clear, with empty text) the bsf:instructions on a task — the natural-language work item an LLM agent performs when the workflow runs under the bsf-agent CLI. The bsf:mock remains the simulation stand-in.',
+    input: { taskId: str('task id'), text: str('instructions for the agent') },
+    required: ['taskId'],
+    run: (args) =>
+      studio
+        .mutate(() => studio.setInstructions({ taskId: args.taskId, text: args.text || undefined }))
+        .then(() => writeResult())
+  },
+  {
     name: 'set_binding',
     description:
       'Declare the real-world implementation intent (bsf:binding) for a task: a type (http, kafka-producer, queue, decision, stream-consumer, manual, custom) plus name/value properties. Descriptive — feeds the binding inventory and per-engine export.',

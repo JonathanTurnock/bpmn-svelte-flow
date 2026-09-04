@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The bpmn-svelte-flow (BSF) browser BPMN engine: executes standard BPMN 2.0 semantics with JavaScript (text/javascript) scripts, mocks, conditions and embedded tests over a bpmn-moddle tree. Zero runtime dependencies; runs in the browser and in bun.",
+  "description": "The bpmn-svelte-flow (BSF) browser BPMN engine: executes standard BPMN 2.0 semantics with JavaScript (text/javascript) scripts, mocks, conditions and embedded tests over a bpmn-moddle tree. Zero runtime dependencies; runs in the browser and in bun/node, and ships the bsf-agent JSON-RPC CLI for LLM-agent-driven runs with durable on-disk state.",
   "exports": {
     ".": {
       "types": "./src/engine.d.mts",
@@ -13,14 +13,20 @@
       "types": "./src/bsf-moddle.d.ts",
       "default": "./src/bsf-moddle.js"
     },
-    "./adapter": "./src/bpmn-engine-adapter.mjs"
+    "./adapter": "./src/bpmn-engine-adapter.mjs",
+    "./agent-cli": "./src/agent-cli.mjs"
   },
   "scripts": {
-    "test": "bun test/engine.test.mjs && bun test/conformance.test.mjs"
+    "test": "bun test/engine.test.mjs && bun test/agent-cli.test.mjs && bun test/conformance.test.mjs"
   },
   "devDependencies": {
     "bpmn-engine": "^25.0.1",
-    "bpmn-moddle": "^10.2.0",
     "feelin": "^7.0.1"
+  },
+  "bin": {
+    "bsf-agent": "bin/bsf-agent.mjs"
+  },
+  "dependencies": {
+    "bpmn-moddle": "^10.2.0"
   }
 }

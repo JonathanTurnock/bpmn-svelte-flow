@@ -44,6 +44,25 @@ target engine as worker stubs.
 </bpmn:serviceTask>
 ```
 
+### `bsf:instructions` — the work item for an LLM agent
+Same elements as `bsf:mock`. Natural-language instructions for what an LLM
+agent should do at this task and which payload fields it should set. Inert
+during simulation (the mock stands in for the agent); executable under the
+`bsf-agent` CLI, where the engine parks the token as *awaiting agent* until
+the agent completes the task with a result object that merges into the
+payload.
+
+```xml
+<bpmn:task id="Task_Classify" name="Classify the ticket">
+  <bpmn:extensionElements>
+    <bsf:instructions>Read payload.subject and payload.body. Set `category`
+      (billing | technical | account), `severity` (low | high) and a
+      one-line `summary`.</bsf:instructions>
+    <bsf:mock>payload.category = 'technical'; payload.severity = 'high';</bsf:mock>
+  </bpmn:extensionElements>
+</bpmn:task>
+```
+
 ### `bsf:binding` — declared real-world implementation intent
 Optional, same elements as `bsf:mock`. *Descriptive, not executable*: a
 thin declaration — a `type` plus open name/value properties, the same shape

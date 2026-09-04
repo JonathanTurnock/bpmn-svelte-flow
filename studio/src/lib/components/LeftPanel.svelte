@@ -52,9 +52,9 @@
     studio.selectedId = id;
   }
 
-  async function loadSample() {
-    const res = await fetch(`${import.meta.env.BASE_URL}samples/messaging-flow.bpmn`);
-    await studio.importXml(await res.text(), 'messaging-flow');
+  async function loadSample(name: string) {
+    const res = await fetch(`${import.meta.env.BASE_URL}samples/${name}.bpmn`);
+    await studio.importXml(await res.text(), name);
   }
 </script>
 
@@ -86,8 +86,17 @@
     {:else}
       <p class="px-2 py-1 text-xs text-muted-foreground">No saved documents yet.</p>
     {/each}
-    <Button size="sm" variant="ghost" class="justify-start" onclick={loadSample}>
+    <Button size="sm" variant="ghost" class="justify-start" onclick={() => loadSample('messaging-flow')}>
       <FolderOpen /> messaging-flow sample
+    </Button>
+    <Button
+      size="sm"
+      variant="ghost"
+      class="justify-start"
+      title="Ticket triage driven by an LLM agent via the bsf-agent CLI"
+      onclick={() => loadSample('agent-triage')}
+    >
+      <FolderOpen /> agent-triage sample
     </Button>
   </div>
 

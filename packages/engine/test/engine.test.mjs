@@ -179,6 +179,51 @@ check('parallel fork/join merges branch payloads', () => {
   assert(payload.charged, 'charge ran after the join');
 });
 
+const agentXml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="D_A" targetNamespace="t" expressionLanguage="text/javascript">
+  <bpmn:process id="P_A" isExecutable="true">
+    <bpmn:startEvent id="S"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:task id="Agent" name="Do the thing">
+      <bpmn:extensionElements>
+        <bsf:instructions>Set done to true.</bsf:instructions>
+        <bsf:mock>payload.done = 'mocked';</bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="E"><bpmn:incoming>f2</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="S" targetRef="Agent"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Agent" targetRef="E"/>
+  </bpmn:process>
+</bpmn:definitions>`;
+const { rootElement: agentDefs } = await moddle.fromXML(agentXml);
+
+check('agent tasks park the run and resume via completeAgentTask', () => {
+  // No handler: instructions are informational, the mock drives simulation.
+  const sim = new BsfEngine(agentDefs).runToEnd({});
+  assert(sim.results[0].payload.done === 'mocked', 'mock drives simulation');
+
+  // Parking handler: run idles unfinished on the pending task, mock skipped.
+  const engine = new BsfEngine(agentDefs, undefined, { onAgentTask: () => undefined });
+  const state = engine.runToEnd({ input: 1 });
+  assert(state.finished === false, 'run idles awaiting the agent');
+  const pending = engine.pendingAgentTasks();
+  assert(pending.length === 1 && pending[0].taskId === 'Agent#1', 'one pending task');
+  assert(/done/.test(pending[0].instructions), 'instructions surfaced');
+  engine.completeAgentTask('Agent#1', { done: true });
+  engine.runToEnd();
+  assert(engine.state.finished === true, 'run finishes after completion');
+  const payload = engine.state.results[0].payload;
+  assert(payload.input === 1 && payload.done === true, 'agent result merged');
+
+  // Handler results complete tasks inline (the replay path).
+  const replayed = new BsfEngine(agentDefs, undefined, {
+    onAgentTask: ({ taskId }) => (taskId === 'Agent#1' ? { done: 'replayed' } : undefined)
+  }).runToEnd({});
+  assert(replayed.finished && replayed.results[0].payload.done === 'replayed', 'replay path');
+});
+
 check('stepRound advances parallel branches in lockstep to the same result', () => {
   const engine = new BsfEngine(synthDefs);
   engine.start({ items: [{ id: 1 }, { id: 2 }] });

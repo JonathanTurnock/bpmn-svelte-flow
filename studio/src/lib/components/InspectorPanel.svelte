@@ -28,6 +28,7 @@
   let condition = $state('');
   let bindingType = $state('');
   let bindingProps = $state('');
+  let instructions = $state('');
   let dirty = $state(false);
 
   $effect(() => {
@@ -46,6 +47,7 @@
       condition = String(d.condition ?? '');
       bindingType = d.binding?.type ?? '';
       bindingProps = d.binding?.properties?.length ? JSON.stringify(d.binding.properties, null, 2) : '';
+      instructions = String(d.instructions ?? '');
       dirty = false;
     } catch {
       detail = null;
@@ -55,6 +57,7 @@
   const isFlow = $derived(detail?.type === 'SequenceFlow');
   const hasScript = $derived(detail ? SCRIPTABLE.has(detail.type) : false);
   const hasMock = $derived(detail ? MOCKABLE.has(detail.type) : false);
+  const hasInstructions = $derived(detail ? MOCKABLE.has(detail.type) || SCRIPTABLE.has(detail.type) : false);
 
   async function save() {
     if (!detail) return;
@@ -64,6 +67,7 @@
       else if (name !== (detail!.name ?? '')) studio.updateElement({ id, name });
       studio.setDocumentation({ id, text: documentation });
       if (hasScript) studio.setScript({ scriptTaskId: id, code });
+      if (hasInstructions) studio.setInstructions({ taskId: id, text: instructions.trim() || undefined });
       if (hasMock) studio.setMock({ taskId: id, code: code || undefined });
       if (hasMock) {
         studio.setBinding({
@@ -102,7 +106,7 @@
     </p>
   </div>
 {:else}
-  <div class="flex h-full flex-col gap-4 overflow-y-auto p-4" data-testid="inspector">
+  <div class="flex h-full flex-col gap-4 overflow-y-auto p-4 *:shrink-0" data-testid="inspector">
     <div class="flex flex-wrap items-center gap-1.5">
       <Badge variant="secondary">{detail.type}</Badge>
       {#if detail.eventDefinition}<Badge variant="outline">{detail.eventDefinition}</Badge>{/if}
@@ -132,15 +136,15 @@
     {/if}
 
     {#if hasScript}
-      <div class="grid min-h-[150px] flex-1 gap-2">
+      <div class="grid gap-2">
         <Label>Script</Label>
-        <CodeEditor bind:value={code} label="Script" onchange={() => (dirty = true)} minHeight="120px" />
+        <CodeEditor bind:value={code} label="Script" onchange={() => (dirty = true)} minHeight="120px" maxHeight="240px" />
         <p class="text-xs text-muted-foreground">bpmn:script, text/javascript — mutates <code>payload</code>.</p>
       </div>
     {:else if hasMock}
-      <div class="grid min-h-[150px] flex-1 gap-2">
+      <div class="grid gap-2">
         <Label>Mock</Label>
-        <CodeEditor bind:value={code} label="Mock" onchange={() => (dirty = true)} minHeight="120px" />
+        <CodeEditor bind:value={code} label="Mock" onchange={() => (dirty = true)} minHeight="120px" maxHeight="240px" />
         <p class="text-xs text-muted-foreground">bsf:mock — the browser stand-in for this task.</p>
       </div>
       <div class="grid gap-2">
@@ -159,6 +163,23 @@
           <CodeEditor bind:value={bindingProps} language="json" label="Binding properties" onchange={() => (dirty = true)} minHeight="60px" />
         </div>
       {/if}
+    {/if}
+
+    {#if hasInstructions}
+      <div class="grid gap-2">
+        <Label for="inspector-instructions">Agent instructions</Label>
+        <Textarea
+          id="inspector-instructions"
+          bind:value={instructions}
+          oninput={() => (dirty = true)}
+          rows={4}
+          placeholder="What should an LLM agent do at this task, and which payload fields should it set?"
+        />
+        <p class="text-xs text-muted-foreground">
+          bsf:instructions — the work item an LLM agent performs via the <code>bsf-agent</code> CLI.
+          The mock stands in for the agent during simulation.
+        </p>
+      </div>
     {/if}
 
     <Separator />

@@ -135,7 +135,7 @@ export class BsfEngine {
    * @param definitions bpmn-moddle bpmn:Definitions
    * @param processBo   the bpmn:Process to run (default: first executable, else first)
    */
-  constructor(definitions, processBo, { maxSteps = 2000 } = {}) {
+  constructor(definitions, processBo, { maxSteps = 2000, onAgentTask } = {}) {
     this.definitions = definitions;
     this.process =
       processBo ||
@@ -143,6 +143,14 @@ export class BsfEngine {
       processesOf(definitions)[0];
     if (!this.process) throw new Error('no bpmn:Process in definitions');
     this.maxSteps = maxSteps;
+    /**
+     * Called when a token reaches an activity carrying bsf:instructions.
+     * Return an object to complete the task (merged into the payload), or
+     * undefined to park the token as "awaiting agent" — the run then idles
+     * unfinished until completeAgentTask() (or a replay) supplies the result.
+     * Without a handler, instructions are informational and the mock runs.
+     */
+    this.onAgentTask = onAgentTask;
     this.reset();
   }
 
@@ -163,6 +171,10 @@ export class BsfEngine {
     this.scopes = new Map();
     this.seq = 0;
     this.started = false;
+    /** Tokens parked at agent tasks: {taskId, token, element, instructions}. */
+    this.agentPending = [];
+    /** Occurrence counter per element id — makes taskIds stable across loops. */
+    this.agentSeen = new Map();
   }
 
   // -- lifecycle ------------------------------------------------------------
@@ -193,12 +205,50 @@ export class BsfEngine {
     }
     const token = this.tokens.find((t) => t.status === 'queued');
     if (!token) {
-      if (!this.releaseStuckJoin()) this.finish();
+      if (!this.releaseStuckJoin()) {
+        // Tokens awaiting an agent keep the run alive but idle.
+        if (this.livePendingAgents().length) return false;
+        this.finish();
+      }
       return !this.state.finished;
     }
     this.state.steps += 1;
     this.execute(token);
     return true;
+  }
+
+  livePendingAgents() {
+    return this.agentPending.filter((p) => p.token.status === 'waiting');
+  }
+
+  /** The agent work the run is currently parked on, with payload snapshots. */
+  pendingAgentTasks() {
+    return this.livePendingAgents().map((p) => ({
+      taskId: p.taskId,
+      elementId: p.element.id,
+      name: p.element.name || p.element.id,
+      type: p.element.$type,
+      instructions: p.instructions,
+      documentation: (p.element.documentation || []).map((d) => d.text).filter(Boolean).join('\n'),
+      payload: clone(p.token.payload)
+    }));
+  }
+
+  /**
+   * Completes a parked agent task: merges `result` into the token's payload
+   * and sends the token onward. Follow with runToEnd()/step() to continue.
+   */
+  completeAgentTask(taskId, result) {
+    const index = this.agentPending.findIndex(
+      (p) => p.taskId === taskId && p.token.status === 'waiting'
+    );
+    if (index < 0) throw new Error(`no pending agent task ${taskId}`);
+    const [pending] = this.agentPending.splice(index, 1);
+    if (result && typeof result === 'object') Object.assign(pending.token.payload, result);
+    this.log(pending.element, 'agent ran', pending.taskId, pending.token.payload);
+    this.log(pending.element, 'completed');
+    pending.token.status = 'queued';
+    this.moveAlong(pending.token, outgoing(pending.element));
   }
 
   /**
@@ -361,6 +411,35 @@ export class BsfEngine {
     if (is(el, 'bpmn:SubProcess') || is(el, 'bpmn:Transaction')) {
       return this.runSubProcess(token, () => this.moveAlong(token, outgoing(el)));
     }
+
+    // Agent task: bsf:instructions + a handler hand the work to an LLM agent.
+    // The handler's result completes the task (the mock is the simulation
+    // stand-in and is skipped); undefined parks the token as awaiting agent.
+    const instructions = extensionBody(el, 'instructions');
+    if (instructions && this.onAgentTask) {
+      const occurrence = (this.agentSeen.get(el.id) ?? 0) + 1;
+      this.agentSeen.set(el.id, occurrence);
+      const taskId = `${el.id}#${occurrence}`;
+      const result = this.onAgentTask({
+        taskId,
+        elementId: el.id,
+        name: el.name || el.id,
+        instructions,
+        payload: token.payload
+      });
+      if (result === undefined) {
+        token.status = 'waiting';
+        this.agentPending.push({ taskId, token, element: el, instructions });
+        this.log(el, 'awaiting agent', taskId);
+        return;
+      }
+      if (result && typeof result === 'object') Object.assign(token.payload, result);
+      this.log(el, 'agent ran', taskId, token.payload);
+      this.log(el, 'completed');
+      this.moveAlong(token, outgoing(el));
+      return;
+    }
+
     this.runActivityBody(token);
     this.log(el, 'completed');
     this.moveAlong(token, outgoing(el));

@@ -28,9 +28,14 @@
     "packages/engine": {
       "name": "@bsf/engine",
       "version": "0.1.0",
+      "bin": {
+        "bsf-agent": "bin/bsf-agent.mjs",
+      },
+      "dependencies": {
+        "bpmn-moddle": "^10.2.0",
+      },
       "devDependencies": {
         "bpmn-engine": "^25.0.1",
-        "bpmn-moddle": "^10.2.0",
         "feelin": "^7.0.1",
       },
     },

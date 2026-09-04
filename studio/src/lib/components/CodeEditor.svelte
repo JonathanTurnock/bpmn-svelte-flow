@@ -17,6 +17,7 @@
     language = 'javascript',
     readonly = false,
     minHeight = '80px',
+    maxHeight = '',
     label = 'Code',
     expandable = true,
     onchange
@@ -25,6 +26,8 @@
     language?: 'javascript' | 'xml' | 'json';
     readonly?: boolean;
     minHeight?: string;
+    /** When set, the editor stops growing and scrolls internally. */
+    maxHeight?: string;
     /** Title of the expanded editor dialog. */
     label?: string;
     expandable?: boolean;
@@ -58,7 +61,10 @@
           bsfHighlight,
           readonlyCompartment.of(EditorState.readOnly.of(readonly)),
           EditorView.lineWrapping,
-          EditorView.theme({ '&': { minHeight } }),
+          EditorView.theme({
+            '&': { minHeight, ...(maxHeight ? { maxHeight } : {}) },
+            '.cm-scroller': { overflow: 'auto' }
+          }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               value = update.state.doc.toString();

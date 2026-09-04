@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:bsf="http://bpmn-svelte-flow/schema/1.0"
+    id="Defs_AgentTriage" targetNamespace="http://bpmn-svelte-flow/samples"
+    expressionLanguage="text/javascript">
+  <bpmn:process id="P_Triage" name="Support ticket triage" isExecutable="true">
+    <bpmn:extensionElements>
+      <bsf:scenario name="Checkout outage" description="High-severity technical ticket that must escalate."
+          payload='{"customer":"Dana","subject":"Checkout is down","body":"Every purchase fails since 09:00, all users affected - urgent!"}'/>
+      <bsf:scenario name="Billing question" description="Routine billing ticket that gets a drafted reply."
+          payload='{"customer":"Ravi","subject":"Double charge on invoice","body":"I was billed twice for March."}'/>
+      <bsf:test name="outage escalates with a brief" payload='{"customer":"Dana","subject":"Checkout is down","body":"Every purchase fails since 09:00, all users affected - urgent!"}'>
+        assert.equal(payloads.length, 1);
+        assert.equal(payload.severity, 'high');
+        assert(payload.brief, 'escalation brief written');
+        assert(state.visited.has('Task_Escalate'), 'escalation path taken');
+      </bsf:test>
+      <bsf:test name="billing gets a drafted reply" payload='{"customer":"Ravi","subject":"Double charge on invoice","body":"I was billed twice for March."}'>
+        assert.equal(payload.category, 'billing');
+        assert(payload.reply, 'customer reply drafted');
+        assert(state.visited.has('Task_Reply'), 'reply path taken');
+      </bsf:test>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Start_Ticket" name="Ticket received">
+      <bpmn:outgoing>F1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_Classify" name="Classify the ticket">
+      <bpmn:documentation>Triage decides everything downstream: category routes the queue, severity gates escalation.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <bsf:instructions>Read payload.subject and payload.body. Set `category` to one of "billing", "technical" or "account"; set `severity` to "low" or "high" (high only for outages or issues affecting many users); and write a one-line `summary` of the problem in your own words.</bsf:instructions>
+        <bsf:mock>
+          const text = ((payload.subject || '') + ' ' + (payload.body || '')).toLowerCase();
+          payload.category = /bill|invoice|charge/.test(text) ? 'billing'
+            : /down|fail|error|crash|outage/.test(text) ? 'technical' : 'account';
+          payload.severity = /outage|down|urgent|all users|everyone/.test(text) ? 'high' : 'low';
+          payload.summary = (payload.subject || 'ticket') + ' [auto-triaged]';
+        </bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>F1</bpmn:incoming>
+      <bpmn:outgoing>F2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="GW_Severity" name="Severity?" default="F_Low">
+      <bpmn:incoming>F2</bpmn:incoming>
+      <bpmn:outgoing>F_High</bpmn:outgoing>
+      <bpmn:outgoing>F_Low</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_Escalate" name="Write escalation brief">
+      <bpmn:extensionElements>
+        <bsf:instructions>Write a short escalation brief for the on-call engineer in `brief`: what broke, the impact, the category, and the customer's own words that matter. Do not promise timelines.</bsf:instructions>
+        <bsf:mock>payload.brief = 'ESCALATION: ' + payload.summary + ' (category ' + payload.category + ')';</bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>F_High</bpmn:incoming>
+      <bpmn:outgoing>F3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Reply" name="Draft customer reply">
+      <bpmn:extensionElements>
+        <bsf:instructions>Draft a friendly reply to the customer in `reply`, acknowledging the `summary`. Plain text, empathetic, no internal details, no commitments beyond "we are looking into it".</bsf:instructions>
+        <bsf:mock>payload.reply = 'Hi ' + (payload.customer || 'there') + ', thanks for reaching out about "' + (payload.subject || 'your issue') + '". We are on it.';</bsf:mock>
+      </bpmn:extensionElements>
+      <bpmn:incoming>F_Low</bpmn:incoming>
+      <bpmn:outgoing>F4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_Escalated" name="Escalated">
+      <bpmn:incoming>F3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Replied" name="Reply drafted">
+      <bpmn:incoming>F4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="F1" sourceRef="Start_Ticket" targetRef="Task_Classify"/>
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_Classify" targetRef="GW_Severity"/>
+    <bpmn:sequenceFlow id="F_High" name="high" sourceRef="GW_Severity" targetRef="Task_Escalate">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">payload.severity === 'high'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F_Low" name="otherwise" sourceRef="GW_Severity" targetRef="Task_Reply"/>
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_Escalate" targetRef="End_Escalated"/>
+    <bpmn:sequenceFlow id="F4" sourceRef="Task_Reply" targetRef="End_Replied"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_AgentTriage">
+    <bpmndi:BPMNPlane id="Plane_AgentTriage" bpmnElement="P_Triage">
+      <bpmndi:BPMNShape id="S_Start" bpmnElement="Start_Ticket">
+        <dc:Bounds x="152" y="232" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="130" y="274" width="80" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Classify" bpmnElement="Task_Classify">
+        <dc:Bounds x="260" y="210" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_GW" bpmnElement="GW_Severity" isMarkerVisible="true">
+        <dc:Bounds x="470" y="225" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="466" y="200" width="58" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Escalate" bpmnElement="Task_Escalate">
+        <dc:Bounds x="600" y="110" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Reply" bpmnElement="Task_Reply">
+        <dc:Bounds x="600" y="310" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndEsc" bpmnElement="End_Escalated">
+        <dc:Bounds x="810" y="132" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="800" y="174" width="56" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndRep" bpmnElement="End_Replied">
+        <dc:Bounds x="810" y="332" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="792" y="374" width="72" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="E_F1" bpmnElement="F1">
+        <di:waypoint x="188" y="250"/><di:waypoint x="260" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F2" bpmnElement="F2">
+        <di:waypoint x="400" y="250"/><di:waypoint x="470" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_FHigh" bpmnElement="F_High">
+        <di:waypoint x="495" y="225"/><di:waypoint x="495" y="150"/><di:waypoint x="600" y="150"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="505" y="180" width="30" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_FLow" bpmnElement="F_Low">
+        <di:waypoint x="495" y="275"/><di:waypoint x="495" y="350"/><di:waypoint x="600" y="350"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="505" y="308" width="58" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F3" bpmnElement="F3">
+        <di:waypoint x="740" y="150"/><di:waypoint x="810" y="150"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="E_F4" bpmnElement="F4">
+        <di:waypoint x="740" y="350"/><di:waypoint x="810" y="350"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

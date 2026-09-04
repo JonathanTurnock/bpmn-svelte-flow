@@ -193,11 +193,11 @@ turns the renderer into a full **local, in-browser BPMN workbench**.
   package's generic binding-pass adapter, `@bsf/engine/adapter`) from the
   same file and payloads, and requires identical end events, executed tasks,
   multi-instance iteration counts, and payload values.
-- **WebMCP tools for the whole workspace**: 31 tools registered on
+- **WebMCP tools for the whole workspace**: 32 tools registered on
   `navigator.modelContext` (and always on `window.bsf` for the console) —
   read (`get_model`, `get_element`, `get_issues`), build (`add_element`,
   `connect`, `add_lane`, `auto_layout`, …), logic (`set_condition`,
-  `set_script`, `set_mock`, `set_binding`, `set_documentation`), execute &
+  `set_script`, `set_mock`, `set_instructions`, `set_binding`, `set_documentation`), execute &
   verify (`define_scenario`, `run_scenario`, `step_scenario`, `add_test`,
   `run_tests`) and workspace management (`new_document`, `load_document`,
   `export_document`, `save_document`, `open_document`, `list_documents`,
@@ -219,6 +219,35 @@ The committed `site/` build is what GitHub Pages serves:
 `.github/workflows/deploy-pages.yml` publishes it on every push to the
 default branch that touches `site/`. After changing the studio, refresh the
 deployment with `bun run build-site` and commit the result.
+
+## Agent-driven workflows
+
+The same BPMN file can put an **LLM agent in the loop**: give a task
+`bsf:instructions` — a natural-language work item — and run the file under
+the **`bsf-agent` JSON-RPC CLI** (part of [`@bsf/engine`](./packages/engine)).
+The engine executes everything deterministic (scripts, mocks-as-needed,
+gateways, joins, multi-instance) and parks the run whenever a token reaches
+an instructions task; the agent fetches the task, does the work, and
+completes it with the payload fields it produced, which drive the routing
+downstream. In the studio the `bsf:mock` on the same task stands in for the
+agent, so one artifact simulates, tests, and executes agentically.
+
+```sh
+bsf-agent start '{"file":"flow.bpmn","scenario":"Checkout outage"}'
+bsf-agent next '{"runId":"run-…"}'          # → taskId, instructions, payload
+bsf-agent complete '{"runId":"run-…","taskId":"Task_Classify#1",
+                     "result":{"category":"technical","severity":"high"}}'
+bsf-agent status|trace '{"runId":"run-…"}'  # bsf-agent serve for stdin JSON-RPC
+```
+
+State is **durable on the filesystem** (`.bsf-runs/<runId>.json`, override
+with `BSF_RUNS_DIR`): each run is an event-sourced record — the initial
+payload plus every completed task result — and every CLI invocation replays
+it through the engine, so runs survive process exits and can be resumed by
+a different agent session. The workflow file is hashed into the record;
+editing it mid-run is detected and refused. `bsf-agent` with no arguments
+prints the method reference. Try it on the shipped sample:
+`studio/public/samples/agent-triage.bpmn`.
 
 ## Development
 

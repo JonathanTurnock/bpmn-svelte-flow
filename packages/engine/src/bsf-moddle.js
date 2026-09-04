@@ -16,6 +16,11 @@ export default {
       properties: [{ name: 'body', isBody: true, type: 'String' }]
     },
     {
+      name: 'Instructions',
+      superClass: ['Element'],
+      properties: [{ name: 'body', isBody: true, type: 'String' }]
+    },
+    {
       name: 'Binding',
       superClass: ['Element'],
       properties: [

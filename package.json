@@ -36,7 +36,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "bun run package && bun tests/engine.test.mjs && bun tests/reference.test.mjs && bun run test:sample-sync && bun run --cwd packages/engine test",
-    "test:sample-sync": "cmp -s studio/public/samples/messaging-flow.bpmn packages/engine/test/fixtures/messaging-flow.bpmn || (echo 'studio sample and engine fixture messaging-flow.bpmn have drifted apart' && exit 1)",
+    "test:sample-sync": "for f in messaging-flow agent-triage; do cmp -s studio/public/samples/$f.bpmn packages/engine/test/fixtures/$f.bpmn || (echo \"studio sample and engine fixture $f.bpmn have drifted apart\" && exit 1); done",
     "build-site": "vite build studio --outDir ../site --emptyOutDir",
     "poc": "vite poc --open",
     "studio": "vite studio --open",
