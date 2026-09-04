@@ -6,7 +6,7 @@
 import { createServer } from 'node:http';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/home/user/bpmn-svelte-flow/node_modules/playwright/index.mjs';
+import { chromium } from 'playwright';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const bundle = readFileSync(here('../dist/webview/index.js'), 'utf8');
