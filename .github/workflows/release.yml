@@ -1,0 +1,72 @@
+name: Release
+
+# Cuts a versioned GitHub Release (ADR-0004): verifies the full test chain,
+# compiles standalone bsf-agent binaries for five targets, packages the
+# VS Code extension, tags v<version>, and publishes everything.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (must match the workspace package versions)'
+        required: true
+        default: '0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+
+      - name: Versions must match the input
+        run: |
+          for f in package.json packages/engine/package.json packages/agent-cli/package.json packages/vscode-ext/package.json studio/package.json; do
+            v=$(bun -e "console.log(require('./$f').version)")
+            if [ "$v" != "${{ inputs.version }}" ]; then
+              echo "$f is $v, expected ${{ inputs.version }}" && exit 1
+            fi
+          done
+
+      - name: Verify (full chain)
+        run: |
+          bun run check
+          bun run test
+          bun run build-site
+
+      - name: Compile bsf-agent binaries
+        run: |
+          mkdir -p dist-release
+          for target in bun-linux-x64 bun-linux-arm64 bun-darwin-x64 bun-darwin-arm64 bun-windows-x64; do
+            suffix=${target#bun-}
+            out="dist-release/bsf-agent-${{ inputs.version }}-${suffix}"
+            [ "$target" = "bun-windows-x64" ] && out="$out.exe"
+            bun build --compile --target=$target packages/agent-cli/bin/bsf-agent.mjs --outfile "$out"
+          done
+          ls -la dist-release/
+
+      - name: Smoke-test the linux binary
+        run: |
+          ./dist-release/bsf-agent-${{ inputs.version }}-linux-x64 start \
+            '{"file":"packages/engine/test/fixtures/agent-triage.bpmn","scenario":"Checkout outage","runId":"rc-smoke","stateDir":"/tmp/bsf-smoke"}' \
+            | grep -q 'Task_Classify#1'
+
+      - name: Package the VS Code extension
+        run: |
+          bun run --cwd packages/vscode-ext build
+          bun run --cwd packages/vscode-ext package:vsix
+          cp packages/vscode-ext/dist/*.vsix dist-release/
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: dist-release/*
