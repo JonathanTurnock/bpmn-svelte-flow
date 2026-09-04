@@ -40,7 +40,8 @@
     "build-site": "vite build studio --outDir ../site --emptyOutDir",
     "poc": "vite poc --open",
     "studio": "vite studio --open",
-    "build-studio": "vite build studio"
+    "build-studio": "vite build studio",
+    "build-vscode": "bun run --cwd packages/vscode-ext build"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

@@ -1,0 +1,54 @@
+/* Webview chrome: plain CSS on VS Code theme variables (no tailwind). */
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--vscode-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  color: var(--vscode-foreground, #222);
+  background: var(--vscode-editor-background, #fff);
+}
+
+/* Run classes, carried over from studio/src/app.css so the diagram reads the
+   same in the editor as it does in the studio. */
+.svelte-flow__node.bsf-visited {
+  filter: drop-shadow(0 0 3px oklch(0.627 0.17 149.214 / 0.85));
+}
+.svelte-flow__node.bsf-active {
+  filter: drop-shadow(0 0 6px oklch(0.705 0.213 47.604));
+  animation: bsf-pulse 1.2s ease-in-out infinite;
+}
+.svelte-flow__edge.bsf-traversed path {
+  stroke: oklch(0.627 0.17 149.214) !important;
+}
+.svelte-flow__node.bsf-selected {
+  outline: 2px solid var(--vscode-focusBorder, #0078d4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@keyframes bsf-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* CodeMirror: quiet, theme-driven chrome. */
+.cm-editor {
+  background: transparent;
+  font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+.cm-gutters {
+  background: transparent;
+  border: 0;
+}

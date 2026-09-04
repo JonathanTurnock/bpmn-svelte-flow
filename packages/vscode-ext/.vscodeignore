@@ -1,0 +1,8 @@
+# Ship only the built extension + webview; sources and tests stay in the repo.
+src/**
+test/**
+vite.config.ts
+svelte.config.js
+node_modules/**
+dist/*.vsix
+.vscodeignore
