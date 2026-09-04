@@ -31,6 +31,14 @@
       <bpmn:documentation>Triage decides everything downstream: category routes the queue, severity gates escalation.</bpmn:documentation>
       <bpmn:extensionElements>
         <bsf:instructions>Read payload.subject and payload.body. Set `category` to one of "billing", "technical" or "account"; set `severity` to "low" or "high" (high only for outages or issues affecting many users); and write a one-line `summary` of the problem in your own words.</bsf:instructions>
+        <bsf:code language="python">
+import re
+text = f"{payload['subject']} {payload['body']}".lower()
+payload['category'] = ('billing' if re.search(r'bill|invoice|charge', text)
+    else 'technical' if re.search(r'down|fail|error|crash|outage', text) else 'account')
+payload['severity'] = 'high' if re.search(r'outage|down|urgent|all users', text) else 'low'
+payload['summary'] = f"{payload['subject']} [auto-triaged]"
+        </bsf:code>
         <bsf:mock>
           const text = ((payload.subject || '') + ' ' + (payload.body || '')).toLowerCase();
           payload.category = /bill|invoice|charge/.test(text) ? 'billing'

@@ -68,6 +68,11 @@ export interface AgentTask {
   name: string;
   type?: string;
   instructions: string;
+  /**
+   * bsf:code — a snippet the agent executes itself as part of the step
+   * (Python, shell, …). The engine never runs it; see ADR-0003.
+   */
+  code?: { language: string; body: string };
   documentation?: string;
   payload: Record<string, unknown>;
 }

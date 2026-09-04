@@ -1,6 +1,6 @@
 <script lang="ts">
   import { FileText, FolderOpen, Plus, Trash2 } from '@lucide/svelte';
-  import { studio } from '../studio.svelte.js';
+  import { studio } from '../../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
   import { Separator } from '$lib/components/ui/separator/index.js';

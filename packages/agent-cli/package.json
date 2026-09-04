@@ -1,0 +1,20 @@
+{
+  "name": "@bsf/agent-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "bsf-agent — JSON-RPC CLI adapter that lets an LLM agent drive a BPMN workflow via @bsf/engine, with durable event-sourced run state on disk.",
+  "bin": {
+    "bsf-agent": "bin/bsf-agent.mjs"
+  },
+  "exports": {
+    ".": "./src/agent-cli.mjs"
+  },
+  "scripts": {
+    "test": "bun test/agent-cli.test.mjs"
+  },
+  "dependencies": {
+    "@bsf/engine": "workspace:*",
+    "bpmn-moddle": "^10.2.0"
+  }
+}

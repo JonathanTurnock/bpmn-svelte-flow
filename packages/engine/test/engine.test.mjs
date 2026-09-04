@@ -188,6 +188,7 @@ const agentXml = `<?xml version="1.0" encoding="UTF-8"?>
     <bpmn:task id="Agent" name="Do the thing">
       <bpmn:extensionElements>
         <bsf:instructions>Set done to true.</bsf:instructions>
+        <bsf:code language="python">print("hello from the agent's runtime")</bsf:code>
         <bsf:mock>payload.done = 'mocked';</bsf:mock>
       </bpmn:extensionElements>
       <bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing>
@@ -211,6 +212,10 @@ check('agent tasks park the run and resume via completeAgentTask', () => {
   const pending = engine.pendingAgentTasks();
   assert(pending.length === 1 && pending[0].taskId === 'Agent#1', 'one pending task');
   assert(/done/.test(pending[0].instructions), 'instructions surfaced');
+  assert(
+    pending[0].code?.language === 'python' && /hello/.test(pending[0].code.body),
+    'bsf:code delegated verbatim to the agent'
+  );
   engine.completeAgentTask('Agent#1', { done: true });
   engine.runToEnd();
   assert(engine.state.finished === true, 'run finishes after completion');

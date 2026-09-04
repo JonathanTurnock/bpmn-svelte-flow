@@ -2,13 +2,13 @@
   import { studio } from './lib/studio.svelte.js';
   import { registerWebMcp } from './lib/webmcp.js';
   import Toolbar from './lib/components/Toolbar.svelte';
-  import LeftPanel from './lib/components/LeftPanel.svelte';
+  import LeftPanel from './lib/components/panels/LeftPanel.svelte';
   import Canvas from './lib/components/Canvas.svelte';
-  import InspectorPanel from './lib/components/InspectorPanel.svelte';
-  import RunPanel from './lib/components/RunPanel.svelte';
-  import TestsPanel from './lib/components/TestsPanel.svelte';
-  import IssuesPanel from './lib/components/IssuesPanel.svelte';
-  import XmlPanel from './lib/components/XmlPanel.svelte';
+  import InspectorPanel from './lib/components/panels/InspectorPanel.svelte';
+  import RunPanel from './lib/components/panels/RunPanel.svelte';
+  import TestsPanel from './lib/components/panels/TestsPanel.svelte';
+  import IssuesPanel from './lib/components/panels/IssuesPanel.svelte';
+  import XmlPanel from './lib/components/panels/XmlPanel.svelte';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Tabs from '$lib/components/ui/tabs/index.js';
 

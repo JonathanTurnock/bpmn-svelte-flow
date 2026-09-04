@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { studio } from '../studio.svelte.js';
+  import { studio } from '../../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
-  import CodeEditor from './CodeEditor.svelte';
+  import CodeEditor from '../CodeEditor.svelte';
 
   let draft = $state('');
   let dirty = $state(false);

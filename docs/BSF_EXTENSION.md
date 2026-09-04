@@ -63,6 +63,23 @@ payload.
 </bpmn:task>
 ```
 
+### `bsf:code` — a snippet the agent executes
+Optional companion to `bsf:instructions`. Carries a `language` attribute
+and a code body that the **agent runs in its own runtime** as part of the
+step — Python, shell, SQL, anything. The engine never executes it (it only
+runs `text/javascript` in-process); it is delegated verbatim through
+`pendingAgentTasks()` and the CLI's `next`, like a worker job's payload
+(ADR-0003). `bsf:code` without `bsf:instructions` draws a validator
+advisory: code with no worker told to run it.
+
+```xml
+<bsf:instructions>Classify the ticket; you may run the snippet.</bsf:instructions>
+<bsf:code language="python">
+import re
+payload['severity'] = 'high' if re.search(r'outage|urgent', text) else 'low'
+</bsf:code>
+```
+
 ### `bsf:binding` — declared real-world implementation intent
 Optional, same elements as `bsf:mock`. *Descriptive, not executable*: a
 thin declaration — a `type` plus open name/value properties, the same shape

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { FlaskConical, Plus } from '@lucide/svelte';
-  import { studio } from '../studio.svelte.js';
+  import { studio } from '../../studio.svelte.js';
   import type { TestResult } from '@bsf/engine';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
-  import CodeEditor from './CodeEditor.svelte';
+  import CodeEditor from '../CodeEditor.svelte';
 
   let results = $state.raw<TestResult[] | null>(null);
   let adding = $state(false);

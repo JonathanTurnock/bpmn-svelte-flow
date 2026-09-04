@@ -25,17 +25,23 @@
         "svelte": "^5.0.0",
       },
     },
-    "packages/engine": {
-      "name": "@bsf/engine",
+    "packages/agent-cli": {
+      "name": "@bsf/agent-cli",
       "version": "0.1.0",
       "bin": {
         "bsf-agent": "bin/bsf-agent.mjs",
       },
       "dependencies": {
+        "@bsf/engine": "workspace:*",
         "bpmn-moddle": "^10.2.0",
       },
+    },
+    "packages/engine": {
+      "name": "@bsf/engine",
+      "version": "0.1.0",
       "devDependencies": {
         "bpmn-engine": "^25.0.1",
+        "bpmn-moddle": "^10.2.0",
         "feelin": "^7.0.1",
       },
     },
@@ -81,6 +87,8 @@
     "@bpmn-io/moddle-utils": ["@bpmn-io/moddle-utils@0.3.0", "", { "dependencies": { "min-dash": "^5.0.0" } }, "sha512-0kz2PKfjIH3XFtO9Koxh7jV8e1DWWs4rgp0IczhJgluoRHf9Jhq8zX1H3wGJu6+lpg1Rkzc6YW1ezKz+2K8wTg=="],
 
     "@bpmn-io/semver-compat": ["@bpmn-io/semver-compat@0.1.0", "", { "dependencies": { "semver": "^7.7.2" } }, "sha512-hIcW42Ku92MUioL6aknDbRoW1jK8ZEqIe8qZZ+d3cjitDO+PMEFFXj/sezJYIHMe8elu4CBz9qpjkV8WIVG9qw=="],
+
+    "@bsf/agent-cli": ["@bsf/agent-cli@workspace:packages/agent-cli"],
 
     "@bsf/engine": ["@bsf/engine@workspace:packages/engine"],
 

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { MousePointerClick } from '@lucide/svelte';
-  import { studio } from '../studio.svelte.js';
+  import { studio } from '../../studio.svelte.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
   import { Separator } from '$lib/components/ui/separator/index.js';
   import { Textarea } from '$lib/components/ui/textarea/index.js';
-  import CodeEditor from './CodeEditor.svelte';
+  import CodeEditor from '../CodeEditor.svelte';
 
   const SCRIPTABLE = new Set(['ScriptTask']);
   const MOCKABLE = new Set([
@@ -180,6 +180,19 @@
           The mock stands in for the agent during simulation.
         </p>
       </div>
+      {#if detail.code}
+        <div class="grid gap-2">
+          <div class="flex items-center gap-2">
+            <Label>Agent code</Label>
+            <Badge variant="outline">{detail.code.language}</Badge>
+          </div>
+          <pre class="max-h-48 overflow-auto rounded-lg border bg-muted/30 p-2.5 font-mono text-xs leading-snug">{detail.code.body}</pre>
+          <p class="text-xs text-muted-foreground">
+            bsf:code — executed by the agent in its own runtime, never by the engine (ADR-0003).
+            Edit it in the XML view.
+          </p>
+        </div>
+      {/if}
     {/if}
 
     <Separator />

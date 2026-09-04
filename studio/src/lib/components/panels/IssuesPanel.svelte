@@ -1,6 +1,6 @@
 <script lang="ts">
   import { CircleCheck } from '@lucide/svelte';
-  import { studio } from '../studio.svelte.js';
+  import { studio } from '../../studio.svelte.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
 </script>
 

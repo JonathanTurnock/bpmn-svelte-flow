@@ -22,7 +22,7 @@ function check(name, fn) {
 }
 
 const BIN = new URL('../bin/bsf-agent.mjs', import.meta.url).pathname;
-const FIXTURE = new URL('./fixtures/agent-triage.bpmn', import.meta.url).pathname;
+const FIXTURE = new URL('../../engine/test/fixtures/agent-triage.bpmn', import.meta.url).pathname;
 const dir = mkdtempSync(join(tmpdir(), 'bsf-agent-'));
 
 function rpc(method, params) {
@@ -54,6 +54,8 @@ check('start parks the run on the first agent task', () => {
   assert.equal(r.pending[0].taskId, 'Task_Classify#1');
   assert.match(r.pending[0].instructions, /category/);
   assert.equal(r.pending[0].payload.customer, 'Dana');
+  assert.equal(r.pending[0].code.language, 'python', 'bsf:code delegated to the agent');
+  assert.match(r.pending[0].code.body, /auto-triaged/);
 });
 
 check('state is durable on disk', () => {
@@ -144,8 +146,8 @@ check('the fixture still simulates fully via mocks (no agent handler)', () => {
     ['--input-type=module', '-e', `
       import { readFileSync } from 'node:fs';
       import { BpmnModdle } from 'bpmn-moddle';
-      import bsf from '${new URL('../src/bsf-moddle.js', import.meta.url).pathname}';
-      import { runTests } from '${new URL('../src/engine.mjs', import.meta.url).pathname}';
+      import bsf from '${new URL('../../engine/src/bsf-moddle.js', import.meta.url).pathname}';
+      import { runTests } from '${new URL('../../engine/src/engine.mjs', import.meta.url).pathname}';
       const moddle = new BpmnModdle({ bsf });
       const { rootElement } = await moddle.fromXML(readFileSync('${FIXTURE}', 'utf8'));
       console.log(JSON.stringify(runTests(rootElement)));

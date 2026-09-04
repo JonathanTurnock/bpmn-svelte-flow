@@ -1049,6 +1049,13 @@ class StudioStore {
     if (mock !== undefined) detail.mock = mock;
     const instructions = extensionBody(bo, 'instructions');
     if (instructions !== undefined) detail.instructions = instructions;
+    const codeExt = extensions(bo, 'code')[0];
+    if (codeExt) {
+      detail.code = {
+        language: codeExt.language || 'javascript',
+        body: (codeExt.body ?? codeExt.$body ?? '').trim()
+      };
+    }
     const binding = extensions(bo, 'binding')[0];
     if (binding) {
       detail.binding = {

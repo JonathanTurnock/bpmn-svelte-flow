@@ -18,8 +18,8 @@
     StepBack,
     StepForward
   } from '@lucide/svelte';
-  import { studio } from '../studio.svelte.js';
-  import StateDiff from './StateDiff.svelte';
+  import { studio } from '../../studio.svelte.js';
+  import StateDiff from '../StateDiff.svelte';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Label } from '$lib/components/ui/label/index.js';

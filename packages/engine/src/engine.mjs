@@ -98,6 +98,20 @@ function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 }
 
+/**
+ * bsf:code on an activity — a snippet the AGENT executes as part of the
+ * step, in whatever runtime it has. The engine never runs it (it only
+ * executes text/javascript scripts/mocks/conditions in-process); it is
+ * delegated verbatim, like a worker job's payload. See ADR-0003.
+ */
+function codeOf(element) {
+  const code = extensions(element, 'code')[0];
+  if (!code) return undefined;
+  const body = (code.body ?? code.$body ?? '').trim();
+  if (!body) return undefined;
+  return { language: code.language || 'javascript', body };
+}
+
 // ---------------------------------------------------------------------------
 // Definitions-level collectors
 // ---------------------------------------------------------------------------
@@ -229,6 +243,7 @@ export class BsfEngine {
       name: p.element.name || p.element.id,
       type: p.element.$type,
       instructions: p.instructions,
+      ...(codeOf(p.element) ? { code: codeOf(p.element) } : {}),
       documentation: (p.element.documentation || []).map((d) => d.text).filter(Boolean).join('\n'),
       payload: clone(p.token.payload)
     }));
@@ -425,6 +440,7 @@ export class BsfEngine {
         elementId: el.id,
         name: el.name || el.id,
         instructions,
+        ...(codeOf(el) ? { code: codeOf(el) } : {}),
         payload: token.payload
       });
       if (result === undefined) {
@@ -892,6 +908,9 @@ export function validate(definitions) {
           if (!exprBody(loop.loopCardinality) && !extensions(loop, 'collection').length) {
             add('warning', el.id, 'multi-instance has neither loopCardinality nor bsf:collection');
           }
+        }
+        if (codeOf(el) && !extensionBody(el, 'instructions')) {
+          add('info', el.id, 'bsf:code without bsf:instructions — no agent is told to run this snippet');
         }
         if (
           (is(el, 'bpmn:ServiceTask') || is(el, 'bpmn:SendTask') || is(el, 'bpmn:BusinessRuleTask')) &&

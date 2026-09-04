@@ -21,6 +21,14 @@ export default {
       properties: [{ name: 'body', isBody: true, type: 'String' }]
     },
     {
+      name: 'Code',
+      superClass: ['Element'],
+      properties: [
+        { name: 'language', isAttr: true, type: 'String' },
+        { name: 'body', isBody: true, type: 'String' }
+      ]
+    },
+    {
       name: 'Binding',
       superClass: ['Element'],
       properties: [

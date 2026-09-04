@@ -28,8 +28,8 @@ import { createHash, randomBytes } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { BpmnModdle } from 'bpmn-moddle';
-import bsfSchema from './bsf-moddle.js';
-import { BsfEngine, collectScenarios } from './engine.mjs';
+import bsfSchema from '@bsf/engine/moddle';
+import { BsfEngine, collectScenarios } from '@bsf/engine';
 
 const STATE_VERSION = 1;
 

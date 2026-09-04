@@ -224,12 +224,14 @@ deployment with `bun run build-site` and commit the result.
 
 The same BPMN file can put an **LLM agent in the loop**: give a task
 `bsf:instructions` — a natural-language work item — and run the file under
-the **`bsf-agent` JSON-RPC CLI** (part of [`@bsf/engine`](./packages/engine)).
+the **`bsf-agent` JSON-RPC CLI** (its own workspace package, [`@bsf/agent-cli`](./packages/agent-cli)).
 The engine executes everything deterministic (scripts, mocks-as-needed,
 gateways, joins, multi-instance) and parks the run whenever a token reaches
 an instructions task; the agent fetches the task, does the work, and
 completes it with the payload fields it produced, which drive the routing
-downstream. In the studio the `bsf:mock` on the same task stands in for the
+downstream. A task may also carry `bsf:code language="python|shell|…"` —
+a snippet the agent executes in its own runtime as part of the step; the
+engine itself only ever runs JavaScript. In the studio the `bsf:mock` on the same task stands in for the
 agent, so one artifact simulates, tests, and executes agentically.
 
 ```sh
